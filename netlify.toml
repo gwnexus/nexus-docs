@@ -7,11 +7,7 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-  # Pin to 5.14.7 — versions >=5.15.x require _global-error.meta which
-  # Next.js 16 + staticGenerationRetryCount:0 does not generate due to
-  # the React 19 useContext(null) SSG prerender bug in @mdx-js/react.
-  [plugins.inputs]
-    version = "5.14.7"
+  # Version is pinned via devDependencies in package.json (@netlify/plugin-nextjs@5.14.7)
 
 [[redirects]]
   from  = "https://nexus-docs.netlify.app/*"
