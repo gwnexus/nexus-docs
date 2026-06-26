@@ -27,6 +27,12 @@ export const metadata: Metadata = {
   description:
     'The official documentation for Nexus — the centralized knowledge and memory platform for AI agent workflows.',
   metadataBase: new URL('https://docs.nexus.gatewarden.eu'),
+  icons: {
+    icon: [
+      { url: '/nexus-icon.svg', type: 'image/svg+xml' },
+      { url: '/nexus-icon-64.png', sizes: '64x64', type: 'image/png' },
+    ],
+  },
 }
 
 export default async function RootLayout({
