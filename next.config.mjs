@@ -20,6 +20,10 @@ const nextConfig = {
     '/**/*': ['./src/app/**/*.mdx'],
   },
   experimental: {
+    // Prevents the SSG prerender crash for /_global-error caused by the
+    // React 19 / Next.js 16 useContext(null) bug in @mdx-js/react context.
+    // The _global-error.meta file is expected by @netlify/plugin-nextjs >=5.15.x —
+    // we pin the plugin to 5.14.7 in netlify.toml to avoid this requirement.
     staticGenerationRetryCount: 0,
   },
 }
