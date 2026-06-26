@@ -36,11 +36,11 @@ const routes   = Object.keys(manifest.routes ?? {})
 let created = 0
 
 for (const route of routes) {
-  // route is e.g. "/adrs", "/", "/_global-error"
-  // The plugin looks for .next/server/app${route}.meta
-  // For "/" the path is .next/server/app.meta (which maps to page.meta at root)
-  const routePath = route === '/' ? '' : route
-  const basePath  = join(serverApp, routePath)
+  // Mirror the plugin's own routeToFilePath() mapping:
+  //   "/"   → "/index"   (plugin looks for index.meta, not .meta at serverApp root)
+  //   "/foo" → "/foo"
+  const filePath  = route === '/' ? '/index' : route
+  const basePath  = join(serverApp, filePath)
 
   const metaPath  = basePath + '.meta'
   const htmlPath  = basePath + '.html'
