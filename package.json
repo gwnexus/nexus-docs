@@ -5,7 +5,7 @@
   "description": "Official documentation for Nexus — the centralized knowledge and memory platform for AI agent workflows.",
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build": "next build --webpack && node scripts/postbuild.mjs",
     "start": "next start",
     "lint": "eslint"
   },
