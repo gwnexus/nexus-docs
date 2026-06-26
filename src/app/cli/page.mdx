@@ -1,0 +1,35 @@
+export const metadata = {
+  title: 'nexus-cli',
+  description: 'The Nexus command-line tool for initializing workspaces, syncing agent files, and managing project knowledge.',
+}
+export const sections = []
+
+# nexus-cli
+
+The command-line tool for managing Nexus workspaces locally. {{ className: 'lead' }}
+
+<Note>
+  This page is under construction. Full content coming soon.
+</Note>
+
+## Overview
+
+`nexus-cli` handles the local side of the Nexus workflow:
+
+- `nexus init` — initialize a workspace, install nexus-mcp, pull agent files
+- `nexus pull` — sync agent files, skills, and directives from the platform
+- `nexus status` — show current workspace and project state
+
+## Installation
+
+After creating a project, the Nexus dashboard shows a one-line install command for your platform:
+
+```bash
+curl -fsSL https://nexus.gatewarden.eu/install.sh | sh
+```
+
+<div className="not-prose mt-8">
+  <Button href="https://github.com/gwnexus/nexus-cli" variant="text" arrow="right">
+    <>View on GitHub</>
+  </Button>
+</div>

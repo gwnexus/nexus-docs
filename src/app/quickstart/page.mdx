@@ -1,0 +1,65 @@
+export const metadata = {
+  title: 'Quickstart',
+  description:
+    'Get up and running with Nexus in under two minutes. Create a project, connect your agent, and run your first session.',
+}
+
+export const sections = []
+
+# Quickstart
+
+Get Nexus running with your agent in under two minutes. {{ className: 'lead' }}
+
+<Note>
+  You need a Nexus account to follow this guide. Sign up at [nexus.gatewarden.eu](https://nexus.gatewarden.eu/login) — it's free.
+</Note>
+
+## Step 1: Create a project
+
+Sign in at [nexus.gatewarden.eu](https://nexus.gatewarden.eu/login) with GitHub. From the dashboard, click **New Project** and give it a name. You will receive a **project ID** and an **API token** — keep these handy.
+
+## Step 2: Install nexus-cli
+
+After creating your project, the dashboard shows a one-line install command. Run it in your terminal:
+
+```bash
+curl -fsSL https://nexus.gatewarden.eu/install.sh | sh
+```
+
+Verify the installation:
+
+```bash
+nexus --version
+```
+
+## Step 3: Initialize your workspace
+
+Navigate to your project directory and run:
+
+```bash
+nexus init
+```
+
+This command:
+- Creates a `.nexus/` directory (your local workspace cache)
+- Pulls your project's agent files, skills, and directives
+- Writes `opencode.json` (or equivalent) with the MCP server config
+- Installs `nexus-mcp` automatically
+
+## Step 4: Start a session
+
+Open your AI coding agent (OpenCode, Claude Code, or any MCP-compatible tool). The `nexus-mcp` server is now available. Run the init skill to start a tracked session:
+
+```
+/nexus-init
+```
+
+Your agent will load project context, check for open sessions, and begin tracking work.
+
+## Next steps
+
+<div className="not-prose">
+  <Button href="/mcp-server" variant="text" arrow="right">
+    <>Explore MCP tools</>
+  </Button>
+</div>

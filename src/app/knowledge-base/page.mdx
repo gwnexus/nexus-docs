@@ -1,0 +1,35 @@
+export const metadata = {
+  title: 'Knowledge Base',
+  description: 'The Nexus knowledge base — how documents, research notes, and structured entities are stored, classified, and retrieved.',
+}
+export const sections = []
+
+# Knowledge Base
+
+The persistent, searchable knowledge store for your project. {{ className: 'lead' }}
+
+<Note>
+  This page is under construction. Full content coming soon.
+</Note>
+
+## What goes in the knowledge base?
+
+The knowledge base holds all durable project knowledge:
+
+- **Sessions** — execution history with append-only entries
+- **ADRs** — architectural decisions with full lifecycle
+- **Tasks** — work items with status and notes
+- **Ingest items** — documents, research notes, and references pushed via `doc_ingest`
+
+## Searching the knowledge base
+
+Use the `kb_search` MCP tool with keyword, semantic, or hybrid mode:
+
+```json
+{
+  "tool": "kb_search",
+  "query": "dispatch routing architecture",
+  "search_mode": "hybrid",
+  "entity_types": ["decision", "session"]
+}
+```

@@ -1,0 +1,27 @@
+export const metadata = {
+  title: 'Sessions',
+  description: 'Sessions are the execution history for a Nexus project — every agent action, decision, and discovery is logged here.',
+}
+export const sections = []
+
+# Sessions
+
+Sessions are the durable execution log for your project. {{ className: 'lead' }}
+
+<Note>
+  This page is under construction. Full content coming soon.
+</Note>
+
+## What is a session?
+
+A session represents a unit of agent work — typically a single coding or analysis session. Sessions have a title, open/closed status, and an append-only log of entries.
+
+Each entry has a type (`note`, `task_created`, `adr_drafted`, etc.), a summary, and optional metadata (model, toolstack, machine ID).
+
+## Session lifecycle
+
+1. **Open** — agent starts work, creates or resumes a session via `session_create` or `session_list`
+2. **In progress** — agent appends entries throughout the session via `session_append`
+3. **Closed** — agent closes the session via `session_close` with a summary and `next_entry_point`
+
+Sessions survive OpenCode restarts and compaction events via the `nexus-compaction-plus` plugin.

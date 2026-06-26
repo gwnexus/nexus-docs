@@ -1,0 +1,53 @@
+import { Guides } from '@/components/Guides'
+import { Resources } from '@/components/Resources'
+import { HeroPattern } from '@/components/HeroPattern'
+
+export const metadata = {
+  title: 'Nexus Documentation',
+  description:
+    'The official documentation for Nexus — the centralized knowledge and memory platform for AI agent workflows.',
+}
+
+export const sections = [
+  { title: 'Getting started', id: 'getting-started' },
+  { title: 'Core concepts', id: 'core-concepts' },
+]
+
+<HeroPattern />
+
+<div className="not-prose mb-8 flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-50 px-4 py-3 text-sm dark:border-emerald-400/20 dark:bg-emerald-400/5">
+  <span className="text-emerald-600 dark:text-emerald-400">✦ New in v0.9.0</span>
+  <span className="text-zinc-700 dark:text-zinc-300">
+    Nexus Dispatch is here — structured, routed work items for AI agent coordination.
+  </span>
+  <a href="/dispatch" className="ml-auto shrink-0 font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300">
+    Learn more →
+  </a>
+</div>
+
+# Nexus Documentation
+
+Nexus is a centralized knowledge and memory platform for AI agent workflows — built on Supabase, powered by MCP. Store decisions, sessions, research, and coordination artifacts in one place, and retrieve them across projects and agents. {{ className: 'lead' }}
+
+<div className="not-prose mt-6 mb-16 flex gap-3">
+  <Button href="/quickstart" arrow="right">
+    <>Quickstart</>
+  </Button>
+  <Button href="/mcp-server" variant="outline">
+    <>Explore MCP Tools</>
+  </Button>
+</div>
+
+## Getting started {{ anchor: false }}
+
+Set up Nexus in under two minutes. Create a project at [nexus.gatewarden.eu](https://nexus.gatewarden.eu), install the MCP server via `nexus init`, and connect your first agent. {{ className: 'lead' }}
+
+<div className="not-prose">
+  <Button href="/quickstart" variant="text" arrow="right">
+    <>Get started</>
+  </Button>
+</div>
+
+<Guides />
+
+<Resources />

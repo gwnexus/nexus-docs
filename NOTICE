@@ -1,0 +1,26 @@
+Nexus Documentation
+Copyright 2025 RelicFrog Holding UG (haftungsbeschränkt)
+
+This product includes software developed by RelicFrog Holding UG
+and is part of the Nexus platform (https://nexus.gatewarden.eu).
+
+---
+
+THIRD-PARTY COMPONENT NOTICE
+
+This project is built on the "Protocol" documentation template
+by Tailwind Labs Inc., acquired under a Tailwind Plus commercial license.
+
+The template is NOT open-source software. The Tailwind Plus license
+grants the licensee the right to use the template in personal and
+commercial projects, but does NOT permit:
+
+  - Forking this repository and using the template as part of a
+    separate independent product or service.
+  - Redistributing the template as a standalone template or theme.
+  - Making the template available for others to use in their own projects.
+
+Full license terms: https://tailwindui.com/license
+Template vendor license file: VENDOR-LICENSE-tailwind-plus-protocol.md
+
+All rights to the "Protocol" template remain with Tailwind Labs Inc.

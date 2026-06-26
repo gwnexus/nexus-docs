@@ -1,0 +1,25 @@
+export const metadata = {
+  title: 'Architecture',
+  description: 'How Nexus is structured — projects, agents, knowledge entities, and the MCP layer.',
+}
+export const sections = []
+
+# Architecture
+
+An overview of how Nexus is structured and how its components interact. {{ className: 'lead' }}
+
+<Note>
+  This page is under construction. Full content coming soon.
+</Note>
+
+## Overview
+
+Nexus is built around a **project-scoped knowledge graph** stored in Supabase. Each project contains:
+
+- **Sessions** — execution history and agent work logs
+- **ADRs** — Architecture Decision Records
+- **Tasks** — trackable work items
+- **Documents** — ingested research and reference material
+- **Dispatches** — routed coordination between agents and humans
+
+Agents interact with the platform exclusively via the **nexus-mcp** MCP server. There is no direct database access from agents.

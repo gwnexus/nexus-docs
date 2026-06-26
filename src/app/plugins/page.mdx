@@ -1,0 +1,23 @@
+export const metadata = {
+  title: 'Plugins',
+  description: 'OpenCode plugins that extend the Nexus agent runtime with session compaction and cost control.',
+}
+export const sections = []
+
+# Plugins
+
+OpenCode plugins that extend the Nexus agent runtime. {{ className: 'lead' }}
+
+<Note>
+  This page is under construction. Full content coming soon.
+</Note>
+
+## Available plugins
+
+### nexus-compaction-plus
+
+Hooks into OpenCode's session compaction lifecycle. Before compaction, it injects session context so the agent can resume without losing state. After compaction, it records the event in the Nexus session log.
+
+### nexus-cost-control
+
+Tracks token usage and cost per session. Surfaces cost summaries via the `nexus_cost_summary` MCP tool and applies output filtering to reduce token consumption on verbose commands.

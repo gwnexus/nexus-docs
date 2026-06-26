@@ -1,0 +1,90 @@
+export const metadata = {
+  title: 'nexus-mcp — MCP Server',
+  description:
+    'The nexus-mcp server is the specification layer between your AI agents and the Nexus knowledge platform. Over 60 tools for knowledge access, coordination, and governance.',
+}
+
+export const sections = [
+  { title: 'Installation', id: 'installation' },
+  { title: 'Tool families', id: 'tool-families' },
+  { title: 'Configuration', id: 'configuration' },
+]
+
+# nexus-mcp
+
+The MCP server that connects your AI agents to the Nexus platform. {{ className: 'lead' }}
+
+`nexus-mcp` exposes 60+ structured tools across six families — sessions, knowledge, decisions, dispatch, tasks, and skills. It is installed automatically when you run `nexus init` in a project workspace.
+
+<div className="not-prose mt-6 mb-16 flex gap-3">
+  <Button href="/mcp-tools" arrow="right">
+    <>Full tool index</>
+  </Button>
+  <Button href="https://github.com/gwnexus/nexus-mcp" variant="outline">
+    <>View on GitHub</>
+  </Button>
+</div>
+
+## Installation {{ tag: 'automatic' }}
+
+`nexus-mcp` is installed automatically when you run `nexus init` in your project workspace. The CLI writes the MCP server configuration to your agent config file.
+
+For manual installation:
+
+```bash
+npm install -g @gwdn/nexus-mcp
+```
+
+Current version: **v0.9.0**
+
+## Tool families
+
+`nexus-mcp` groups its tools into six families:
+
+<Properties>
+  <Property name="session_*" type="5 tools">
+    Create, list, append to, and close work sessions. Sessions are the execution history for a project — every agent action is logged here.
+  </Property>
+  <Property name="kb_*" type="6 tools">
+    Search and retrieve knowledge objects (sessions, ADRs, tasks, research notes, planning items). Supports keyword, semantic, and hybrid search modes.
+  </Property>
+  <Property name="adr_*" type="4 tools">
+    Draft, submit, and accept Architecture Decision Records. ADRs are the durable decision log for your project.
+  </Property>
+  <Property name="dispatch_*" type="13 tools">
+    Create, route, acknowledge, reply to, and resolve Dispatches — structured work items for agent-to-agent and agent-to-human coordination.
+  </Property>
+  <Property name="task_*" type="3 tools">
+    Create, list, and update project tasks with status tracking and audit trail.
+  </Property>
+  <Property name="doc_*" type="5 tools">
+    Ingest, classify, update, list, and delete knowledge documents in the project knowledge base.
+  </Property>
+</Properties>
+
+## Configuration
+
+After `nexus init`, your agent config contains an entry like:
+
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "nexus-mcp",
+      "args": [],
+      "env": {
+        "NEXUS_API_URL": "https://nexus.gatewarden.eu",
+        "NEXUS_API_TOKEN": "<your-token>"
+      }
+    }
+  }
+}
+```
+
+The `NEXUS_API_TOKEN` is scoped to your project. Generate a new token from the project settings in the dashboard.
+
+<div className="not-prose mt-8">
+  <Button href="/mcp-tools" variant="text" arrow="right">
+    <>Browse all 60+ tools</>
+  </Button>
+</div>

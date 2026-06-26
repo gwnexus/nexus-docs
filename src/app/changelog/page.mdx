@@ -1,0 +1,26 @@
+export const metadata = {
+  title: 'Changelog',
+  description: 'Release history for Nexus, nexus-mcp, and nexus-cli.',
+}
+export const sections = []
+
+# Changelog
+
+Release history for the Nexus platform and its tools. {{ className: 'lead' }}
+
+## v0.9.0
+
+**Nexus Dispatch** — Vault Letter system redesigned as structured, routed work items.
+
+- 13 new `dispatch_*` MCP tools (inbox, outbox, create, ack, reply, resolve, close, assign, forward, sweep, related, get)
+- `vl_*` tools remain as compatibility aliases
+- 8 dispatch types: question, bug_report, implementation_request, review_request, decision_notice, blocker, status_update, handover
+- 9-status lifecycle with enforced transitions
+- Cross-project routing with project-link gate
+- `dispatch_sweep` for session-start prioritized overview
+
+**nexus-mcp v0.9.0** — 154 tests, all passing. Published to npm as `@gwdn/nexus-mcp`.
+
+## v0.8.x
+
+Session vectorization, vector search (pgvector + OpenAI embeddings), vision OCR pipeline, DGX Spark node management, C&C channel security (Ed25519 signed commands), ADR system maturation.

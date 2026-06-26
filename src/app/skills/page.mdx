@@ -1,0 +1,29 @@
+export const metadata = {
+  title: 'Skills',
+  description: 'Nexus Skills — reusable, versioned workflow instructions that agents load on demand.',
+}
+export const sections = []
+
+# Skills
+
+Reusable workflow instructions for agents, managed by the Nexus platform. {{ className: 'lead' }}
+
+<Note>
+  This page is under construction. Full content coming soon.
+</Note>
+
+## What is a skill?
+
+A skill is a markdown-based workflow instruction assigned to a project. Skills are versioned, searchable, and exposed to agents as slash commands (e.g. `/nexus-init`, `/nexus-adr-draft`).
+
+## Built-in skills
+
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| Init Nexus | `/nexus-init` | Initialize a session, load project context |
+| Session Close | `/nexus-session-close` | Close the active session with a structured summary |
+| ADR Draft | `/nexus-adr-draft` | Draft an Architecture Decision Record |
+| Sync Memory | `/nexus-sync-memory` | Persist session outputs to the knowledge base |
+| Git Commit | `/nexus-git-commit` | Create clean, professional commits |
+| Code Review | `/nexus-code-review` | Structured code review with checklist |
+| Security Scan | `/nexus-sec-scan` | OWASP-based security audit |

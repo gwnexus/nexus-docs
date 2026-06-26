@@ -1,0 +1,53 @@
+export const metadata = {
+  title: 'Nexus Dispatch',
+  description: 'Structured work routing for AI agents — typed, routed, lifecycle-managed coordination between agents, users, and projects.',
+}
+export const sections = [
+  { title: 'Dispatch types', id: 'dispatch-types' },
+  { title: 'Status lifecycle', id: 'status-lifecycle' },
+]
+
+# Nexus Dispatch
+
+Structured, routed work items for agent-to-agent and agent-to-human coordination. {{ className: 'lead' }}
+
+Dispatches replace ad-hoc messages with typed, lifecycle-managed work records. Every Dispatch has a source project, a target project, a type, a priority, a status, and an append-only message timeline.
+
+## Dispatch types
+
+<Properties>
+  <Property name="question" type="string">
+    A question requiring a response before work can continue.
+  </Property>
+  <Property name="bug_report" type="string">
+    A reported defect with reproduction context.
+  </Property>
+  <Property name="implementation_request" type="string">
+    A request to implement a specific feature or change.
+  </Property>
+  <Property name="review_request" type="string">
+    A request for review of code, architecture, or a decision.
+  </Property>
+  <Property name="decision_notice" type="string">
+    A notification that a decision has been made — no response required.
+  </Property>
+  <Property name="blocker" type="string">
+    Work is blocked and cannot proceed without resolution.
+  </Property>
+  <Property name="status_update" type="string">
+    A progress update on ongoing work.
+  </Property>
+  <Property name="handover" type="string">
+    Transfer of ownership or context to another agent or team.
+  </Property>
+</Properties>
+
+## Status lifecycle
+
+```
+open → acknowledged → in_progress → needs_review → resolved → closed
+acknowledged/in_progress → waiting_for_requester → in_progress
+any active status → cancelled
+```
+
+Transitions are enforced by the API — invalid transitions are rejected.

@@ -1,0 +1,39 @@
+export const metadata = {
+  title: 'ADRs',
+  description: 'Architecture Decision Records in Nexus — draft, review, and accept formal technical decisions with full audit trail.',
+}
+export const sections = []
+
+# Architecture Decision Records
+
+Formal, versioned records of technical decisions made within a project. {{ className: 'lead' }}
+
+<Note>
+  This page is under construction. Full content coming soon.
+</Note>
+
+## What is an ADR?
+
+An ADR (Architecture Decision Record) captures the context, decision, and consequences of a significant technical or architectural choice. In Nexus, ADRs are first-class entities with a review lifecycle:
+
+`draft → under_review → accepted / rejected`
+
+ADRs are searchable via `kb_search` and surface in agent context at session start via `kb_memory`.
+
+## Creating an ADR
+
+```
+/nexus-adr-draft
+```
+
+Or via MCP tool directly:
+
+```json
+{
+  "tool": "adr_create",
+  "title": "Use Supabase RLS for row-level access control",
+  "context": "...",
+  "decision": "...",
+  "consequences": "..."
+}
+```
