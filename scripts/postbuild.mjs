@@ -2,27 +2,74 @@
 /**
  * scripts/postbuild.mjs
  *
- * Synthesises the static prerender artifacts (.meta, .html, .prefetch.rsc)
- * that @netlify/plugin-nextjs expects for every statically prerendered route.
+ * Renders all statically prerendered routes by starting the Next.js server
+ * briefly, fetching each page's HTML, and writing the required artifacts
+ * (.meta, .html, .prefetch.rsc) that @netlify/plugin-nextjs expects.
  *
- * Root cause: Next.js 16 with @next/mdx + staticGenerationRetryCount:0
- * suppresses the /_global-error SSG crash (React 19 useContext(null) bug
- * in @mdx-js/react), but as a side-effect skips emitting all prerender
- * artifacts (.meta, .html, .prefetch.rsc) for every route in the app.
+ * Root cause: Next.js 16 + @next/mdx + staticGenerationRetryCount:0 suppresses
+ * the @mdx-js/react useContext(null) SSG crash but also skips emitting all
+ * prerender artifacts for every route. The plugin reads these files during
+ * its onBuild phase — without them the deploy fails. Without real HTML content
+ * the pages render as white/blank.
  *
- * The plugin reads prerender-manifest.json to enumerate routes, then
- * opens `${route}.meta` for each one. This script synthesises the minimal
- * valid content for each file so the plugin can proceed.
- *
- * Content format verified against a working nexus-hub build (Next.js 16,
- * same plugin version, no MDX pipeline).
+ * Strategy:
+ *   1. Start `next start` on a free port
+ *   2. Fetch each route from prerender-manifest.json
+ *   3. Write the real HTML + synthetic .meta + empty .prefetch.rsc
+ *   4. Kill the server
  */
 
 import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { join, dirname } from 'path'
+import { spawn } from 'child_process'
+import { createServer } from 'net'
 
-const publishDir  = join(process.cwd(), '.next')
-const serverApp   = join(publishDir, 'server', 'app')
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function findFreePort() {
+  return new Promise((resolve, reject) => {
+    const srv = createServer()
+    srv.listen(0, '127.0.0.1', () => {
+      const port = srv.address().port
+      srv.close(() => resolve(port))
+    })
+    srv.on('error', reject)
+  })
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
+
+async function waitForServer(port, retries = 30, interval = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/`)
+      if (res.status < 600) return true
+    } catch {
+      // not ready yet
+    }
+    await sleep(interval)
+  }
+  throw new Error(`Server on port ${port} did not become ready after ${retries}s`)
+}
+
+async function fetchHtml(port, route) {
+  const url = `http://127.0.0.1:${port}${route}`
+  const res = await fetch(url, {
+    headers: { 'accept': 'text/html' },
+  })
+  return res.text()
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+const publishDir   = join(process.cwd(), '.next')
+const serverApp    = join(publishDir, 'server', 'app')
 const manifestPath = join(publishDir, 'prerender-manifest.json')
 
 if (!existsSync(manifestPath)) {
@@ -33,41 +80,76 @@ if (!existsSync(manifestPath)) {
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
 const routes   = Object.keys(manifest.routes ?? {})
 
-let created = 0
+// Routes to skip — not real pages, no HTML to render
+const SKIP_ROUTES = new Set(['/_global-error'])
 
-for (const route of routes) {
-  // Mirror the plugin's own routeToFilePath() mapping:
-  //   "/"   → "/index"   (plugin looks for index.meta, not .meta at serverApp root)
-  //   "/foo" → "/foo"
-  const filePath  = route === '/' ? '/index' : route
-  const basePath  = join(serverApp, filePath)
+const port = await findFreePort()
+console.log(`postbuild: starting next server on port ${port}...`)
 
-  const metaPath  = basePath + '.meta'
-  const htmlPath  = basePath + '.html'
-  const rscPath   = basePath + '.prefetch.rsc'
+const server = spawn(
+  process.execPath,
+  ['node_modules/.bin/next', 'start', '--port', String(port)],
+  { stdio: 'pipe', cwd: process.cwd() }
+)
 
-  // Ensure parent directory exists
-  const parentDir = dirname(metaPath)
-  if (!existsSync(parentDir)) {
-    mkdirSync(parentDir, { recursive: true })
+server.stderr.on('data', () => {}) // suppress stderr noise
+server.stdout.on('data', () => {}) // suppress stdout noise
+
+try {
+  await waitForServer(port)
+  console.log(`postbuild: server ready — rendering ${routes.length} routes`)
+
+  let created = 0
+
+  for (const route of routes) {
+    // Mirror the plugin's routeToFilePath(): "/" → "/index"
+    const filePath = route === '/' ? '/index' : route
+    const basePath = join(serverApp, filePath)
+
+    const metaPath = basePath + '.meta'
+    const htmlPath = basePath + '.html'
+    const rscPath  = basePath + '.prefetch.rsc'
+
+    // Ensure parent directory exists
+    const parentDir = dirname(metaPath)
+    if (!existsSync(parentDir)) {
+      mkdirSync(parentDir, { recursive: true })
+    }
+
+    // .meta — always write (plugin requires it; content is status + empty headers)
+    if (!existsSync(metaPath)) {
+      const status = manifest.routes[route]?.initialStatus ?? 200
+      writeFileSync(metaPath, JSON.stringify({ status, headers: {} }), 'utf-8')
+      created++
+    }
+
+    // .prefetch.rsc — always empty for our static MDX pages
+    if (!existsSync(rscPath)) {
+      writeFileSync(rscPath, '', 'utf-8')
+    }
+
+    // .html — fetch real rendered HTML from the server
+    if (!existsSync(htmlPath)) {
+      if (SKIP_ROUTES.has(route)) {
+        writeFileSync(htmlPath,
+          '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/></head><body></body></html>',
+          'utf-8')
+      } else {
+        try {
+          const html = await fetchHtml(port, route)
+          writeFileSync(htmlPath, html, 'utf-8')
+          process.stdout.write(`  ✓ ${route}\n`)
+        } catch (err) {
+          console.warn(`  ⚠ ${route}: fetch failed (${err.message}) — writing empty HTML`)
+          writeFileSync(htmlPath,
+            '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/></head><body></body></html>',
+            'utf-8')
+        }
+      }
+    }
   }
 
-  // Only write if not already present (don't overwrite real artifacts)
-  if (!existsSync(metaPath)) {
-    const status = manifest.routes[route]?.initialStatus ?? 200
-    writeFileSync(metaPath, JSON.stringify({ status, headers: {} }), 'utf-8')
-    created++
-  }
-
-  if (!existsSync(htmlPath)) {
-    writeFileSync(htmlPath,
-      '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/></head><body></body></html>',
-      'utf-8')
-  }
-
-  if (!existsSync(rscPath)) {
-    writeFileSync(rscPath, '', 'utf-8')
-  }
+  console.log(`✓ postbuild: wrote artifacts for ${routes.length} routes (${created} .meta files created)`)
+} finally {
+  server.kill()
 }
-
-console.log(`✓ postbuild: synthesised prerender artifacts for ${routes.length} routes (${created} .meta files created)`)
