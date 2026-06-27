@@ -2,24 +2,96 @@ export const metadata = {
   title: 'Architecture',
   description: 'How Nexus is structured — projects, agents, knowledge entities, and the MCP layer.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Data model', id: 'data-model' },
+  { title: 'Communication flow', id: 'communication-flow' },
+  { title: 'Authentication and RBAC', id: 'authentication-and-rbac' },
+  { title: 'Project links', id: 'project-links' },
+]
 
 # Architecture
 
 An overview of how Nexus is structured and how its components interact. {{ className: 'lead' }}
 
-<Note>
-  This page is under construction. Full content coming soon.
-</Note>
-
 ## Overview
 
-Nexus is built around a **project-scoped knowledge graph** stored in Supabase. Each project contains:
+Nexus is built around a **project-scoped knowledge graph** stored in Supabase (PostgreSQL + Row Level Security). The platform provides three access layers:
 
-- **Sessions** — execution history and agent work logs
-- **ADRs** — Architecture Decision Records
-- **Tasks** — trackable work items
-- **Documents** — ingested research and reference material
-- **Dispatches** — routed coordination between agents and humans
+1. **Nexus API** — RESTful HTTP API with tenant isolation and project-scoped RBAC
+2. **nexus-mcp** — MCP server bridging agent runtimes to the API via stdio
+3. **nexus-cli** — Native Rust CLI for workspace management and synchronization
 
-Agents interact with the platform exclusively via the **nexus-mcp** MCP server. There is no direct database access from agents.
+Agents interact with the platform exclusively via the MCP server. There is no direct database access from agents — all data flows through the authenticated API.
+
+## Data model
+
+Each project contains a knowledge graph of interconnected entities:
+
+| Entity | Purpose | Lifecycle |
+| --- | --- | --- |
+| **Sessions** | Execution history and agent work logs | open -> closed |
+| **ADRs** | Architecture Decision Records | draft -> under_review -> accepted/rejected |
+| **Tasks** | Trackable work items | open -> in_progress -> done |
+| **Documents** | Ingested research, references, scan reports | unclassified -> classified |
+| **Dispatches** | Routed coordination between agents and humans | open -> resolved -> closed |
+| **Skills** | Reusable workflow instructions | draft -> active -> archived |
+| **Directives** | Project-scoped rules and policies | enabled/disabled |
+| **Reviews** | Multi-entity review workflow | draft -> submitted -> accepted/rejected |
+
+Entities are connected through relationships navigable via `kb_related` — for example, ADR supersession chains, tasks created during sessions, or dispatches linked to specific projects.
+
+## Communication flow
+
+```
+Developer / Human
+    │
+    │  Browser (Dashboard UI)
+    ▼
+Nexus App (Next.js + Supabase)
+    │
+    │  API routes (/api/*)
+    ▼
+Nexus API (Bearer token auth, RBAC)
+    ▲                          ▲
+    │  HTTPS                   │  HTTPS
+    │                          │
+nexus-mcp (stdio MCP)    nexus-cli (Rust binary)
+    ▲                          ▲
+    │  stdio                   │  Terminal
+    │                          │
+Agent Runtime              Developer
+(OpenCode, Claude,
+ Cursor, ...)
+```
+
+All communication between agents and the platform goes through `nexus-mcp`. The CLI handles workspace scaffolding, file synchronization, and authentication — it does not participate in agent workflows at runtime.
+
+## Authentication and RBAC
+
+### Token model
+
+API tokens use the `nxs_pat_*` prefix and are passed as Bearer tokens in the `Authorization` header. Tokens are SHA-256 hashed at rest and resolve to a user identity with tenant and project scope at the API layer.
+
+### Dual-layer RBAC
+
+Nexus uses a dual-layer RBAC model:
+
+1. **Platform-level roles** — via `app_metadata.platform_role`:
+   - `platform_owner` — full platform access
+   - `platform_admin` — administrative access
+
+2. **Project-scoped roles** — via `project_memberships`:
+   - `owner` — full project control
+   - `admin` — project administration
+   - `developer` — read/write access
+   - `viewer` — read-only access
+
+Customer-level access is managed through `customer_memberships`, providing an additional isolation layer.
+
+## Project links
+
+Projects can be linked for cross-project coordination. When projects are linked, Dispatches can be forwarded between them, and agents can reference entities across project boundaries.
+
+Cross-project Dispatches require an active `project_link` between source and target projects.

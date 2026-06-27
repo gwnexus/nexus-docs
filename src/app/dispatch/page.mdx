@@ -2,52 +2,107 @@ export const metadata = {
   title: 'Nexus Dispatch',
   description: 'Structured work routing for AI agents — typed, routed, lifecycle-managed coordination between agents, users, and projects.',
 }
+
 export const sections = [
+  { title: 'Core concept', id: 'core-concept' },
   { title: 'Dispatch types', id: 'dispatch-types' },
   { title: 'Status lifecycle', id: 'status-lifecycle' },
+  { title: 'MCP tools', id: 'mcp-tools' },
+  { title: 'Session-start sweep', id: 'session-start-sweep' },
 ]
 
 # Nexus Dispatch
 
 Structured, routed work items for agent-to-agent and agent-to-human coordination. {{ className: 'lead' }}
 
-Dispatches replace ad-hoc messages with typed, lifecycle-managed work records. Every Dispatch has a source project, a target project, a type, a priority, a status, and an append-only message timeline.
+Nexus Dispatch is the structured work-routing layer for agents, users, and linked projects. It replaces the legacy Vault Letter concept while preserving backward compatibility via `vl_*` aliases.
 
-## Dispatch types
+## Core concept
+
+A Dispatch is an append-only, routed work record with ownership, priority, lifecycle status, and a complete message timeline. Dispatches can be created within a project or routed across linked projects.
 
 <Properties>
-  <Property name="question" type="string">
-    A question requiring a response before work can continue.
+  <Property name="source_project_id" type="uuid">
+    Derived from the calling agent's authenticated project (never caller-supplied).
   </Property>
-  <Property name="bug_report" type="string">
-    A reported defect with reproduction context.
+  <Property name="target_project_id" type="uuid">
+    The recipient project (explicit or resolved from `to_actor`).
   </Property>
-  <Property name="implementation_request" type="string">
-    A request to implement a specific feature or change.
+  <Property name="requester_actor_id" type="uuid">
+    The creating actor (from agent registry).
   </Property>
-  <Property name="review_request" type="string">
-    A request for review of code, architecture, or a decision.
-  </Property>
-  <Property name="decision_notice" type="string">
-    A notification that a decision has been made — no response required.
-  </Property>
-  <Property name="blocker" type="string">
-    Work is blocked and cannot proceed without resolution.
-  </Property>
-  <Property name="status_update" type="string">
-    A progress update on ongoing work.
-  </Property>
-  <Property name="handover" type="string">
-    Transfer of ownership or context to another agent or team.
+  <Property name="assignee_actor_id" type="uuid">
+    The actor expected to act on the Dispatch.
   </Property>
 </Properties>
 
+## Dispatch types
+
+| Type | Purpose |
+| --- | --- |
+| `question` | Ask for clarification or decision input |
+| `bug_report` | Report a defect discovered by an agent or user |
+| `implementation_request` | Assign implementation work to another agent |
+| `review_request` | Request review of code, ADRs, or docs |
+| `decision_notice` | Propagate an accepted ADR to affected projects |
+| `blocker` | Escalate an issue preventing progress |
+| `status_update` | Report progress or completion |
+| `handover` | Transfer context or ownership |
+
 ## Status lifecycle
 
+Statuses follow enforced transition rules. Terminal states: `closed`, `cancelled`.
+
 ```
-open → acknowledged → in_progress → needs_review → resolved → closed
-acknowledged/in_progress → waiting_for_requester → in_progress
-any active status → cancelled
+open -> acknowledged -> in_progress -> needs_review -> resolved -> closed
+acknowledged/in_progress -> waiting_for_requester -> in_progress
+any active status -> blocked -> in_progress
+any active status -> cancelled
 ```
 
 Transitions are enforced by the API — invalid transitions are rejected.
+
+## MCP tools
+
+| Tool | Description |
+| --- | --- |
+| `dispatch_create` | Create a new routed Dispatch |
+| `dispatch_reply` | Append a reply or timeline entry (optional status transition) |
+| `dispatch_inbox` | List Dispatches addressed to the calling project |
+| `dispatch_outbox` | List Dispatches created by the calling project |
+| `dispatch_ack` | Acknowledge — open to acknowledged |
+| `dispatch_assign` | Assign or reassign to an actor |
+| `dispatch_forward` | Forward to another actor or linked project |
+| `dispatch_resolve` | Mark as resolved with optional resolution note |
+| `dispatch_close` | Close a resolved Dispatch (terminal) |
+| `dispatch_sweep` | Session-start overview: blocking, overdue, waiting-on-me, new assignments |
+| `dispatch_get` | Fetch full Dispatch with timeline and participants |
+| `dispatch_related` | Find structurally related Dispatches (loop prevention) |
+
+### Legacy aliases
+
+The `vl_*` tools remain available for backward compatibility: `vl_create`, `vl_reply`, `vl_inbox`, `vl_outbox`, `vl_ack`.
+
+<Note>
+  New integrations should use the `dispatch_*` tools exclusively.
+</Note>
+
+## Session-start sweep
+
+Call `dispatch_sweep` at the start of every agent session. It returns a prioritized overview across five categories:
+
+1. **Blocking dispatches** — highest priority, process first
+2. **Overdue dispatches** — past their due date
+3. **Waiting on me** — dispatches where this actor needs to respond
+4. **New assignments** — unacknowledged dispatches
+5. **Recent updates** — recently updated open dispatches
+
+```json
+{
+  "tool": "dispatch_sweep",
+  "project_id": "...",
+  "acknowledge_non_blocking": true
+}
+```
+
+The sweep also returns `recommended_next_actions` to guide the agent's prioritization.

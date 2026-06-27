@@ -4,7 +4,7 @@ export function Logo(props: React.ComponentPropsWithoutRef<'img'>) {
     <img
       src="/nexus-logo.svg"
       alt="Nexus"
-      className={`h-7 w-auto dark:invert ${props.className ?? ''}`}
+      className={`h-7 w-auto invert dark:invert-0 ${props.className ?? ''}`}
       {...props}
     />
   )

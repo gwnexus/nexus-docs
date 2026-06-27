@@ -1,0 +1,109 @@
+export const metadata = {
+  title: 'Workspaces',
+  description: 'Reproducible dev environments using Devbox — blueprint-fork architecture, baselines, flavors, and CLI integration.',
+}
+
+export const sections = [
+  { title: 'Blueprint + Fork architecture', id: 'blueprint-fork-architecture' },
+  { title: 'Baselines and flavors', id: 'baselines-and-flavors' },
+  { title: 'CLI integration', id: 'cli-integration' },
+  { title: 'devbox.json reference', id: 'devbox-json-reference' },
+  { title: 'Upstream change detection', id: 'upstream-change-detection' },
+]
+
+# Workspaces
+
+Reproducible, version-controlled development environments using Devbox. {{ className: 'lead' }}
+
+Nexus Workspaces follow a Blueprint + Fork architecture: admins create global blueprints, and projects receive independent deep-copy forks that can be customized without affecting the source.
+
+## Blueprint + Fork architecture
+
+A **Workspace Blueprint** is a global template that defines a complete dev environment. It combines:
+
+- A **baseline** — core packages like Go, Node, or Python
+- A **flavor** — curated package sets like `nexus-dev` or `web-frontend`
+- Optional **post-init scripts** and **metadata variables**
+
+When assigned to a project, Nexus creates a **Fork** — a deep copy of the blueprint at its current version. Forks are fully independent: changes to the composed body, post-init script, or meta variables do not propagate back to the blueprint.
+
+### Wizard
+
+Creating a blueprint uses a 5-step wizard:
+
+1. **Type** — Devbox 0.17 (Dev Containers and devenv coming soon)
+2. **Baseline** — core language runtime
+3. **Flavor** — curated package bundle
+4. **Post-Init Script** — setup commands
+5. **Metadata** — project-level variables
+
+Blueprints can be activated, deactivated, or archived. Only active blueprints appear in the project assignment modal.
+
+## Baselines and flavors
+
+Baselines provide the foundation packages. Flavors add curated tool sets on top. Both are admin-seeded and read-only.
+
+| Type | Examples | Purpose |
+| --- | --- | --- |
+| Baseline | `go-1.23`, `node-22`, `python-3.12` | Core language runtime |
+| Flavor | `nexus-dev`, `web-frontend`, `data-science` | Curated package bundle |
+
+## CLI integration
+
+The Nexus CLI pulls workspace forks and materializes them as local Devbox configuration files:
+
+| Command | Description |
+| --- | --- |
+| `nexus pull --scope workspace` | Download the active workspace fork and write `devbox.json` + init scripts |
+| `nexus status` | Shows workspace fork status including upstream change detection |
+
+## devbox.json reference
+
+The `devbox.json` file is the heart of every Nexus workspace. It defines a reproducible, Nix-based development environment.
+
+```json
+{
+  "packages": [],
+  "env": {},
+  "shell": {
+    "init_hook": [],
+    "scripts": {}
+  },
+  "include": []
+}
+```
+
+### Key sections
+
+<Properties>
+  <Property name="packages" type="array | object">
+    Nix packages. Supports version pinning (`go@1.23`), flake references, and per-platform filtering.
+  </Property>
+  <Property name="env" type="object">
+    Environment variables set inside the Devbox shell. Supports `$PWD` and `$PATH`.
+  </Property>
+  <Property name="shell.init_hook" type="array">
+    Shell commands run before every `devbox shell` or `devbox run`.
+  </Property>
+  <Property name="shell.scripts" type="object">
+    Named commands runnable via `devbox run <name>`.
+  </Property>
+  <Property name="include" type="array">
+    References to Devbox plugins (GitHub repos, local paths, or built-in).
+  </Property>
+</Properties>
+
+### Best practices
+
+- Pin package versions explicitly (e.g. `node@22` instead of `node@latest`) for reproducible builds
+- Keep `init_hook` fast — move long-running setup into named scripts
+- Use `env` for project-specific config; use `.env` files for secrets
+- Use Nexus Meta Variables (`C_DBX_*`) to inject project-level config at fork level
+
+### Validation
+
+The Nexus workspace editor validates `devbox.json` in real-time: JSON syntax errors are caught immediately, and devbox-specific rules (valid top-level keys, package format, platform names, shell structure) are checked before saving.
+
+## Upstream change detection
+
+When a blueprint is updated after a fork has been created, a database trigger sets `upstream_changed = true` on all forks of that blueprint. This flag is visible in both the UI and the CLI, letting project teams decide when to pull the latest changes.

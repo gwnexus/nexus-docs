@@ -2,26 +2,87 @@ export const metadata = {
   title: 'Sessions',
   description: 'Sessions are the execution history for a Nexus project — every agent action, decision, and discovery is logged here.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'What is a session?', id: 'what-is-a-session' },
+  { title: 'Session lifecycle', id: 'session-lifecycle' },
+  { title: 'Entry types', id: 'entry-types' },
+  { title: 'Session metadata', id: 'session-metadata' },
+  { title: 'Compaction survival', id: 'compaction-survival' },
+  { title: 'MCP tools', id: 'mcp-tools' },
+]
 
 # Sessions
 
 Sessions are the durable execution log for your project. {{ className: 'lead' }}
 
-<Note>
-  This page is under construction. Full content coming soon.
-</Note>
+Every agent action, decision, and discovery is logged in sessions. They persist across agent restarts, OpenCode compaction events, and system reboots.
 
 ## What is a session?
 
 A session represents a unit of agent work — typically a single coding or analysis session. Sessions have a title, open/closed status, and an append-only log of entries.
 
-Each entry has a type (`note`, `task_created`, `adr_drafted`, etc.), a summary, and optional metadata (model, toolstack, machine ID).
+Each entry has a type, a summary, optional linked entities (tasks, ADRs, dispatches), and metadata (model, toolstack, machine ID).
+
+Sessions are the **execution history**, not the source of truth for decisions. Durable knowledge belongs in ADRs, tasks, or the knowledge base. Sessions record *what happened* and provide context for resuming work.
 
 ## Session lifecycle
 
-1. **Open** — agent starts work, creates or resumes a session via `session_create` or `session_list`
+1. **Open** — agent starts work, creates a session via `session_create` or resumes an existing one found via `session_list`
 2. **In progress** — agent appends entries throughout the session via `session_append`
-3. **Closed** — agent closes the session via `session_close` with a summary and `next_entry_point`
+3. **Closed** — agent closes the session via `session_close` with a structured summary and `next_entry_point`
 
-Sessions survive OpenCode restarts and compaction events via the `nexus-compaction-plus` plugin.
+<Note>
+  Never create a new session if an open one already exists for the same user and project. The `/nexus-init` skill checks for open sessions automatically.
+</Note>
+
+### Resuming sessions
+
+When an agent starts, it calls `session_list` to find open sessions. If one exists, it loads the session detail (summary, `next_entry_point`, last entries) and appends a `note` entry marking the resumption. The `next_entry_point` from the previous close provides the starting context.
+
+## Entry types
+
+| Entry type | When to use |
+| --- | --- |
+| `note` | General progress, discoveries, decisions, blockers |
+| `task_created` | A task was created — link the task ID |
+| `task_updated` | A task status changed — link the task ID |
+| `adr_drafted` | An ADR was drafted — link the ADR ID |
+| `adr_accepted` | An ADR was accepted — link the ADR ID |
+| `decision_referenced` | An existing ADR was referenced during work |
+| `letter_sent` | A Dispatch was created — link the dispatch ID |
+| `letter_replied` | A Dispatch was replied to — link the dispatch ID |
+| `research_added` | Research was ingested into the knowledge base |
+| `conflict_detected` | A conflict between entities was found |
+| `handoff_recorded` | Work was handed off to another agent |
+| `correction` | A previous entry was corrected |
+| `security_scan` | A security scan was completed (auto-ingested as scan report) |
+| `performance_scan` | A performance scan was completed (auto-ingested as scan report) |
+
+## Session metadata
+
+Every `session_append` and `session_create` call should include metadata for traceability:
+
+```json
+{
+  "agent_id": "opencode",
+  "metadata": "{\"model\": \"claude-opus-4.6\", \"toolstack\": \"opencode\", \"machine_id\": \"...\"}"
+}
+```
+
+This ensures full traceability of which agent, model, and toolstack produced each session entry. Entries without metadata show as N/A in the dashboard.
+
+## Compaction survival
+
+Sessions survive OpenCode context window compaction via the `nexus-compaction-plus` plugin. Before compaction, the plugin injects session and project IDs into the compaction prompt. After compaction, it records the event in the session timeline.
+
+To maximize resilience against interruptions, agents should append entries **during work**, not only at close time. If a session is interrupted (crash, timeout, compaction), the resuming agent should have enough context from the session entries alone to continue without asking the user what happened.
+
+## MCP tools
+
+| Tool | Description |
+| --- | --- |
+| `session_create` | Create a new work session |
+| `session_list` | List open sessions for a project |
+| `session_append` | Append an entry to the active session |
+| `session_close` | Close the session with summary and next entry point |

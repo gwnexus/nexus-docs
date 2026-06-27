@@ -2,31 +2,163 @@ export const metadata = {
   title: 'nexus-cli',
   description: 'The Nexus command-line tool for initializing workspaces, syncing agent files, and managing project knowledge.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'Installation', id: 'installation' },
+  { title: 'Quick start', id: 'quick-start' },
+  { title: 'Commands', id: 'commands' },
+  { title: 'Preflight checks', id: 'preflight-checks' },
+  { title: 'Import workflow', id: 'import-workflow' },
+  { title: 'Workspace cache', id: 'workspace-cache' },
+  { title: 'Cost control tools', id: 'cost-control-tools' },
+]
 
 # nexus-cli
 
-The command-line tool for managing Nexus workspaces locally. {{ className: 'lead' }}
+The native Rust CLI for managing Nexus workspaces locally. {{ className: 'lead' }}
 
-<Note>
-  This page is under construction. Full content coming soon.
-</Note>
+`nexus-cli` handles project scaffolding, authentication, agentic file import, workspace management, environment preflight checks, and configuration management for multi-agent engineering workflows.
 
-## Overview
-
-`nexus-cli` handles the local side of the Nexus workflow:
-
-- `nexus init` — initialize a workspace, install nexus-mcp, pull agent files
-- `nexus pull` — sync agent files, skills, and directives from the platform
-- `nexus status` — show current workspace and project state
+<div className="not-prose mt-6 mb-16 flex gap-3">
+  <Button href="/quickstart" arrow="right">
+    <>Quickstart</>
+  </Button>
+  <Button href="https://github.com/gwnexus/nexus-cli" variant="outline">
+    <>View on GitHub</>
+  </Button>
+</div>
 
 ## Installation
 
-After creating a project, the Nexus dashboard shows a one-line install command for your platform:
+### One-liner (recommended)
 
 ```bash
-curl -fsSL https://nexus.gatewarden.eu/install.sh | sh
+curl -fsSL https://nexus.gatewarden.eu/install.sh | bash
 ```
+
+The installer detects your platform (macOS / Linux, x86_64 / aarch64), downloads the pre-built binary from GitHub Releases, and verifies its SHA-256 checksum. If no binary exists for your platform it falls back to `cargo install --git`.
+
+### From source
+
+```bash
+cargo install --git https://github.com/gwnexus/nexus-cli.git nexusctl
+```
+
+Requires Rust >= 1.85.
+
+### Pin a version
+
+```bash
+NEXUS_VERSION=v0.6.12 curl -fsSL https://nexus.gatewarden.eu/install.sh | bash
+```
+
+## Quick start
+
+```bash
+nexus login              # Authenticate with the Nexus platform
+nexus init               # Initialize a Nexus project workspace
+nexus preflight          # Verify environment readiness
+nexus pull               # Sync skills and agent files from the platform
+```
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `nexus init [path]` | Initialize a Nexus project workspace |
+| `nexus login` | Authenticate with the Nexus platform |
+| `nexus logout` | Remove stored credentials |
+| `nexus status` | Show auth, project, and workspace status |
+| `nexus link [--project-id <id>]` | Bind a project to the current workspace |
+| `nexus unlink` | Remove project binding from the workspace |
+| `nexus pull [--project-id <id>]` | Pull skills and config from the Nexus platform |
+| `nexus import` | Scan workspace for existing agentic files and import into linked project |
+| `nexus skills export [--project-id <id>]` | Export enabled skills as JSON |
+| `nexus preflight` | Run environment readiness checks |
+| `nexus deinit [--force]` | Remove all AI scaffold files from the workspace |
+| `nexus config show` | Display configuration |
+| `nexus config set K=V` | Update a configuration value |
+| `nexus config path` | Show the config file path |
+| `nexus upgrade` | Upgrade CLI to latest release version |
+
+### Global flags
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--yes` | `-y` | Non-interactive mode (auto-confirm all prompts) |
+| `--verbose` | `-v` | Enable verbose output |
+| `--help` | `-h` | Show help |
+| `--version` | `-V` | Show version |
+
+## Preflight checks
+
+`nexus preflight` validates the local environment is ready for Nexus:
+
+| Check | What it verifies |
+| --- | --- |
+| Git | `git` is installed and accessible |
+| Node.js | `node` >= 18 available |
+| npm | `npm` available |
+| npx | `npx` available |
+| Config | Nexus config file exists (`~/.config/nexus/`) |
+| Credentials | Valid `nxs_pat_*` token stored |
+| API | Nexus API reachable and token valid |
+| Workspace | `.nexus/` workspace marker present |
+| MCP | Agent MCP configurations reference nexus-mcp |
+
+## Import workflow
+
+`nexus import` scans the current workspace for pre-existing agentic configuration files and imports them into the linked Nexus project. This is the recommended way to onboard existing projects alongside the platform-managed workflow.
+
+**Detected files:** `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `copilot-instructions.md`, `.windsurf/rules/*.md`, `GEMINI.md`
+
+**What happens:**
+
+- Detected agentic files are ingested as unclassified items for review and promotion
+- Directive-like sections (rules, guidelines, conventions) are extracted and created as disabled project directives
+- Markdown links to local documents (e.g. `docs/*.md`) are resolved and ingested as referenced documents
+- Exported agent files (`.nexus/CLAUDE.md`, `.nexus/AGENTS.md`) automatically include a cross-reference block pointing to the original customer files
+
+During `nexus init`, the CLI automatically detects existing agentic files and offers to run the import.
+
+## Workspace cache
+
+The CLI creates a `.nexus/` directory in your project root to store workspace metadata, project bindings, and cached configuration. This directory is automatically excluded from Git via `.git/info/exclude` (not `.gitignore`) to avoid polluting the shared ignore file. The `nexus deinit` command cleans up both the cache directory and the exclude entries.
+
+<Note>
+  Local agent file changes are overwritten by `nexus pull`. Files managed by the Nexus platform (AGENTS.md, CLAUDE.md, .cursorrules, plugin configs, etc.) are pulled from the server and will overwrite local modifications. Edit agent files in the Nexus dashboard and run `nexus pull` to sync.
+</Note>
+
+## Cost control tools
+
+`nexus pull` automatically configures two token-saving tools when enabled for a project:
+
+### RTK — Runtime Token Killer
+
+Filters and compresses CLI output before it reaches the agent context (60-90% savings on build/test/lint output).
+
+```bash
+# Install the RTK binary
+# See: https://www.rtk-ai.app/#install
+
+# Install the OpenCode plugin (once per machine)
+rtk init -g --opencode
+
+# After nexus pull, trust project filters
+rtk trust
+```
+
+The `.rtk/filters.toml` file is auto-generated from the project's codebase character presets (configured in the Nexus dashboard under Project > Plugins) and synced on every `nexus pull`.
+
+### Headroom — Context Compression MCP
+
+ML-based context compression via MCP server. Reduces input context by 60-95% for large tool outputs.
+
+```bash
+pip install "headroom-ai[mcp]"
+```
+
+The Headroom MCP server is configured automatically in `opencode.json` when the headroom plugin is active. It provides three tools: `headroom_compress`, `headroom_retrieve`, `headroom_stats`.
 
 <div className="not-prose mt-8">
   <Button href="https://github.com/gwnexus/nexus-cli" variant="text" arrow="right">

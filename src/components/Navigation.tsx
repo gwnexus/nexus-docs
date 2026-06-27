@@ -247,6 +247,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: 'nexus-mcp',      href: '/mcp-server' },
       { title: 'nexus-cli',      href: '/cli' },
+      { title: 'nexus-link',     href: '/nexus-link' },
       { title: 'Plugins',        href: '/plugins' },
     ],
   },
@@ -258,6 +259,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'Dispatch',       href: '/dispatch' },
       { title: 'Knowledge Base', href: '/knowledge-base' },
       { title: 'Skills',         href: '/skills' },
+      { title: 'Workspaces',     href: '/workspaces' },
     ],
   },
   {

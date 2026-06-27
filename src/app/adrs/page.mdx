@@ -2,38 +2,103 @@ export const metadata = {
   title: 'ADRs',
   description: 'Architecture Decision Records in Nexus — draft, review, and accept formal technical decisions with full audit trail.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'What is an ADR?', id: 'what-is-an-adr' },
+  { title: 'ADR lifecycle', id: 'adr-lifecycle' },
+  { title: 'ADR structure', id: 'adr-structure' },
+  { title: 'Creating an ADR', id: 'creating-an-adr' },
+  { title: 'Supersession', id: 'supersession' },
+  { title: 'MCP tools', id: 'mcp-tools' },
+]
 
 # Architecture Decision Records
 
 Formal, versioned records of technical decisions made within a project. {{ className: 'lead' }}
 
-<Note>
-  This page is under construction. Full content coming soon.
-</Note>
+ADRs capture the context, decision, and consequences of significant technical or architectural choices. They are the durable decision log for your project — searchable, reviewable, and auditable.
 
 ## What is an ADR?
 
-An ADR (Architecture Decision Record) captures the context, decision, and consequences of a significant technical or architectural choice. In Nexus, ADRs are first-class entities with a review lifecycle:
+An ADR (Architecture Decision Record) documents a technical or architectural decision that affects the project. Unlike session notes, ADRs are **permanent** — they represent decisions that should be understood and respected by all future agents and team members.
 
-`draft → under_review → accepted / rejected`
+ADRs are first-class entities in Nexus with a formal review lifecycle. They are searchable via `kb_search` and surface automatically in agent context at session start via `kb_memory`.
 
-ADRs are searchable via `kb_search` and surface in agent context at session start via `kb_memory`.
+## ADR lifecycle
+
+```
+draft -> under_review -> accepted / rejected
+```
+
+| Status | Description |
+| --- | --- |
+| `draft` | Initial state. The ADR is being written and refined. |
+| `under_review` | Submitted for team review. Comments can be added via `dc_add`. |
+| `accepted` | The decision is approved and becomes authoritative. |
+| `rejected` | The decision was not approved. Preserved for historical context. |
+| `superseded` | Replaced by a newer ADR. Automatically set when the superseding ADR is accepted. |
+
+## ADR structure
+
+Every ADR follows a standard format:
+
+<Properties>
+  <Property name="Title" type="string">
+    Short, descriptive. Format: "Use X for Y" or "Adopt X over Y".
+  </Property>
+  <Property name="Context" type="markdown">
+    What is the situation? What problem are we solving? What constraints exist? What alternatives were considered?
+  </Property>
+  <Property name="Decision" type="markdown">
+    What is the decision? Stated clearly and directly. Includes key implementation details that affect the architecture.
+  </Property>
+  <Property name="Consequences" type="markdown">
+    Expected positive outcomes, known trade-offs or risks, follow-up work required.
+  </Property>
+</Properties>
 
 ## Creating an ADR
+
+Use the `/nexus-adr-draft` skill for guided ADR creation:
 
 ```
 /nexus-adr-draft
 ```
 
-Or via MCP tool directly:
+Or create directly via MCP tools:
 
 ```json
 {
   "tool": "adr_create",
+  "project_id": "...",
   "title": "Use Supabase RLS for row-level access control",
-  "context": "...",
-  "decision": "...",
-  "consequences": "..."
+  "context": "We need to enforce data isolation...",
+  "decision": "We will use Supabase Row Level Security...",
+  "consequences": "Positive: automatic enforcement at the DB layer..."
 }
 ```
+
+After drafting, submit for review:
+
+```json
+{
+  "tool": "adr_submit",
+  "adr_id": "..."
+}
+```
+
+## Supersession
+
+When a new ADR replaces an existing one, specify the `supersedes` field during creation. When the new ADR is accepted, the superseded ADR is automatically marked as `superseded`.
+
+Use `kb_related` to navigate supersession chains and understand the evolution of decisions.
+
+## MCP tools
+
+| Tool | Description |
+| --- | --- |
+| `adr_create` | Create a new ADR in draft status |
+| `adr_submit` | Submit a draft ADR for review |
+| `adr_decide` | Accept or reject an ADR under review |
+| `dc_add` | Add a comment to an ADR under review |
+| `dc_list` | List comments on an ADR |

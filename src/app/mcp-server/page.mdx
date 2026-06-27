@@ -6,15 +6,20 @@ export const metadata = {
 
 export const sections = [
   { title: 'Installation', id: 'installation' },
-  { title: 'Tool families', id: 'tool-families' },
+  { title: 'Architecture', id: 'architecture' },
+  { title: 'Tool layers', id: 'tool-layers' },
+  { title: 'Tool naming convention', id: 'tool-naming-convention' },
   { title: 'Configuration', id: 'configuration' },
+  { title: 'Skill lifecycle', id: 'skill-lifecycle' },
+  { title: 'Auto-ingested scan reports', id: 'auto-ingested-scan-reports' },
+  { title: 'Known issues', id: 'known-issues' },
 ]
 
 # nexus-mcp
 
 The MCP server that connects your AI agents to the Nexus platform. {{ className: 'lead' }}
 
-`nexus-mcp` exposes 60+ structured tools across six families — sessions, knowledge, decisions, dispatch, tasks, and skills. It is installed automatically when you run `nexus init` in a project workspace.
+`nexus-mcp` exposes 60+ structured tools across six families — sessions, knowledge, decisions, dispatch, tasks, and skills. It communicates exclusively with the Nexus HTTP API and holds no direct database credentials. Installed automatically when you run `nexus init`.
 
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="/mcp-tools" arrow="right">
@@ -29,38 +34,113 @@ The MCP server that connects your AI agents to the Nexus platform. {{ className:
 
 `nexus-mcp` is installed automatically when you run `nexus init` in your project workspace. The CLI writes the MCP server configuration to your agent config file.
 
-For manual installation:
+For manual installation or standalone use:
+
+```bash
+npx @gwdn/nexus-mcp
+```
+
+Or install globally:
 
 ```bash
 npm install -g @gwdn/nexus-mcp
 ```
 
-Current version: **v0.9.0**
+Published on npm as [`@gwdn/nexus-mcp`](https://www.npmjs.com/package/@gwdn/nexus-mcp). Current version: **v0.9.0**.
 
-## Tool families
+## Architecture
 
-`nexus-mcp` groups its tools into six families:
+The MCP server acts as a mediation layer between local agent runtimes and the Nexus HTTP API via the [Model Context Protocol](https://modelcontextprotocol.io) (stdio transport).
 
-<Properties>
-  <Property name="session_*" type="5 tools">
-    Create, list, append to, and close work sessions. Sessions are the execution history for a project — every agent action is logged here.
-  </Property>
-  <Property name="kb_*" type="6 tools">
-    Search and retrieve knowledge objects (sessions, ADRs, tasks, research notes, planning items). Supports keyword, semantic, and hybrid search modes.
-  </Property>
-  <Property name="adr_*" type="4 tools">
-    Draft, submit, and accept Architecture Decision Records. ADRs are the durable decision log for your project.
-  </Property>
-  <Property name="dispatch_*" type="13 tools">
-    Create, route, acknowledge, reply to, and resolve Dispatches — structured work items for agent-to-agent and agent-to-human coordination.
-  </Property>
-  <Property name="task_*" type="3 tools">
-    Create, list, and update project tasks with status tracking and audit trail.
-  </Property>
-  <Property name="doc_*" type="5 tools">
-    Ingest, classify, update, list, and delete knowledge documents in the project knowledge base.
-  </Property>
-</Properties>
+```
+Agent Runtime (OpenCode, Claude Code, Cursor, ...)
+    │
+    │  stdio (MCP protocol)
+    ▼
+nexus-mcp (this package)
+    │
+    │  HTTPS (Bearer token auth)
+    ▼
+Nexus API (nexus.gatewarden.eu)
+    │
+    ▼
+Supabase (PostgreSQL + RLS)
+```
+
+Identity is resolved once at startup via `GET /api/mcp/identity` using the `NEXUS_PRIVATE_TOKEN` (`nxs_pat_*` format) as a Bearer token. All subsequent API calls reuse this token for authentication. The Nexus backend resolves the token to a user identity and enforces project-scoped RBAC.
+
+## Tool layers
+
+The server organizes its 60+ tools into four layers:
+
+### Layer 1 — Knowledge Access (5 tools)
+
+| Tool | Description |
+| --- | --- |
+| `kb_search` | Full-text, semantic, or hybrid search across project entities |
+| `kb_memory` | Structured project memory snapshot (ADRs, tasks, sessions, dispatches) |
+| `kb_get` | Retrieve a specific entity by type and ID |
+| `kb_related` | Find entities related to a given entity |
+| `project_list` | List accessible projects |
+
+### Layer 2 — Coordination (54 tools)
+
+| Group | Tools |
+| --- | --- |
+| **Sessions** | `session_create`, `session_close`, `session_list`, `session_append` |
+| **Tasks** | `task_create`, `task_update`, `task_list`, `task_note` |
+| **Dispatch** | `dispatch_create`, `dispatch_reply`, `dispatch_inbox`, `dispatch_outbox`, `dispatch_ack`, `dispatch_assign`, `dispatch_forward`, `dispatch_resolve`, `dispatch_close`, `dispatch_sweep`, `dispatch_get`, `dispatch_related` |
+| **Dispatch (legacy)** | `vl_create`, `vl_reply`, `vl_inbox`, `vl_outbox`, `vl_ack` |
+| **Documents** | `doc_ingest`, `doc_list`, `doc_classify`, `doc_update`, `doc_delete` |
+| **Skills** | `sk_list`, `sk_get`, `sk_create`, `sk_update`, `sk_activate`, `sk_assign`, `sk_unassign`, `sk_export` |
+| **Decision Comments** | `dc_add`, `dc_list` |
+| **Directives** | `pd_list`, `pd_get`, `pd_create`, `pd_update`, `pd_delete`, `pd_toggle`, `directive_export` |
+
+### Layer 3 — Governance (3 tools)
+
+| Tool | Description |
+| --- | --- |
+| `adr_create` | Create a new ADR in draft status |
+| `adr_submit` | Submit a draft ADR for review |
+| `adr_decide` | Accept or reject an ADR under review |
+
+### Layer 4 — Reviews (5 tools)
+
+| Tool | Description |
+| --- | --- |
+| `rv_list` | List reviews with optional filters |
+| `rv_get` | Get review details by ID or entity |
+| `rv_create` | Create a new review for a skill or agent |
+| `rv_decide` | Transition a review state (submit, accept, reject, ...) |
+| `rv_comment` | Add a comment to a review |
+
+### Utility (3 tools)
+
+| Tool | Description |
+| --- | --- |
+| `identity` | Show current user identity |
+| `cost_summary` | Token usage and cost for the current session |
+| `show_plugins` | List loaded Nexus plugins and their status |
+
+## Tool naming convention
+
+All tools follow the `{domain}_{operation}` pattern:
+
+| Prefix | Domain |
+| --- | --- |
+| `kb_*` | Knowledge |
+| `dispatch_*` | Nexus Dispatch (v0.9.0+) |
+| `vl_*` | Nexus Dispatch (legacy aliases) |
+| `task_*` | Tasks |
+| `session_*` | Sessions |
+| `dc_*` | Decision Comments |
+| `doc_*` | Documents |
+| `sk_*` | Skills |
+| `adr_*` | ADR Governance |
+| `rv_*` | Reviews |
+| `pd_*` | Project Directives (CRUD) |
+| `directive_*` | Directives (export) |
+| `project_*` | Projects |
 
 ## Configuration
 
@@ -70,18 +150,72 @@ After `nexus init`, your agent config contains an entry like:
 {
   "mcpServers": {
     "nexus": {
-      "command": "nexus-mcp",
-      "args": [],
+      "command": "npx",
+      "args": ["-y", "@gwdn/nexus-mcp@latest"],
       "env": {
         "NEXUS_API_URL": "https://nexus.gatewarden.eu",
-        "NEXUS_API_TOKEN": "<your-token>"
+        "NEXUS_PRIVATE_TOKEN": "nxs_pat_..."
       }
     }
   }
 }
 ```
 
-The `NEXUS_API_TOKEN` is scoped to your project. Generate a new token from the project settings in the dashboard.
+### Environment variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXUS_API_URL` | Yes | Nexus API base URL (e.g. `https://nexus.gatewarden.eu`) |
+| `NEXUS_PRIVATE_TOKEN` | Yes | `nxs_pat_*` API token for identity resolution |
+| `NEXUS_SEC_OPENAI_API_KEY` | No | OpenAI API key for semantic and hybrid `kb_search` embeddings |
+| `NEXUS_MODEL` | No | Model identifier injected into session metadata (e.g. `claude-sonnet-4.6`) |
+| `NEXUS_TOOLSTACK` | No | Toolstack identifier for session metadata (e.g. `opencode`, `claude-code`) |
+
+## Skill lifecycle
+
+Skills are managed centrally in the Nexus platform and delivered to agents at runtime.
+
+**How skills are loaded:**
+
+- When an agent invokes a skill command (e.g. `/nexus-sec-scan`), the skill body is loaded **live from the Nexus backend** via the MCP server — not from local files.
+- Skill updates pushed via `sk_update` take effect **immediately** for all projects the skill is assigned to. No pull, restart, or re-deployment required.
+- The local `.nexus/skills/` directory is a workspace cache written by `nexus pull`. It exists for offline reference and IDE autocompletion, but is never the authoritative source.
+
+**When to run `nexus pull`:**
+
+- To update local `.nexus/` cache files (AGENTS.md, skill files, agent files) for reference
+- After adding new skill assignments in the dashboard
+- **Not required** for skill content updates — agents always fetch the latest version at invocation time
+
+**Scope:**
+
+- **Core skills** (`project_id = NULL`) are tenant-wide and available to all projects. Only platform owners and admins can create or modify them.
+- **Project-scoped skills** belong to a single project and are managed by project admins. They do not appear in other projects unless explicitly promoted to core.
+
+## Auto-ingested scan reports
+
+When agents append a session entry with `entry_type` set to `security_scan` or `performance_scan`, the platform automatically creates a knowledge-base document from the entry summary.
+
+- The ingest document is classified as `scan_report` and tagged with source `auto-scan`
+- The summary field of the session entry becomes the document body — skills instruct agents to write the complete structured report into this field
+- Scan reports appear in the project knowledge base under the scan report classification and are searchable via `kb_search`
+
+## Known issues
+
+### npx cache prevents version upgrade
+
+When using `npx` to run the MCP server, npm caches the resolved package in `~/.npm/_npx/`. Subsequent invocations may continue to use the cached (outdated) version even after a new release is published.
+
+**Fix:** Clear all npx caches for this package before starting your agent:
+
+```bash
+find ~/.npm/_npx -path "*/node_modules/@gwdn/nexus-mcp" -type d \
+  -exec rm -rf {} + 2>/dev/null
+```
+
+<Note>
+  Pin `@latest` in your MCP config args to always resolve the newest version: `["--yes", "@gwdn/nexus-mcp@latest"]`
+</Note>
 
 <div className="not-prose mt-8">
   <Button href="/mcp-tools" variant="text" arrow="right">

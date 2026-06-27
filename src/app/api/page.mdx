@@ -2,16 +2,65 @@ export const metadata = {
   title: 'REST API',
   description: 'The Nexus REST API — endpoints for projects, sessions, ADRs, tasks, dispatches, and knowledge base operations.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'Authentication', id: 'authentication' },
+  { title: 'RBAC model', id: 'rbac-model' },
+  { title: 'Base URL', id: 'base-url' },
+  { title: 'API reference', id: 'api-reference' },
+]
 
 # REST API
 
+The Nexus REST API is the foundation that all tools are built on. {{ className: 'lead' }}
+
+All MCP tools and CLI commands are thin wrappers over the REST API. The API enforces tenant isolation, project-scoped RBAC, and token-based authentication.
+
+## Authentication
+
+API tokens use the `nxs_pat_*` prefix and are passed as Bearer tokens in the `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer nxs_pat_..." \
+  https://nexus.gatewarden.eu/api/mcp/identity
+```
+
+Tokens are SHA-256 hashed at rest and resolve to a user identity with tenant and project scope.
+
+## RBAC model
+
+Nexus uses a dual-layer RBAC model:
+
+1. **Platform-level roles** via `app_metadata.platform_role` (`platform_owner`, `platform_admin`)
+2. **Project-scoped roles** via `project_memberships` (`owner`, `admin`, `developer`, `viewer`)
+
+Customer-level access is managed through `customer_memberships`.
+
+## Base URL
+
+```
+https://nexus.gatewarden.eu/api
+```
+
+### Key endpoints
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/api/mcp/identity` | GET | Resolve token to user identity |
+| `/api/mcp/kb/search` | POST | Search the knowledge base |
+| `/api/mcp/kb/memory` | POST | Get project memory snapshot |
+| `/api/mcp/sessions` | POST | Create a session |
+| `/api/mcp/sessions/:id/close` | POST | Close a session |
+| `/api/mcp/sessions/:id/entries` | POST | Append a session entry |
+| `/api/mcp/adrs` | POST | Create an ADR |
+| `/api/mcp/dispatches` | POST | Create a Dispatch |
+| `/api/mcp/tasks` | POST | Create a task |
+| `/api/mcp/documents` | POST | Ingest a document |
+
+## API reference
+
 <Note>
-  This page is under construction. Full API reference coming soon.
+  A downloadable OpenAPI schema for the Nexus platform API is planned for a future release.
 </Note>
 
-The Nexus REST API is the foundation that `nexus-mcp` is built on. All MCP tools are thin wrappers over the REST API.
-
-Base URL: `https://nexus.gatewarden.eu/api`
-
-Authentication: Bearer token (project-scoped API token from the dashboard).
+For the complete tool reference with parameters and response schemas, see the [MCP Tool Index](/mcp-tools). The MCP tools map 1:1 to REST API endpoints.

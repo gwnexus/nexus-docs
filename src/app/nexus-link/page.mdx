@@ -1,0 +1,186 @@
+export const metadata = {
+  title: 'nexus-link',
+  description: 'Hardware agent for connecting on-premise AI hardware nodes to the Nexus platform — telemetry, compose management, and Ed25519 security.',
+}
+
+export const sections = [
+  { title: 'Installation', id: 'installation' },
+  { title: 'Quick start', id: 'quick-start' },
+  { title: 'Two-token security model', id: 'two-token-security-model' },
+  { title: 'Compose management', id: 'compose-management' },
+  { title: 'Ed25519 request signing', id: 'ed25519-request-signing' },
+  { title: 'Device compatibility', id: 'device-compatibility' },
+  { title: 'CLI reference', id: 'cli-reference' },
+]
+
+# nexus-link
+
+Hardware agent for connecting on-premise AI nodes to the Nexus platform. {{ className: 'lead' }}
+
+`nexus-link` connects NVIDIA DGX Spark, A100, and H100 hardware nodes to the Nexus backend: live telemetry push and remote compose management — without requiring inbound network access into your infrastructure.
+
+<div className="not-prose mt-6 mb-16 flex gap-3">
+  <Button href="https://github.com/gwnexus/nexus-link" variant="outline">
+    <>View on GitHub</>
+  </Button>
+</div>
+
+## Installation
+
+### One-liner (recommended)
+
+```bash
+curl -fsSL https://nexus.gatewarden.eu/install-link.sh | bash
+```
+
+The installer detects your platform (Linux aarch64 / x86_64), downloads the pre-built binary from GitHub Releases, and verifies its SHA-256 checksum.
+
+### From source
+
+```bash
+cargo install --git https://github.com/gwnexus/nexus-link.git nexus-link-cli
+```
+
+Requires Rust >= 1.85 (2024 edition).
+
+### Container image
+
+```bash
+docker pull ghcr.io/gwnexus/nexus-link/nexus-link-service:latest
+```
+
+Multi-arch manifest (arm64 + amd64) — automatically selects the correct platform.
+
+## Quick start
+
+```bash
+# 1. Preflight check (optional — register runs this automatically)
+nexus-link preflight
+
+# 2. Register the node with both tokens from the Nexus dashboard
+nexus-link register \
+  --token     <nxs_node_*> \
+  --cmd-token <nxs_cmd_*>
+
+# 3. Start the telemetry agent
+nexus-link agent start
+
+# 4. Start the command service (receives compose management commands)
+nexus-link-service
+
+# 5. Check status
+nexus-link status
+```
+
+Both tokens are generated and displayed **once** in the Nexus dashboard registration wizard. Copy them before closing the dialog.
+
+## Two-token security model
+
+nexus-link uses two independent credentials with different trust levels:
+
+| Token | Format | Used by | Operations | Trust level |
+| --- | --- | --- | --- | --- |
+| Node Token | `nxs_node_*` | Telemetry agent | POST /telemetry, heartbeat | Read-only |
+| Command Token | `nxs_cmd_*` | Compose service | File read/write, docker compose, logs | Write-capable |
+
+This separation ensures a compromised telemetry process cannot trigger service restarts or modify compose configuration. Both tokens are stored in `~/.nexus-link/config.toml`.
+
+### Token rotation
+
+| Command | Behavior |
+| --- | --- |
+| `nexus-link refresh --token <nxs_node_*>` | Rotate node token. 24-hour grace period. Restarts agent automatically. |
+| `nexus-link refresh-cmd --cmd-token <nxs_cmd_*>` | Rotate command token. Immediate effect, no grace period. |
+
+## Compose management
+
+The `nexus-link-service` (port 8443) exposes a compose management API used by the Nexus dashboard **Compose tab**:
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/api/health` | GET | Health check (no auth required) |
+| `/api/compose/file` | GET | Read `docker-compose.yaml` + companion files |
+| `/api/compose/file` | PUT | Write compose file (YAML validation, atomic write) |
+| `/api/compose/activate` | POST | Run `docker compose up -d` (120s timeout) |
+| `/api/compose/logs` | GET | Live log stream (SSE, `docker compose logs --follow`) |
+
+All `/api/compose/*` endpoints require `Authorization: Bearer <nxs_cmd_*>`. The node token is **not accepted** on compose routes.
+
+### Dashboard integration
+
+The AI Hardware node detail page has a **Compose** tab where you can:
+
+- **View and edit** `docker-compose.yaml` and companion files (`.env`, `.conf`, `.toml`)
+- **Save & Commit** — atomically writes the file with YAML validation
+- **Activate Config** — runs `docker compose up -d` with output displayed in the UI
+- **Stream Logs** — live `docker compose logs --follow` as Server-Sent Events
+
+The dashboard proxy routes all compose API calls server-side — the command token never reaches the browser.
+
+## Ed25519 request signing
+
+Write operations (`PUT /api/compose/file`, `POST /api/compose/activate`) support Ed25519 request signing. The Nexus backend signs each write request with its private key; nexus-link-service verifies the signature before processing.
+
+**Protection:**
+- 5-minute timestamp window prevents replay attacks
+- SHA-256 body hash detects payload tampering
+- The signing private key never leaves the Nexus backend
+
+Signature enforcement is opt-in:
+
+```bash
+nexus-link config set compose.require_signatures true
+```
+
+The Ed25519 public key is delivered during node registration and stored in `~/.nexus-link/signing_key.pub`.
+
+## Device compatibility
+
+Registration includes an automatic preflight check:
+
+| Check | What it verifies |
+| --- | --- |
+| Architecture | Linux aarch64 or x86_64 |
+| GPU | NVIDIA GPU present (via `nvidia-smi`) |
+| Docker | Docker daemon accessible |
+| Network | Nexus API reachable |
+| Disk | >= 10 GB available |
+
+### Known devices (fully tested)
+
+| Device | Identifier | Notes |
+| --- | --- | --- |
+| NVIDIA DGX Spark | `gb10` | GB10 Grace Blackwell, 128 GB, aarch64 |
+| NVIDIA DGX Station A100 | `a100` | 4x A100 80 GB, AMD EPYC, x86_64 |
+| NVIDIA DGX A100 | `dgx-a100` | 8x A100 80 GB, AMD EPYC, x86_64 |
+| NVIDIA DGX H100 | `dgx-h100` | 8x H100 80 GB, x86_64 |
+
+## CLI reference
+
+### Core commands
+
+| Command | Description |
+| --- | --- |
+| `nexus-link register` | Register this node with both tokens |
+| `nexus-link preflight` | Run device compatibility check |
+| `nexus-link status` | Show registration and agent status |
+| `nexus-link reset [--force]` | Hard-reset: stop services, remove config |
+| `nexus-link unregister [--force]` | Send offline heartbeat and remove config |
+| `nexus-link upgrade [--force]` | Upgrade to latest release |
+
+### Agent commands
+
+| Command | Description |
+| --- | --- |
+| `nexus-link agent start` | Start the telemetry agent daemon |
+| `nexus-link agent stop` | Stop the running agent |
+| `nexus-link agent logs [-t N]` | Show last N agent log lines |
+
+### Config commands
+
+| Command | Description |
+| --- | --- |
+| `nexus-link config show` | Display full configuration |
+| `nexus-link config set <k> <v>` | Set a configuration value |
+| `nexus-link config get <k>` | Get a configuration value |
+| `nexus-link config path` | Print config file path |

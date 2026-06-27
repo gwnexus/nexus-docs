@@ -1,23 +1,98 @@
 export const metadata = {
   title: 'Plugins',
-  description: 'OpenCode plugins that extend the Nexus agent runtime with session compaction and cost control.',
+  description: 'OpenCode plugins that extend the Nexus agent runtime with session compaction, cost control, and platform integration.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'nexus-compaction-plus', id: 'nexus-compaction-plus' },
+  { title: 'nexus-cost-control', id: 'nexus-cost-control' },
+  { title: 'Distribution', id: 'distribution' },
+  { title: 'Auto-assignment rules', id: 'auto-assignment-rules' },
+]
 
 # Plugins
 
-OpenCode plugins that extend the Nexus agent runtime. {{ className: 'lead' }}
+OpenCode plugins that extend the Nexus agent runtime with platform-aware behavior. {{ className: 'lead' }}
 
-<Note>
-  This page is under construction. Full content coming soon.
-</Note>
+Nexus ships open-source OpenCode plugins that integrate session tracking, context preservation across compaction events, and token usage and cost visibility. Plugins are distributed as TypeScript source files via `nexus init` / `nexus pull` and load automatically from the `.opencode/plugins/` directory at startup.
 
-## Available plugins
+<div className="not-prose mt-6 mb-16 flex gap-3">
+  <Button href="https://github.com/gwnexus/nexus-oc-plugins" variant="outline">
+    <>View on GitHub</>
+  </Button>
+</div>
 
-### nexus-compaction-plus
+## nexus-compaction-plus
 
-Hooks into OpenCode's session compaction lifecycle. Before compaction, it injects session context so the agent can resume without losing state. After compaction, it records the event in the Nexus session log.
+**Version:** v1.8.0
 
-### nexus-cost-control
+Preserves Nexus session context across OpenCode compaction events and records each compaction as an auditable entry in the active Nexus session. Ensures resuming agents have full context even after context window compaction.
 
-Tracks token usage and cost per session. Surfaces cost summaries via the `nexus_cost_summary` MCP tool and applies output filtering to reduce token consumption on verbose commands.
+### Hooks
+
+<Properties>
+  <Property name="experimental.session.compacting" type="hook">
+    Fires before compaction. Injects active session and project IDs into the compaction prompt so the post-compaction agent retains Nexus context.
+  </Property>
+  <Property name="event (session.compacted)" type="hook">
+    Fires after compaction. Records a compaction entry in the Nexus session via the REST API, including token counts and compaction metadata.
+  </Property>
+</Properties>
+
+## nexus-cost-control
+
+**Version:** v2.0.0
+
+Tracks token usage and estimated cost for the current Nexus session by aggregating data from OpenCode's native `AssistantMessage` objects. No external dependencies — all data is sourced locally from the OpenCode session.
+
+### Custom tools
+
+<Properties>
+  <Property name="nexus_cost_summary" type="tool">
+    On-demand cost snapshot with input/output/reasoning/cache token counts and estimated cost in USD.
+  </Property>
+  <Property name="nexus_show_plugins" type="tool">
+    Discovers all loaded Nexus plugins, versions, API connection status, and registered hooks.
+  </Property>
+</Properties>
+
+### Events
+
+<Properties>
+  <Property name="session.idle" type="event">
+    Auto-appends cost snapshots to the active Nexus session timeline (debounced: 5 min).
+  </Property>
+</Properties>
+
+### Startup notification
+
+On load, each plugin shows a TUI toast confirming its name, version, and API connection status. Use the `/nexus-show-plugins` command to display detailed plugin information on demand.
+
+## Distribution
+
+Plugins are distributed as **code-mirrors** — the TypeScript source lives in each project's `.opencode/plugins/` directory. They are not published to npm. Updates are synced via `nexus pull` (agent files mechanism).
+
+### Installation
+
+1. Copy the plugin file to `.opencode/plugins/` in your project
+2. Ensure `@opencode-ai/plugin` is declared in `.opencode/package.json`
+3. Set the required environment variables (`NEXUS_API_URL`, `NEXUS_PRIVATE_TOKEN`)
+4. Restart OpenCode
+
+When using `nexus init` or `nexus pull`, recommended plugins are downloaded automatically based on your project wizard selection — no manual copy needed.
+
+### Requirements
+
+- [OpenCode](https://opencode.ai) v1.14+ with plugin support
+- A Nexus platform account with MCP access configured
+- `NEXUS_API_URL` and `NEXUS_PRIVATE_TOKEN` environment variables
+
+## Auto-assignment rules
+
+OpenCode plugins are only distributed to projects where the agent owner is set to `opencode` or `both`. Projects using `claude-cli` exclusively will not receive plugin files during `nexus pull`.
+
+<div className="not-prose mt-8">
+  <Button href="https://github.com/gwnexus/nexus-oc-plugins" variant="text" arrow="right">
+    <>View on GitHub</>
+  </Button>
+</div>

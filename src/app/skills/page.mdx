@@ -2,28 +2,75 @@ export const metadata = {
   title: 'Skills',
   description: 'Nexus Skills — reusable, versioned workflow instructions that agents load on demand.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'What is a skill?', id: 'what-is-a-skill' },
+  { title: 'How skills work', id: 'how-skills-work' },
+  { title: 'Built-in skills', id: 'built-in-skills' },
+  { title: 'Skill scope', id: 'skill-scope' },
+  { title: 'MCP tools', id: 'mcp-tools' },
+]
 
 # Skills
 
-Reusable workflow instructions for agents, managed by the Nexus platform. {{ className: 'lead' }}
+Reusable, versioned workflow instructions for agents, managed by the Nexus platform. {{ className: 'lead' }}
 
-<Note>
-  This page is under construction. Full content coming soon.
-</Note>
+Skills provide structured guidance for agents — from session initialization to security audits. They are loaded live from the Nexus backend at invocation time and exposed as slash commands in the agent runtime.
 
 ## What is a skill?
 
-A skill is a markdown-based workflow instruction assigned to a project. Skills are versioned, searchable, and exposed to agents as slash commands (e.g. `/nexus-init`, `/nexus-adr-draft`).
+A skill is a markdown-based workflow instruction assigned to a project. Each skill defines:
+
+- A **purpose** — what the skill does
+- A **workflow** — step-by-step instructions for the agent
+- **Rules** — constraints and guardrails
+- **Validation** — checks to verify the skill was executed correctly
+
+Skills are versioned, searchable, and exposed to agents as slash commands (e.g. `/nexus-init`, `/nexus-adr-draft`). When an agent invokes a skill command, the skill body is loaded **live from the Nexus backend** — not from local files.
+
+## How skills work
+
+1. **Assignment** — skills are assigned to projects in the Nexus dashboard or via MCP tools
+2. **Sync** — `nexus pull` writes a local cache of skill files to `.nexus/skills/` for reference
+3. **Invocation** — the agent invokes a slash command (e.g. `/nexus-sec-scan`)
+4. **Loading** — the skill body is fetched live from the backend via the MCP server
+5. **Execution** — the agent follows the skill's instructions
+
+<Note>
+  Skill updates via `sk_update` take effect immediately for all assigned projects. No pull, restart, or re-deployment required. The local `.nexus/skills/` directory is a cache for offline reference only.
+</Note>
 
 ## Built-in skills
 
 | Skill | Command | Purpose |
-|-------|---------|---------|
-| Init Nexus | `/nexus-init` | Initialize a session, load project context |
-| Session Close | `/nexus-session-close` | Close the active session with a structured summary |
-| ADR Draft | `/nexus-adr-draft` | Draft an Architecture Decision Record |
-| Sync Memory | `/nexus-sync-memory` | Persist session outputs to the knowledge base |
-| Git Commit | `/nexus-git-commit` | Create clean, professional commits |
-| Code Review | `/nexus-code-review` | Structured code review with checklist |
-| Security Scan | `/nexus-sec-scan` | OWASP-based security audit |
+| --- | --- | --- |
+| Init Nexus | `/nexus-init` | Initialize a session, load project context, sweep dispatches |
+| Session Close | `/nexus-session-close` | Close the active session with a structured summary and next entry point |
+| ADR Draft | `/nexus-adr-draft` | Draft an Architecture Decision Record with context, decision, consequences |
+| Sync Memory | `/nexus-sync-memory` | Classify and persist session outputs to the knowledge base |
+| Deploy Check | `/nexus-deploy-check` | Pre-deployment verification: build, lint, type-check, test, environment validation |
+| Code Review | `/nexus-code-review` | Structured code review with checklist-based analysis |
+| Security Scan | `/nexus-sec-scan` | OWASP Top 10 security audit with structured findings report |
+| Performance Scan | `/nexus-perf-scan` | Performance audit using Lighthouse (web) or profiling tools (CLI) |
+| Learnings | `/nexus-learnings` | Capture surprises, unexpected findings, and gotchas as research notes |
+| Dispatch Sweep | `/nexus-dispatch-sweep` | Process open Dispatches: prioritized inbox sweep and routing |
+| Dispatch Create | `/nexus-dispatch` | Create a structured Dispatch for agent coordination |
+| Show Plugins | `/nexus-show-plugins` | Display loaded Nexus plugins and connection status |
+
+## Skill scope
+
+- **Core skills** (`project_id = NULL`) are tenant-wide and available to all projects. Only platform owners and admins can create or modify them.
+- **Project-scoped skills** belong to a single project and are managed by project admins. They do not appear in other projects unless explicitly promoted to core.
+
+## MCP tools
+
+| Tool | Description |
+| --- | --- |
+| `sk_list` | List skills for the current tenant |
+| `sk_get` | Get full skill content by identifier |
+| `sk_create` | Create a new skill in draft status |
+| `sk_update` | Update skill content (increments version) |
+| `sk_activate` | Change skill status (draft, active, archived) |
+| `sk_assign` | Assign a skill to a project |
+| `sk_unassign` | Remove a skill assignment from a project |
+| `sk_export` | Export all skill assignments for a project |

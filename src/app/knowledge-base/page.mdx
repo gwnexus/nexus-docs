@@ -2,34 +2,145 @@ export const metadata = {
   title: 'Knowledge Base',
   description: 'The Nexus knowledge base — how documents, research notes, and structured entities are stored, classified, and retrieved.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'What goes in the knowledge base?', id: 'what-goes-in-the-knowledge-base' },
+  { title: 'Entity types', id: 'entity-types' },
+  { title: 'Searching', id: 'searching' },
+  { title: 'Document ingestion', id: 'document-ingestion' },
+  { title: 'Classification', id: 'classification' },
+  { title: 'MCP tools', id: 'mcp-tools' },
+]
 
 # Knowledge Base
 
 The persistent, searchable knowledge store for your project. {{ className: 'lead' }}
 
-<Note>
-  This page is under construction. Full content coming soon.
-</Note>
+The knowledge base holds all durable project knowledge — sessions, decisions, tasks, research notes, and ingested documents. It supports keyword, semantic, and hybrid search across all entity types.
 
 ## What goes in the knowledge base?
 
-The knowledge base holds all durable project knowledge:
+The knowledge base is the single source of truth for a project's accumulated knowledge. It stores both structured entities (created through workflows) and unstructured documents (ingested manually or by agents).
 
+**Structured entities** are created through Nexus workflows:
 - **Sessions** — execution history with append-only entries
 - **ADRs** — architectural decisions with full lifecycle
 - **Tasks** — work items with status and notes
-- **Ingest items** — documents, research notes, and references pushed via `doc_ingest`
+- **Dispatches** — coordination records between agents and projects
 
-## Searching the knowledge base
+**Unstructured content** is ingested via the `doc_*` tools:
+- Research notes and analysis
+- Reference material
+- Scan reports (auto-ingested from security and performance scans)
+- Planning items
 
-Use the `kb_search` MCP tool with keyword, semantic, or hybrid mode:
+## Entity types
+
+| Entity type | Description | Created by |
+| --- | --- | --- |
+| `session` | Execution history log | `session_create` |
+| `decision` | Architecture Decision Record | `adr_create` |
+| `task` | Work item with status tracking | `task_create` |
+| `letter` | Dispatch / coordination record | `dispatch_create` |
+| `research_note` | Durable technical analysis | `doc_ingest` + classify |
+| `planning_item` | Strategic upcoming work | `doc_ingest` + classify |
+| `ingest_item` | Raw ingested document | `doc_ingest` |
+
+## Searching
+
+Use `kb_search` with three search modes:
+
+### Keyword search
+
+Fast, exact matching using full-text search:
+
+```json
+{
+  "tool": "kb_search",
+  "query": "RLS policy",
+  "project_id": "...",
+  "search_mode": "keyword"
+}
+```
+
+### Semantic search
+
+Uses OpenAI embeddings (requires `NEXUS_SEC_OPENAI_API_KEY`) for meaning-based retrieval:
+
+```json
+{
+  "tool": "kb_search",
+  "query": "how do we handle authorization?",
+  "project_id": "...",
+  "search_mode": "semantic"
+}
+```
+
+### Hybrid search
+
+Combines keyword and semantic search for the best of both worlds:
 
 ```json
 {
   "tool": "kb_search",
   "query": "dispatch routing architecture",
+  "project_id": "...",
   "search_mode": "hybrid",
   "entity_types": ["decision", "session"]
 }
 ```
+
+### Related entities
+
+Use `kb_related` to navigate the knowledge graph — find entities related to a given item:
+
+```json
+{
+  "tool": "kb_related",
+  "entity_type": "decision",
+  "entity_id": "..."
+}
+```
+
+## Document ingestion
+
+Push content into the knowledge base via `doc_ingest`:
+
+```json
+{
+  "tool": "doc_ingest",
+  "project_id": "...",
+  "title": "API rate limiting analysis",
+  "body": "## Findings\n\n...",
+  "source": "research"
+}
+```
+
+Documents start as `unclassified` and can be promoted to a specific classification.
+
+## Classification
+
+Ingested documents can be classified to improve search relevance and organization:
+
+| Classification | Purpose |
+| --- | --- |
+| `unclassified` | Default state for new ingests |
+| `research_note` | Durable technical analysis or findings |
+| `planning_item` | Strategic work or requirements |
+| `decision_input` | Input material for ADR decisions |
+| `reference` | Reference documentation |
+| `archive` | Historical, no longer active |
+
+## MCP tools
+
+| Tool | Description |
+| --- | --- |
+| `kb_search` | Full-text, semantic, or hybrid search |
+| `kb_memory` | Structured project memory snapshot |
+| `kb_get` | Retrieve a specific entity by type and ID |
+| `kb_related` | Find related entities in the knowledge graph |
+| `doc_ingest` | Push content into the knowledge base |
+| `doc_list` | List ingested documents |
+| `doc_classify` | Update document classification |
+| `doc_update` | Update document title, body, or URL |
+| `doc_delete` | Delete an ingested document |
