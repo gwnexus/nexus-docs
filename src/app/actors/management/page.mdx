@@ -1,0 +1,139 @@
+export const metadata = {
+  title: 'Actor Management',
+  description: 'Creating, editing, duplicating, promoting, and archiving actors in the Nexus dashboard.',
+}
+
+export const sections = [
+  { title: 'Actor categories', id: 'actor-categories' },
+  { title: 'Creating actors', id: 'creating-actors' },
+  { title: 'Editing actors', id: 'editing-actors' },
+  { title: 'Actor promotion', id: 'actor-promotion' },
+  { title: 'Assigning actors to projects', id: 'assigning-actors-to-projects' },
+  { title: 'Archiving actors', id: 'archiving-actors' },
+]
+
+# Actor Management
+
+Create, edit, promote, and organize actors in the Nexus dashboard. {{ className: 'lead' }}
+
+Actors are managed at the tenant level and assigned to individual projects. This means you define actors once and reuse them across multiple projects -- each project selects which actors it needs from the shared pool.
+
+## Actor categories
+
+Actors are organized into three categories:
+
+| Category | Description | Examples |
+| --- | --- | --- |
+| **System templates** | Pre-built actors provided by the platform. Read-only -- cannot be edited directly. | "Fullstack Development Architect" (default), "Security Auditor", "Documentation Writer" |
+| **Personalized workspace** | Custom actors created by your team or promoted from templates. Fully editable. | "Dan Data -- Senior Backend Engineer", "Alice -- DevOps Specialist" |
+| **Hidden / service** | Internal actors for automation and background tasks. Not visible to users. | System automation, CI/CD agents |
+
+System templates serve as starting points. To customize a template, **promote** it into a personalized workspace actor (see below).
+
+## Creating actors
+
+To create a new actor from scratch:
+
+1. Navigate to the **Actors** section in the Nexus dashboard
+2. Click **Create Actor**
+3. Fill in the actor profile:
+   - **Display name** -- the human-readable name (e.g., "Backend Architect")
+   - **Slug** -- URL-safe identifier, auto-generated from the name
+   - **Title** -- full role title (e.g., "Senior Backend Architect")
+   - **Domains** -- expertise areas as tags (e.g., `backend`, `databases`, `api-design`)
+   - **Permission profile** -- select from `readonly`, `reviewer`, `writer`, `builder`, `operator`
+   - **Route alias** -- which model route to use
+   - **Recommended skills** -- skills this actor brings to projects
+   - **Recommended plugins** -- plugins this actor brings to projects
+4. Save the actor
+
+The actor is created in the tenant-wide registry and can be assigned to any project.
+
+### Minimal setup
+
+At minimum, an actor needs:
+
+- A **display name**
+- A **slug** (auto-generated)
+- A **permission profile** (defaults to `writer`)
+- A **route alias** (defaults to the project's default route)
+
+All other fields are optional and can be filled in later.
+
+## Editing actors
+
+Personalized workspace actors are fully editable. Navigate to the actor detail page to modify:
+
+- Identity fields (display name, title, domains, working style)
+- Routing (route alias, override policy)
+- Runtime (permission profile, tool restrictions, recommended skills/plugins)
+- Avatar (regenerate DiceBear avatar, upload custom image)
+- Dispatch configuration (ticket creation rules, escalation targets)
+- Vita (backstory, specializations, certifications)
+
+Changes take effect on the next `nexus pull` for all projects that have this actor assigned.
+
+<Note>
+  System template actors cannot be edited directly. To customize a template, promote it into a personalized workspace actor first.
+</Note>
+
+## Actor promotion
+
+Generic template actors can be **promoted** into personalized workspace actors. Promotion creates a copy with customizable fields:
+
+1. Navigate to the template actor you want to promote
+2. Click **Promote to Workspace Actor**
+3. Customize the promoted copy:
+   - Give it a **custom name** (e.g., "Dan Data" instead of "Backend Engineer")
+   - Add a **unique avatar** (auto-generated from the new name)
+   - Enhance **capabilities** and skill recommendations
+   - Add a **vita** (backstory, specializations)
+4. Save the promoted actor
+
+The original template remains unchanged. The promoted actor is a fully independent copy that can be edited, assigned to projects, and managed separately.
+
+### When to promote
+
+- You want to give an actor a distinctive identity for your team
+- You need to customize the skill/plugin recommendations beyond the template
+- You want to add a vita (backstory) for a more personalized agent experience
+- You need different permission profiles than the template provides
+
+## Assigning actors to projects
+
+Actors are assigned to projects through the **Project Wizard** (Step 4) or **Project Settings > Agent Setup**:
+
+1. Switch to **Actor-Based** mode (if not already enabled)
+2. Open the **Actors** tab
+3. Select the actors you want to assign by clicking their cards
+4. Save the project settings
+
+### Assignment rules
+
+- Multiple actors can be assigned to a single project
+- The first selected actor is marked as **primary** for default prompt routing
+- Selecting specialized actors **deselects the default** actor automatically
+- Each actor contributes its recommended skills and plugins to the project
+
+### Removing actors
+
+To remove an actor from a project, deselect it in the Actors tab and save. If all actors are removed, the default actor is automatically re-selected.
+
+## Archiving actors
+
+Actors that are no longer needed can be archived:
+
+1. Navigate to the actor detail page
+2. Click **Archive**
+3. Confirm the action
+
+Archived actors:
+
+- Are removed from the actor selection grid in all projects
+- Remain in the database for audit trail and reference
+- Can be **restored** at any time by an administrator
+- Do not appear in `nexus pull` output
+
+<Note>
+  Archiving is reversible. If you need to permanently delete an actor, contact your tenant administrator. Deletion is an administrative action that removes all associated data.
+</Note>

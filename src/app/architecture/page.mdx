@@ -39,8 +39,11 @@ Each project contains a knowledge graph of interconnected entities:
 | **Skills** | Reusable workflow instructions | draft -> active -> archived |
 | **Directives** | Project-scoped rules and policies | enabled/disabled |
 | **Reviews** | Multi-entity review workflow | draft -> submitted -> accepted/rejected |
+| **Actors** | Reusable virtual team members with role profiles | active -> archived |
 
 Entities are connected through relationships navigable via `kb_related` — for example, ADR supersession chains, tasks created during sessions, or dispatches linked to specific projects.
+
+Actors are a special entity type: they are **tenant-scoped** (reusable across projects) rather than project-scoped. Each actor defines a role profile with model routing, permission boundaries, and operational workflows. Actors are assigned to projects via a junction table and exported into local agent configuration files during `nexus pull`. See the [Actor System](/actors) documentation for details.
 
 ## Communication flow
 

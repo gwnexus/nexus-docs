@@ -252,6 +252,18 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
+    title: 'Actors',
+    links: [
+      { title: 'Actor System',       href: '/actors' },
+      { title: 'Getting Started',    href: '/actors/getting-started' },
+      { title: 'Actor Profiles',     href: '/actors/profiles' },
+      { title: 'Model Routing',      href: '/actors/model-routing' },
+      { title: 'Management',         href: '/actors/management' },
+      { title: 'Generated Files',    href: '/actors/generated-files' },
+      { title: 'CLI Commands',       href: '/actors/cli' },
+    ],
+  },
+  {
     title: 'Core Concepts',
     links: [
       { title: 'Sessions',       href: '/sessions' },

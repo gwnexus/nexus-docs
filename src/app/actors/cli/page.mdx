@@ -1,0 +1,230 @@
+export const metadata = {
+  title: 'CLI Actor Commands',
+  description: 'CLI commands for listing, inspecting, normalizing, validating, and importing actor profiles.',
+}
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'nexus actors list', id: 'nexus-actors-list' },
+  { title: 'nexus actors show', id: 'nexus-actors-show' },
+  { title: 'nexus pull with actors', id: 'nexus-pull-with-actors' },
+  { title: 'nexus actors normalize', id: 'nexus-actors-normalize' },
+  { title: 'nexus actors validate', id: 'nexus-actors-validate' },
+  { title: 'nexus actors import', id: 'nexus-actors-import' },
+]
+
+# CLI Actor Commands
+
+Manage and inspect actors from the command line with `nexus actors` and `nexus pull`. {{ className: 'lead' }}
+
+The Nexus CLI provides commands for listing actors assigned to your project, inspecting their profiles, pulling actor configuration into your workspace, and validating or normalizing actor profile files.
+
+## Overview
+
+| Command | Purpose |
+| --- | --- |
+| `nexus actors list` | List actors assigned to the current project |
+| `nexus actors show <slug>` | Display full profile for a specific actor |
+| `nexus pull` | Pull all configuration including actor files |
+| `nexus pull --with-actor-assets` | Pull configuration plus actor avatar assets |
+| `nexus actors normalize` | Normalize actor profile YAML to canonical format |
+| `nexus actors validate` | Validate actor profiles against the schema |
+| `nexus actors import` | Import actor profiles from local files |
+
+## nexus actors list
+
+List all actors assigned to the current project:
+
+```bash
+nexus actors list
+```
+
+Output:
+
+```
+PROJECT: nexus-doc (adb6278b)
+
+ACTORS (3 assigned):
+
+  SLUG                    DISPLAY NAME              MODE       PERMISSION    ROUTE ALIAS
+  ────                    ────────────              ────       ──────────    ───────────
+  security-architect      Security Architect         primary    builder       premium-security-reasoning
+  backend-engineer        Backend Engineer           subagent   builder       zen-balanced
+  doc-writer              Documentation Writer       subagent   writer        zen-fast
+```
+
+### Flags
+
+| Flag | Description |
+| --- | --- |
+| `--format json` | Output as JSON instead of table |
+| `--all` | Show all tenant actors, not just those assigned to the current project |
+| `--include-archived` | Include archived actors in the listing |
+
+## nexus actors show
+
+Display the full profile for a specific actor:
+
+```bash
+nexus actors show security-architect
+```
+
+Output:
+
+```
+ACTOR: Security Architect (security-architect)
+
+  Title:            Senior Security Architect
+  Mode:             primary
+  Permission:       builder
+  Route Alias:      premium-security-reasoning
+  Cost Class:       premium
+  Domains:          security, infrastructure, compliance
+  Working Style:    methodical
+  Status:           active
+
+  RECOMMENDED SKILLS:
+    - nexus-init
+    - nexus-sec-scan
+    - nexus-code-review
+
+  RECOMMENDED PLUGINS:
+    - nexus-compaction-plus
+    - nexus-cost-control
+
+  DISPATCH CONFIG:
+    Can create tickets:  yes
+    Escalation target:   project-lead
+    Auto acknowledge:    no
+```
+
+### Flags
+
+| Flag | Description |
+| --- | --- |
+| `--format json` | Output as JSON |
+| `--include-vita` | Include the actor's vita/backstory in the output |
+| `--include-prompt-stack` | Show the prompt stack layer configuration |
+
+## nexus pull with actors
+
+The standard `nexus pull` command includes actor configuration automatically:
+
+```bash
+nexus pull
+```
+
+This generates `.nexus/AGENTS.md`, `.nexus/actors.json`, `.nexus/actors/*.md`, and `opencode.json` (if the OpenCode adapter is enabled).
+
+### Actor assets
+
+To also pull actor avatar images into the workspace:
+
+```bash
+nexus pull --with-actor-assets
+```
+
+This downloads avatar images to `.nexus/actors/assets/` for use in local documentation or tooling.
+
+## nexus actors normalize
+
+Normalize actor profile YAML files to the canonical format defined in ADR-0056:
+
+```bash
+nexus actors normalize [file...]
+```
+
+The normalizer:
+
+- Reorders YAML frontmatter keys to the canonical sequence
+- Validates required fields are present
+- Ensures consistent formatting (indentation, quoting)
+- Reports warnings for deprecated field names
+
+If no files are specified, normalizes all `.md` files in `.nexus/actors/`.
+
+```bash
+# Normalize a single file
+nexus actors normalize .nexus/actors/security-architect.md
+
+# Normalize all actor profiles
+nexus actors normalize
+```
+
+## nexus actors validate
+
+Validate actor profiles against the profile schema without modifying them:
+
+```bash
+nexus actors validate [file...]
+```
+
+The validator checks:
+
+- Required frontmatter fields are present and correctly typed
+- Permission profile is one of the 5 valid values
+- Route alias references an existing route in the catalog
+- Domain tags are valid
+- No invalid field combinations (e.g., `hidden` mode + `opencode` export target)
+- Recommended skills reference existing skill IDs
+
+```bash
+nexus actors validate .nexus/actors/security-architect.md
+```
+
+Output:
+
+```
+VALIDATE: .nexus/actors/security-architect.md
+
+  [PASS] Required frontmatter fields present
+  [PASS] Permission profile: builder
+  [PASS] Route alias: premium-security-reasoning (active)
+  [PASS] Domains: 3 valid tags
+  [PASS] No invalid field combinations
+  [WARN] Skill 'nexus-git-commit' not found in skill catalog
+
+  Result: VALID (1 warning)
+```
+
+### Validation strictness
+
+| Flag | Behavior |
+| --- | --- |
+| `--strict` | Treat warnings as errors (non-zero exit code) |
+| `--ignore-routes` | Skip route alias validation (useful offline) |
+
+## nexus actors import
+
+Import actor profiles from local YAML/Markdown files into the Nexus backend:
+
+```bash
+nexus actors import <file...>
+```
+
+The import command:
+
+1. Reads and validates the actor profile file
+2. Normalizes the profile to canonical format
+3. Creates or updates the actor in the Nexus backend
+4. Reports the result
+
+```bash
+# Import a single actor
+nexus actors import my-custom-actor.md
+
+# Import multiple actors
+nexus actors import actors/*.md
+```
+
+<Note>
+  Imported actors are created in the tenant-wide registry. They still need to be assigned to projects via the dashboard or API before they appear in `nexus pull` output.
+</Note>
+
+### Flags
+
+| Flag | Description |
+| --- | --- |
+| `--dry-run` | Validate and normalize without creating/updating in the backend |
+| `--force` | Overwrite existing actors with the same slug |
+| `--project <id>` | Automatically assign the imported actor to the specified project |

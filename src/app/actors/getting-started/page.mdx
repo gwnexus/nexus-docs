@@ -1,0 +1,131 @@
+export const metadata = {
+  title: 'Getting Started with Actors',
+  description: 'Enable actor-based mode, select actors for your project, and pull the generated configuration into your workspace.',
+}
+
+export const sections = [
+  { title: 'Enable actor-based mode', id: 'enable-actor-based-mode' },
+  { title: 'Select actors', id: 'select-actors' },
+  { title: 'Configure skills', id: 'configure-skills' },
+  { title: 'Pull configuration', id: 'pull-configuration' },
+  { title: 'Verify the setup', id: 'verify-the-setup' },
+]
+
+# Getting Started with Actors
+
+Enable actor-based mode, select your virtual team, and pull the configuration into your workspace. {{ className: 'lead' }}
+
+## Enable actor-based mode
+
+Actor-based mode is enabled per project in the **Project Wizard** or the **Project Settings** page.
+
+### New projects
+
+In the Project Wizard, navigate to **Step 4: Agent Setup**. At the top of the step, two radio cards let you choose:
+
+- **Classic** -- single agent with manual configuration
+- **Actor-Based** -- virtual team with specialized actors
+
+Select **Actor-Based** to enable the actor selection grid. The default actor ("Fullstack Development Architect") is automatically pre-selected.
+
+### Existing projects
+
+Open the project in the Nexus dashboard and navigate to **Settings > Agent Setup**. Switch the agent mode from Classic to Actor-Based. The existing agent configuration is preserved -- actors are added on top of the runtime identity.
+
+<Note>
+  Switching modes does not delete your existing agent configuration. The `project_agents` entry (runtime identity) remains unchanged. Actor-based mode adds behavioral profiles on top of the runtime agent.
+</Note>
+
+## Select actors
+
+In actor-based mode, the Agent Setup step shows an **Actors** tab with a selection grid:
+
+- Each actor is shown as a card with avatar initials, display name, title, and domain badges
+- Cards are arranged in a 2-column layout
+- Click a card to select or deselect an actor
+
+### Selection rules
+
+- Selecting any **specialized actor** automatically deselects the default actor
+- The default actor shows a "fallback only" badge when disabled
+- If all specialized actors are deselected, the default actor is automatically re-selected
+- The default actor and specialized actors are **mutually exclusive**
+
+### Recommended approach
+
+1. Browse the available actors and read their role descriptions
+2. Select the actors that match your project's needs (e.g., a security architect for a security-sensitive project)
+3. Check the Skills tab to see which skills each actor recommends
+4. Adjust skill selection if needed -- remove skills you do not need or add skills not covered by any actor
+
+## Configure skills
+
+After selecting actors, switch to the **Skills** tab. This tab shows all available skills with:
+
+- **Pre-selected checkboxes** for skills recommended by your selected actors
+- **"Recommended" badges** on skills that come from actor recommendations
+- **Per-actor skill count indicators** (e.g., "Security Architect: 3 skills")
+- The **nexus-init** skill is always included and cannot be removed
+
+The skill selection is a **union** of all selected actors' recommendations. You can:
+
+- **Remove** a recommended skill if you do not need it
+- **Add** additional skills not recommended by any actor
+- **Keep** the defaults for a curated experience
+
+The same merge logic applies to **plugins** -- each actor's `recommended_plugins` are merged into the project plugin selection.
+
+## Pull configuration
+
+After saving your project settings, pull the generated configuration into your workspace:
+
+```bash
+nexus pull
+```
+
+This generates or updates:
+
+| File | Content |
+| --- | --- |
+| `.nexus/AGENTS.md` | Agent identity with actor profiles, role definitions, and skill assignments |
+| `.nexus/actors/*.md` | Individual actor profile files (one per assigned actor) |
+| `.nexus/actors.json` | Machine-readable actor registry for the project |
+| `opencode.json` | OpenCode agent/subagent entries with model routing and permissions (if OpenCode adapter is enabled) |
+
+<Note>
+  The `.nexus/` directory is automatically excluded from Git via `.gitignore`. Generated configuration files are workspace artifacts, not source-controlled files.
+</Note>
+
+### Config file generation
+
+Both Classic and Actor-Based modes show a **Config file generation** section that controls:
+
+- **AGENTS.md** -- auto-generated or manual upload override
+- **CLAUDE.md** -- auto-generated or manual upload override
+
+A warning dialog appears when you try to disable auto-generation, explaining that overriding may break:
+
+- Confidentiality level enforcement
+- Project directive materialization
+- Plugin/MCP configurations
+- Actor profile injection
+
+## Verify the setup
+
+After pulling, verify the configuration is correct:
+
+1. Check that `.nexus/AGENTS.md` contains your selected actors with their role definitions
+2. Check that `.nexus/actors/` contains individual profile files for each actor
+3. If using OpenCode, verify `opencode.json` contains the expected agent entries
+4. Start your agent and confirm it loads the actor context
+
+```bash
+# Check the generated files
+ls -la .nexus/actors/
+cat .nexus/actors.json | head -20
+
+# Start your agent with actor context
+opencode
+```
+
+The agent should identify itself using the primary actor's role definition and follow the behavioral guidelines from the actor profile.

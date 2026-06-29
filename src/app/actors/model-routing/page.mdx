@@ -1,0 +1,141 @@
+export const metadata = {
+  title: 'Model Routing',
+  description: 'Route aliases, the Model Route catalog, and how actors are decoupled from volatile provider model IDs.',
+}
+
+export const sections = [
+  { title: 'Why route aliases?', id: 'why-route-aliases' },
+  { title: 'Model Route catalog', id: 'model-route-catalog' },
+  { title: 'Route resolution', id: 'route-resolution' },
+  { title: 'Cost tiers', id: 'cost-tiers' },
+  { title: 'Route lifecycle', id: 'route-lifecycle' },
+  { title: 'Actor routing configuration', id: 'actor-routing-configuration' },
+]
+
+# Model Routing
+
+Stable route aliases decouple actor definitions from volatile provider model IDs. {{ className: 'lead' }}
+
+AI model identifiers change frequently -- providers rename models, release new versions, or deprecate old ones. Model Routing provides a stable abstraction layer so actor profiles reference route aliases instead of raw provider/model pairs.
+
+## Why route aliases?
+
+Without route aliases, an actor profile would contain a hard-coded reference like `anthropic/claude-opus-4-8`. When the provider releases a new version, every actor profile referencing that model must be updated manually.
+
+Route aliases solve this by introducing a stable indirection layer:
+
+```
+Actor profile            Route alias              Provider/Model
+─────────────            ───────────              ──────────────
+route_alias:             premium-reasoning   →    anthropic/claude-opus-4-8
+"premium-reasoning"      (resolved at export)
+```
+
+When the provider releases a new model, you update the route alias mapping once in the Model Route catalog. All actors referencing that alias automatically get the new model on their next `nexus pull`.
+
+## Model Route catalog
+
+The Model Route catalog is a tenant-scoped table of route definitions stored in the `model_routes` table:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `route_alias` | string | Stable name (e.g., `premium-reasoning`, `local-coder-main`) |
+| `provider` | string | Model provider (e.g., `anthropic`, `openai`, `dgx-spark`) |
+| `model` | string | Provider-specific model ID (e.g., `claude-opus-4-8`) |
+| `cost_class` | string | Cost tier: `local`, `balanced`, `premium` |
+| `capability_tags` | string[] | What the model is good at (e.g., `reasoning`, `coding`, `fast`) |
+| `lifecycle_status` | string | Route state: `active`, `deprecated`, `retired` |
+| `fallback` | string | Fallback route alias if this route is unavailable |
+
+### Seed catalog
+
+Nexus ships with a default set of route aliases covering common use cases:
+
+| Route alias | Provider | Model | Cost class | Capabilities |
+| --- | --- | --- | --- | --- |
+| `local-coder-main` | dgx-spark | nexus-coder-main | local | coding, reasoning |
+| `zen-premium` | zen-provider | premium model | premium | reasoning, analysis |
+| `zen-balanced` | zen-provider | balanced model | balanced | coding, general |
+| `zen-fast` | zen-provider | fast model | balanced | coding, fast |
+| `premium-reasoning` | anthropic | claude-opus-4 | premium | reasoning, analysis |
+| `premium-coding` | anthropic | claude-sonnet-4 | balanced | coding, fast |
+
+The seed catalog is a starting point. You can add, modify, or remove routes to match your model infrastructure.
+
+## Route resolution
+
+Route resolution happens at **export time** when `nexus pull` generates runtime configuration files:
+
+1. The export pipeline reads each actor's `route_alias`
+2. Looks up the alias in the Model Route catalog
+3. Resolves to the current `provider/model` pair
+4. Writes the resolved value into the runtime config (e.g., `opencode.json`)
+
+### Validation rules
+
+- **Active** routes resolve normally
+- **Deprecated** routes resolve with a warning in the export log
+- **Retired** routes **fail the export** -- you must update the actor's route alias before pulling
+
+### Fallback chain
+
+If a route has a `fallback` defined and the primary model is unavailable, the export pipeline follows the fallback chain:
+
+```
+premium-reasoning → zen-premium → zen-balanced
+```
+
+Fallback chains are optional and primarily useful for local/on-premise models that may be offline.
+
+## Cost tiers
+
+Routes are grouped into cost tiers that help teams manage AI spending:
+
+| Tier | Description | Use case |
+| --- | --- | --- |
+| **local** | On-premise models (DGX Spark, self-hosted) | Zero external cost, classified workloads |
+| **balanced** | Mid-range cloud models | Day-to-day coding, general tasks |
+| **premium** | Top-tier reasoning models | Architecture decisions, security audits, complex analysis |
+
+The UI groups routes by cost tier with lifecycle badges, making it easy to see which models are available at each price point.
+
+### Cost class and actors
+
+An actor's `cost.cost_class` field indicates its expected cost tier. This is informational -- it helps project administrators understand the cost implications of assigning specific actors. The actual cost depends on the resolved model route.
+
+## Route lifecycle
+
+Routes go through a lifecycle that prevents breaking changes:
+
+| Status | Behavior |
+| --- | --- |
+| **active** | Normal operation, fully supported |
+| **deprecated** | Still works, export produces a warning. Schedule migration. |
+| **retired** | Export fails. The route alias must be updated. |
+
+### Deprecation workflow
+
+1. Mark a route as `deprecated` in the catalog
+2. All projects using actors with that route see warnings during `nexus pull`
+3. Update actor profiles to reference the replacement route
+4. Mark the old route as `retired` once all actors have migrated
+
+## Actor routing configuration
+
+Each actor's profile contains a `routing` section:
+
+```yaml
+routing:
+  route_alias: "premium-reasoning"
+  override_policy: "project"
+```
+
+The `override_policy` controls whether the project can override the actor's route:
+
+| Policy | Behavior |
+| --- | --- |
+| `actor` | The actor's route is fixed and cannot be overridden by the project |
+| `project` | The project can override the route with a different alias |
+| `none` | No routing restrictions |
+
+This lets you enforce that security-critical actors always use premium models, while allowing flexible routing for general-purpose actors.

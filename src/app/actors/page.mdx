@@ -1,0 +1,132 @@
+export const metadata = {
+  title: 'Actor System',
+  description: 'Nexus Actors are reusable virtual team members with role profiles, model routing, permission boundaries, and operational workflows.',
+}
+
+export const sections = [
+  { title: 'What is an actor?', id: 'what-is-an-actor' },
+  { title: 'Agent vs actor', id: 'agent-vs-actor' },
+  { title: 'How actors work', id: 'how-actors-work' },
+  { title: 'Classic vs actor-based mode', id: 'classic-vs-actor-based-mode' },
+  { title: 'Default actor', id: 'default-actor' },
+  { title: 'Permission profiles', id: 'permission-profiles' },
+  { title: 'Actor modes', id: 'actor-modes' },
+]
+
+# Actor System
+
+Virtual team members with role profiles, model routing, and operational workflows. {{ className: 'lead' }}
+
+Nexus Actors let you define specialized roles for your project -- a security architect, a backend engineer, a documentation writer -- each with their own model routing, permission boundaries, working style, and recommended skills. Actors are reusable across projects and exported into local repository configuration via `nexus pull`.
+
+## What is an actor?
+
+A Nexus Actor is a reusable virtual team member with a defined:
+
+- **Role and expertise domains** -- what the actor specializes in (e.g., backend architecture, security auditing)
+- **Model routing** -- which AI model to use, via stable route aliases
+- **Permission profile** -- what the actor is allowed to do (edit files, run commands, create dispatches)
+- **Recommended skills and plugins** -- which workflows the actor brings to a project
+- **Working style** -- communication tone, output format, operational preferences
+- **Avatar** -- a DiceBear-generated or custom-uploaded visual identity
+
+Actors are tenant-scoped entities stored in the Nexus backend. They are assigned to projects via a junction table, and their profiles are exported into local agent configuration files (like `AGENTS.md` and `opencode.json`) when you run `nexus pull`.
+
+## Agent vs actor
+
+These two concepts serve different purposes:
+
+| | Agent | Actor |
+| --- | --- | --- |
+| **Scope** | Project-specific | Tenant-scoped, reusable across projects |
+| **Purpose** | Runtime identity for MCP, sessions, coordination | Role profile defining behavior, routing, permissions |
+| **Storage** | `project_agents` table | `actors` + `project_actors` junction |
+| **Cardinality** | One per project | Multiple per project |
+| **Contains** | Agent ID, CLI flavor, skills, plugins | Identity, routing, permissions, prompt stack, vita |
+| **Example** | `rf-nexus-doc-agent` | "Security Architect", "Backend Engineer" |
+
+An **agent** is the technical runtime identity that connects to Nexus via MCP, owns sessions, and participates in coordination. An **actor** is a reusable role definition that shapes how an agent behaves -- its expertise, boundaries, and working style.
+
+When actors are assigned to a project, their profiles are merged into the agent's exported configuration. The agent remains the single runtime identity; actors define the behavioral layer on top.
+
+## How actors work
+
+1. **Define actors** in the Nexus dashboard with role profiles, model routing, and permission boundaries
+2. **Assign actors** to projects -- each project can have multiple actors
+3. **Pull configuration** via `nexus pull` -- actors are exported into `AGENTS.md`, `opencode.json`, and other runtime-specific files
+4. **Agent uses actor context** -- the runtime agent loads the actor's prompt stack, permission profile, and operational instructions
+
+The export pipeline uses an **adapter pattern** to support multiple runtime targets. The Nexus Actor Registry is the single source of truth -- runtime-specific files are generated artifacts, not the canonical source.
+
+<Note>
+  Nexus does not depend on any specific runtime. OpenCode is the first supported adapter target, but actors can be exported to Claude Code, LiteLLM, or any MCP-native runtime via adapter plugins.
+</Note>
+
+## Classic vs actor-based mode
+
+Projects have an `agent_mode` setting that determines the agent configuration approach:
+
+| Mode | Description |
+| --- | --- |
+| **Classic** | Single runtime agent with manual configuration (Agent ID, Display Name, CLI Flavor, Skills, Plugins). The traditional mode. |
+| **Actor-Based** | Virtual team with specialized actors. Actors contribute their recommended skills and plugins automatically. |
+
+The mode is selected in the **Project Wizard** (Step 4: Agent Setup) via radio cards. Switching from Classic to Actor-Based pre-selects the default actor automatically.
+
+In actor-based mode, the Agent Setup step shows a **tab layout**:
+
+| Tab | Content |
+| --- | --- |
+| **Actors** | Actor selection grid with avatar initials, display name, title, and domain badges |
+| **Skills** | Skill checkboxes pre-selected from actor recommendations, with "recommended" badges |
+
+### Skill pre-selection
+
+When actors are selected, their `recommended_skills` arrays are merged (union) into the project skill selection:
+
+- Actor A recommends skills `[init, code-review, git-commit]`
+- Actor B recommends skills `[init, sec-scan, perf-scan]`
+- Project gets pre-selected: `[init, code-review, git-commit, sec-scan, perf-scan]`
+
+The Skills tab shows per-actor skill count indicators and a "recommended" badge on skills that come from actor recommendations. The mandatory `nexus-init` skill is always included and cannot be removed.
+
+The same merge logic applies to `recommended_plugins`.
+
+## Default actor
+
+Every project has access to a **default actor** (currently "Fullstack Development Architect") with `is_default: true`. Its behavior:
+
+- **Auto-selected** when switching to actor-based mode or when all actors are deselected
+- **Greyed out and disabled** when any specialized (non-default) actor is selected
+- **Cannot coexist** with specialized actors -- selecting a specialized actor removes the default; selecting the default removes all others
+- Acts as a **safety net** to ensure at least one actor is always selected
+
+The default actor provides a broad, general-purpose role profile suitable for projects that do not need specialized actors.
+
+## Permission profiles
+
+Each actor has a named permission profile that controls what operations it can perform:
+
+| Profile | File edit | Bash/commands | Dispatch write | Secret access |
+| --- | --- | --- | --- | --- |
+| **readonly** | deny | deny | deny | deny |
+| **reviewer** | deny | ask | deny | deny |
+| **writer** | allow | ask | allow | deny |
+| **builder** | allow | allow | allow | deny |
+| **operator** | allow | allow | allow | gated |
+
+Permission profiles are enforced at export time. If the target runtime (e.g., OpenCode) does not support a permission level, the adapter **rejects the export** rather than silently downgrading. This prevents actors from accidentally gaining more permissions than intended.
+
+## Actor modes
+
+Actors have a mode that determines their visibility and export behavior:
+
+| Mode | Visibility | Export target | Use case |
+| --- | --- | --- | --- |
+| **primary** | User-facing | Main agent entry | The default interaction point |
+| **subagent** | @mention accessible | Subagent entry | Specialized roles invoked on demand |
+| **service** | Not user-facing | Not exported | Background services, automation |
+| **system** | Not user-facing | Not exported | Platform-internal actors |
+| **hidden** | Not visible | Not exported | Internal bookkeeping |
+
+Only `primary` and `subagent` modes are exported to runtime configuration files. Service, system, and hidden actors exist in the registry but do not appear in generated files.

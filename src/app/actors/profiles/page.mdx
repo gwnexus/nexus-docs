@@ -1,0 +1,228 @@
+export const metadata = {
+  title: 'Actor Profiles',
+  description: 'The actor profile schema — identity, routing, permissions, prompt stack, dispatch configuration, and avatar settings.',
+}
+
+export const sections = [
+  { title: 'Profile structure', id: 'profile-structure' },
+  { title: 'Identity', id: 'identity' },
+  { title: 'Routing', id: 'routing' },
+  { title: 'Runtime', id: 'runtime' },
+  { title: 'Cost and telemetry', id: 'cost-and-telemetry' },
+  { title: 'Avatar', id: 'avatar' },
+  { title: 'Prompt stack', id: 'prompt-stack' },
+  { title: 'Dispatch configuration', id: 'dispatch-configuration' },
+  { title: 'Vita', id: 'vita' },
+]
+
+# Actor Profiles
+
+The `profile_json` schema defines an actor's identity, capabilities, and operational boundaries. {{ className: 'lead' }}
+
+Every actor stores its configuration in a `profile_json` field -- a structured JSON object that contains identity, model routing, permissions, prompt stack, dispatch rules, and more. This profile is the canonical source from which all runtime configuration files are generated.
+
+## Profile structure
+
+The profile follows a normalized YAML frontmatter format (ADR-0056) with these top-level sections:
+
+| Section | Purpose |
+| --- | --- |
+| `identity` | Role name, title, expertise domains, working style |
+| `routing` | Model route alias and override policy |
+| `runtime` | Permission profile, tool restrictions, resource limits |
+| `cost` | Cost class and budget constraints |
+| `avatar` | DiceBear style, seed, colors, or custom upload reference |
+| `prompt_stack` | Layered instruction files from global rules to task context |
+| `dispatch` | Ticket creation rules, escalation behavior |
+| `telemetry` | Metrics collection preferences |
+| `export_targets` | Which runtime adapters to generate for |
+
+## Identity
+
+The identity section defines who the actor is and what it specializes in:
+
+```yaml
+identity:
+  display_name: "Security Architect"
+  title: "Senior Security Architect"
+  slug: "security-architect"
+  domains:
+    - security
+    - infrastructure
+    - compliance
+  working_style: "methodical"
+  communication_tone: "precise"
+  output_format: "structured"
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `display_name` | string | Human-readable name shown in UI and generated files |
+| `title` | string | Full role title |
+| `slug` | string | URL-safe identifier, used as avatar seed |
+| `domains` | string[] | Expertise areas, used for filtering and routing |
+| `working_style` | string | How the actor approaches work (e.g., "methodical", "iterative", "exploratory") |
+| `communication_tone` | string | Tone of agent output (e.g., "precise", "conversational", "formal") |
+| `output_format` | string | Preferred output structure (e.g., "structured", "narrative") |
+
+## Routing
+
+The routing section defines which AI model the actor uses via **route aliases** -- stable names that resolve to provider/model pairs at export time:
+
+```yaml
+routing:
+  route_alias: "premium-security-reasoning"
+  override_policy: "project"
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `route_alias` | string | Reference to a Model Route (e.g., `premium-security-reasoning`, `local-coder-main`) |
+| `override_policy` | string | Whether the project can override the route (`actor`, `project`, `none`) |
+
+Route aliases decouple actor definitions from volatile provider model IDs. Instead of storing `anthropic/claude-opus-4-8` directly, actors reference a route alias that is resolved from the Model Route catalog at export time. See [Model Routing](/actors/model-routing) for details.
+
+## Runtime
+
+The runtime section defines the actor's permission profile and operational boundaries:
+
+```yaml
+runtime:
+  permission_profile: "builder"
+  max_concurrent_tasks: 3
+  tool_restrictions:
+    - "no_direct_db_access"
+  recommended_skills:
+    - nexus-init
+    - nexus-sec-scan
+    - nexus-code-review
+  recommended_plugins:
+    - nexus-compaction-plus
+    - nexus-cost-control
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `permission_profile` | string | Named profile: `readonly`, `reviewer`, `writer`, `builder`, `operator` |
+| `max_concurrent_tasks` | number | Maximum parallel tasks (soft limit) |
+| `tool_restrictions` | string[] | Additional tool-level constraints |
+| `recommended_skills` | string[] | Skills this actor recommends for projects it is assigned to |
+| `recommended_plugins` | string[] | Plugins this actor recommends |
+
+See the [Actor System overview](/actors#permission-profiles) for the full permission matrix.
+
+## Cost and telemetry
+
+```yaml
+cost:
+  cost_class: "premium"
+  budget_alert_threshold: 0.8
+
+telemetry:
+  collect_token_usage: true
+  collect_session_metrics: true
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `cost_class` | string | Cost tier: `local`, `balanced`, `premium` |
+| `budget_alert_threshold` | number | Alert when budget usage exceeds this ratio (0.0-1.0) |
+| `collect_token_usage` | boolean | Whether to track token consumption per session |
+| `collect_session_metrics` | boolean | Whether to track session duration, entry count, etc. |
+
+## Avatar
+
+Actors have visual identities via DiceBear-generated avatars or custom uploads:
+
+```yaml
+avatar:
+  provider: "dicebear"
+  style: "bottts-neutral"
+  seed: "security-architect"
+  background_color: "#1a1a2e"
+  custom_url: null
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `provider` | string | Avatar source: `dicebear` or `custom` |
+| `style` | string | DiceBear style (e.g., `bottts-neutral`) |
+| `seed` | string | Deterministic seed for avatar generation (defaults to actor slug) |
+| `background_color` | string | Background color for the avatar |
+| `custom_url` | string | URL to a custom avatar image (when `provider` is `custom`) |
+
+DiceBear avatars are pre-generated from the slug seed, converted to SVG, and cached in S3/Supabase storage. Custom SVG uploads are disabled until sanitization is implemented -- use PNG or WebP for custom avatars.
+
+<Note>
+  Avatars are optional. Generic template actors show a neutral placeholder. Named or personalized actors get DiceBear-generated avatars automatically.
+</Note>
+
+## Prompt stack
+
+The prompt stack defines the layered instruction set that shapes the actor's behavior. It follows a 7-layer hierarchy from global rules down to task-specific context:
+
+| Layer | Purpose | Example |
+| --- | --- | --- |
+| 1. Global rules | Platform-wide constraints | Coding discipline, security policies |
+| 2. Project rules | Project-specific directives | Deployment conventions, tech stack rules |
+| 3. Actor identity | Who the actor is | Role definition, expertise domains |
+| 4. Actor methods | How the actor works | Working style, communication patterns |
+| 5. Tool policy | What tools are available/restricted | Permission profile, tool restrictions |
+| 6. Output contract | Expected output format | Structured vs narrative, language requirements |
+| 7. Task context | Current task details | Session state, active dispatches |
+
+```yaml
+prompt_stack:
+  - layer: "global_rules"
+    source: "platform"
+  - layer: "project_rules"
+    source: "directives"
+  - layer: "actor_identity"
+    source: "profile"
+  - layer: "actor_methods"
+    source: "profile"
+  - layer: "tool_policy"
+    source: "permission_profile"
+  - layer: "output_contract"
+    source: "profile"
+  - layer: "task_context"
+    source: "session"
+```
+
+Layers are assembled at export time and materialized into the generated `AGENTS.md` and runtime configuration files.
+
+## Dispatch configuration
+
+Controls how the actor interacts with the Dispatch system:
+
+```yaml
+dispatch:
+  can_create_followup_tickets: true
+  escalation_target: "project-lead"
+  auto_acknowledge: false
+  default_priority: "normal"
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `can_create_followup_tickets` | boolean | Whether the actor can create new dispatches |
+| `escalation_target` | string | Actor slug to escalate to when blocked |
+| `auto_acknowledge` | boolean | Automatically acknowledge incoming dispatches |
+| `default_priority` | string | Default priority for created dispatches |
+
+## Vita
+
+Personalized actors can have a `vita_json` field -- a backstory that adds depth to the actor's identity. This is optional and primarily used for promoted (personalized) actors:
+
+```yaml
+vita:
+  backstory: "15 years of experience in fintech security..."
+  specializations:
+    - "OWASP Top 10 auditing"
+    - "SOC 2 compliance"
+  certifications:
+    - "CISSP"
+    - "AWS Security Specialty"
+```
+
+The vita is included in the actor's prompt stack at the identity layer, providing the agent with contextual background that shapes its responses and decision-making style.
