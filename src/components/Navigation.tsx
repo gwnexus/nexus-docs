@@ -280,6 +280,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'MCP Tool Index', href: '/mcp-tools' },
       { title: 'REST API',       href: '/api' },
       { title: 'Changelog',      href: '/changelog' },
+      { title: 'Roadmap',        href: '/roadmap' },
     ],
   },
 ]

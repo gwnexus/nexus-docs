@@ -1,0 +1,275 @@
+export const metadata = {
+  title: 'Roadmap',
+  description: 'A transparent view of what has shipped, what is in progress, and where Nexus is headed.',
+}
+
+export const sections = [
+  { title: 'Upcoming', id: 'upcoming' },
+  { title: 'In progress', id: 'in-progress' },
+  { title: 'Released', id: 'released' },
+]
+
+# Roadmap
+
+A transparent view of what we've shipped, what we're building, and where Nexus is headed. {{ className: 'lead' }}
+
+---
+
+## Upcoming {{ id: 'upcoming' }}
+
+### v1.0.0-beta — August 2026
+
+**Production-ready release**
+
+- Feature-complete platform with all core workflows stabilized and battle-tested
+- Full documentation suite: onboarding guides, API reference, plugin SDK, and self-hosting manual
+- Performance baseline and SLA definitions for cloud and self-hosted deployments
+- Public API stability guarantee with semantic versioning commitment
+- Community contribution guidelines, plugin SDK, and third-party integration templates
+- End-to-end test coverage for all critical paths (auth, sessions, decisions, CLI, MCP)
+
+---
+
+### v0.11.0 — Planned
+
+**Self-hosted stack, Helm charts, and intelligence layer**
+
+- Helm charts for full Nexus stack (webapp, MCP server, Supabase, Caddy) on user-owned Kubernetes clusters
+- Community/Pro self-hosted deployment with zero license enforcement and no phone-home
+- One-command deployment for single-node setups via Docker Compose
+- Configuration wizard for self-hosted setup: database, storage, auth, and domain
+- Cross-project vector search: pgvector-based semantic retrieval across all project documents and knowledge
+- Comprehensive audit trail with event sourcing for all platform mutations
+- Advanced session analytics with trend visualization and team productivity insights
+- Multi-tenant SaaS onboarding with self-service registration and tenant provisioning
+- Stripe billing integration with metered usage tracking and invoice generation
+
+---
+
+## In progress {{ id: 'in-progress' }}
+
+### v0.10.x — Actor Refinements, Dark Mode Polish & Customer Analytics
+
+- Dark mode content-level polish across all dashboard pages
+- Customer Statistics Card: dark capability-card-style metrics panel
+- Actor metrics and activity tracking (daily aggregation, ratings)
+- Actor semantic search embedding (profile + capabilities indexed)
+- Landing page: Actor System feature promotion section
+- Actor Profile Normalizer CLI: `nexus actors normalize/validate/import`
+- FAQ: Nexus Actors section (9 answered questions)
+
+---
+
+## Released {{ id: 'released' }}
+
+### v0.10.0 — June 2026
+
+**Nexus Actors, Model Routing & Dark Mode**
+
+- Nexus Actor System: first-class virtual team members with role profiles, model routing, avatar identity, and operational workflow instructions (ADR-0053, ADR-0054)
+- 11 seed actors: 7 system templates + 3 personalized (Yuri, Max, Marina) + 1 promoted (Dan Data)
+- Actor Management UI: list (Named/Templates split), detail (Runtime Profile capability card), edit (tabbed markdown sections with per-section source/preview)
+- Actor promotion: template → named workspace actor with personalized avatar + vita
+- Model Route Catalog (ADR-0055): 28 routes across 5 provider groups with lifecycle metadata
+- Model Routes admin page with CRUD, inline edit, icon-prefixed custom dropdowns, search filter
+- Generated actor files in `nexus pull`: `.nexus/actors/*.md`, `actors.json`, AGENTS.md injection, `opencode_agents` export
+- Actor-aware Dispatch routing: `to_actor` resolves via `actors.slug`
+- Dark Mode MVP: class-based toggle, ThemeProvider, user menu switch
+- Session timeline cleanup: `cost_snapshot` entry type + server-side dedup (92% noise reduction)
+- DiceBear avatar system: deterministic generation, S3 cache, regenerate preview
+- **Tool versions:** nexus-mcp v0.9.0 · nexus-cli v0.9.2 · nexus-link v0.8.7
+
+---
+
+### v0.9.x — June 2026
+
+**Nexus Dispatch, Documentation Site & Skill Refinement**
+
+- Vault Letters promoted to Nexus Dispatch: canonical product concept for Nexus-native routed agent work (ADR-0052)
+- Clean-break data model: `dispatches` + `dispatch_messages` + `dispatch_participants` tables
+- 8 Dispatch types: question, bug_report, implementation_request, review_request, decision_notice, blocker, status_update, handover
+- 9-status lifecycle with enforced transition rules
+- 13 new `dispatch_*` MCP tools + `vl_*` compatibility aliases
+- Dedicated documentation site at docs.nexus.gatewarden.eu (tailwind-plus-protocol, MDX, FlexSearch)
+- Grill Me skill: upstream-preserving wrapper with depth control and output routing
+- Dispatch skills: `/nexus-dispatch-sweep` and `/nexus-dispatch`
+- Actor registry auto-seed: `trg_seed_project_agent` trigger on project creation
+- **Tool versions:** nexus-mcp v0.9.0 · nexus-cli v0.8.0 · nexus-link v0.8.7
+
+---
+
+### v0.8.0 — June 2026
+
+**Compose Management, C&C Security & Node Control**
+
+- Compose YAML management API: read, edit, atomic write, `docker compose up -d`, and SSE log stream via nexus-link-service
+- C&C channel security (ADR-0051): dedicated `nxs_cmd_*` token + Ed25519 signed write commands + AES-256-GCM proxy encryption
+- Dual-token registration wizard: node token (telemetry) + command token (compose control)
+- Auto-detected private IP as service endpoint — WireGuard/LAN deployments need no manual DNS setup
+- Compose tab on node detail: YAML editor, Save & Commit, Activate Config, live SSE log viewer
+- nexus-link v0.8.0: compose handlers, `refresh-cmd` CLI, `core::network` module, pre-commit hooks
+
+---
+
+### v0.7.0 — June 2026
+
+**Local LLM, Plugin Marketplace & Project Intelligence**
+
+- DGX Spark local LLM integration: Qwen3-14B on NVIDIA GB10 via vLLM + LiteLLM + Caddy
+- Plugin Marketplace: free (compaction+, cost-control) and alpha tiers (vault-shield, knowledge-graph, llm-bridge, ci-bridge)
+- Licensing rework: self-hosted = full Pro for free, no license key, no phone-home
+- Project Intelligence Layer positioning: Nexus as the governance brain upstream of agent execution
+- Project-scoped skills and agent files (ADR-0044)
+- Security + performance scans with auto-ingest into knowledge base
+- 13 core skills including nx-learnings, nx-sec-scan v4, nx-perf-scan v4
+- **Tool versions:** nexus-cli v0.7.0 (237 tests)
+
+---
+
+### v0.6.10 — May 2026
+
+**Git Identity Guard**
+
+- Per-project git identity config (`user.name`, `user.email`, `signingkey`, `commit.gpgsign`)
+- Project wizard: collapsible Git Identity section in the Agent step
+- CLI: `nexus git verify` / `nexus git apply` — compare and apply project git identity to local repo
+- Auto-apply git identity on `nexus init` and `nexus pull`
+- AGENTS.md / CLAUDE.md: auto-generated `# GIT IDENTITY` section
+- Default directive: all knowledge artifacts must be written in English
+
+---
+
+### v0.6.9 — May 2026
+
+**Workspace Management & Shadow Mode**
+
+- Workspace shadow mode: git-exclude workspace files via `.git/info/exclude` with fork-level toggle
+- Shadow mode un-deprecated: root-level agentic files still need git-exclude management
+- Auto-generated script files: new forks receive boilerplate shell scripts
+- Upstream sync info box and Ignore & Decouple from upstream blueprint
+- New baseline: Minimal K8s/Tilt; new flavor: Go (Expert)
+- **CLI v0.6.9:** `nexus workspace shadow on|off|status`, auto-apply git-exclude on pull, 211 tests
+
+---
+
+### v0.6.8 — May 2026
+
+**Smart Agent File Generation & Sync Protocol**
+
+- Smart agent file auto-generation (ADR-0036): AGENTS.md and CLAUDE.md with project-specific content
+- Content hash & sync protocol: SHA-256 drift detection, bidirectional sync MCP actions
+- Override source tracking and confidentiality-aware agent files
+- **CLI v0.6.8:** `nexus status`, `nexus push`, `nexus reset`
+
+---
+
+### v0.6.7 — May 2026
+
+**Workspace Pull Fix — PAT-Authenticated Export**
+
+- `ws_export` MCP action for workspace fork export with PAT authentication (fixed 404 for all CLI users)
+- Backup/restore script for pull-managed agentic files
+
+---
+
+### v0.6.6 — May 2026
+
+**Workspace 2.0 — Blueprint + Fork Architecture**
+
+- Workspace Blueprints: first-class entities composed from Baseline + Flavor, 5-step creation wizard
+- Project Forks: deep-copy forks with upstream-change detection via DB triggers
+- Curated catalog: 6 baselines and 6 flavors
+- **CLI v0.6.6:** v2 fork export with v1 fallback
+
+---
+
+### v0.6.5 — May 2026
+
+**Import, Session Metadata & CLI `.git/info/exclude`**
+
+- Import API: `POST /api/mcp/import` for agentic files, directives, and referenced documents
+- Session entry metadata: model, toolstack, and machine_id via JSONB metadata column
+- CLI unified `.git/info/exclude` block on `nexus init`
+
+---
+
+### v0.6.4 — May 2026
+
+**Project Tasks, Security Hardening & CLI Machine-ID**
+
+- Project-level Tasks Phase 1: full CRUD with status/priority filters, notes timeline, properties sidebar
+- OWASP Top 10 Audit: 18 findings identified, 7 fixed
+- CLI Machine-ID: persistent UUID sent as `X-Nexus-Machine-Id` header
+
+---
+
+### v0.6.0 — April 2026
+
+**Security Hardening, PDF Export & Performance**
+
+- Comprehensive security audit: IDOR fix, MCP identity scoping, open redirect blocked, SVG sanitized
+- PDF export for ingest documents with S3 caching
+- Quick-classify and bulk-classify for ingest items
+- Database aggregation RPCs replacing N+1 counting
+
+---
+
+### v0.5.0 — April 2026
+
+**Document Management, Vector Search & Onboarding**
+
+- Project documents with S3/CloudFront storage and versioning
+- Vector search across uploaded documents via pgvector
+- Demo license request flow and community showcase
+- Revised 3-tier pricing: Community, Pro, Enterprise
+
+---
+
+### v0.4.0 — April 2026
+
+**Devbox Integration, Skill Lifecycle & Entity Reviews**
+
+- Devbox: interactive developer shell with module system
+- Skill lifecycle: full CRUD, versioning, review workflow, project assignment
+- Entity review system: structured workflow with inline comments and audit trail
+- Notification subscriptions per user
+
+---
+
+### v0.3.0 — April 2026
+
+**Skills, Decisions, Sessions & Governance Workflows**
+
+- Skill management with versioning, review, and command auto-generation
+- ADR decision lifecycle (draft, review, accept/reject) with community voting
+- Session UI with user attribution, markdown rendering, and timeline filters
+- Project directives system (8 categories)
+- License model (Community/Pro/Enterprise) with quota gauges
+
+---
+
+### v0.2.0 — April 2026
+
+**Landing Page Redesign, CRUD Forms & Quality Improvements**
+
+- Hero banner, public navigation, roadmap page
+- New Project and New Customer creation forms
+- 46 audit findings resolved: type safety, rate limiting, pagination
+
+---
+
+### v0.1.0 — April 2026
+
+**Initial platform launch**
+
+- GitHub OAuth with automatic profile creation
+- Project-scoped RBAC (admin, editor, reviewer, viewer)
+- Long-term memory: sessions, decisions, research, planning, letters
+- MCP server with 11 tools across 3 layers
+- API key system for delegated agent access
+- S3 document storage with CloudFront delivery
+- Netlify deployment with CSP and HSTS hardening
+
+<Note>
+  For the full detailed release notes including all sub-versions and individual fix entries, see the [Changelog](/changelog).
+</Note>

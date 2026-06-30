@@ -1,26 +1,596 @@
 export const metadata = {
   title: 'Changelog',
-  description: 'Release history for Nexus, nexus-mcp, and nexus-cli.',
+  description: 'Full release history for the Nexus platform, nexus-mcp, nexus-cli, and nexus-link.',
 }
-export const sections = []
+
+export const sections = [
+  { title: 'v0.10.0', id: 'v0-10-0' },
+  { title: 'v0.9.x', id: 'v0-9-x' },
+  { title: 'v0.8.x', id: 'v0-8-x' },
+  { title: 'v0.7.x', id: 'v0-7-x' },
+  { title: 'v0.6.x', id: 'v0-6-x' },
+  { title: 'v0.5.x', id: 'v0-5-x' },
+  { title: 'v0.4.x', id: 'v0-4-x' },
+  { title: 'v0.3.x', id: 'v0-3-x' },
+  { title: 'v0.2.x', id: 'v0-2-x' },
+  { title: 'v0.1.0', id: 'v0-1-0' },
+]
 
 # Changelog
 
-Release history for the Nexus platform and its tools. {{ className: 'lead' }}
+Full release history for the Nexus platform and its tools. {{ className: 'lead' }}
 
-## v0.9.0
+---
 
-**Nexus Dispatch** — Vault Letter system redesigned as structured, routed work items.
+## v0.10.0 — June 2026 {{ id: 'v0-10-0' }}
 
-- 13 new `dispatch_*` MCP tools (inbox, outbox, create, ack, reply, resolve, close, assign, forward, sweep, related, get)
-- `vl_*` tools remain as compatibility aliases
-- 8 dispatch types: question, bug_report, implementation_request, review_request, decision_notice, blocker, status_update, handover
-- 9-status lifecycle with enforced transitions
-- Cross-project routing with project-link gate
-- `dispatch_sweep` for session-start prioritized overview
+**Nexus Actors — Virtual Team Members, Model Routing & Dark Mode**
 
-**nexus-mcp v0.9.0** — 154 tests, all passing. Published to npm as `@gwdn/nexus-mcp`.
+### Feature: Nexus Actor System
 
-## v0.8.x
+- **First-class virtual team members** with reusable role profiles, model routing, permission boundaries, DiceBear avatars, and operational workflow instructions (ADR-0053, ADR-0054)
+- **11 seed actors** — 7 system templates (Fullstack, Backend, Frontend, Data/DB, Platform, QA, Documentation, Spring Boot) + 3 personalized (Yuri Andropov, Max Well, Marina Meaning) + 1 promoted (Dan Data)
+- **Actor Management UI** — List (Named/Templates split with avatar differentiation), detail (dark Runtime Profile capability card), edit (tabbed markdown sections with per-section source/preview)
+- **Actor promotion** — Duplicate a generic template into a personalized workspace actor with custom name, unique avatar, enhanced capabilities, and vita/backstory
 
-Session vectorization, vector search (pgvector + OpenAI embeddings), vision OCR pipeline, DGX Spark node management, C&C channel security (Ed25519 signed commands), ADR system maturation.
+### Feature: Model Route Catalog
+
+- **28 model routes** across 5 provider groups (GitHub Copilot, Local/DGX Spark, OpenCode Zen, Direct BYOK, Free/Demo) with lifecycle metadata (active, experimental, deprecated, retired)
+- **Route alias resolution** — actors reference stable aliases instead of volatile provider model IDs, resolved at export time from the `model_routes` catalog
+- **Admin page** (`/dashboard/model-routes`) — CRUD with inline edit, icon-prefixed dropdowns, search filter, lifecycle management
+
+### Feature: Dark Mode
+
+- **Class-based dark mode** with ThemeProvider, localStorage persistence, and user menu toggle. Dashboard layout, navbar, sidebar, and footer styled.
+
+### Generated Files & Export
+
+- **Actor profiles in nexus pull** — `.nexus/actors/*.md` with YAML frontmatter + operational body sections (When Invoked, Context Assessment, Operating Workflow, Quality Checklist, Return Contract)
+- **OpenCode adapter** — `opencode_agents` field in af_export with route resolution, permission mapping, prompt file references
+- **Scan skills** — Recommended Actor sections with `@actor-slug` references for intelligent Dispatch routing
+
+### Platform Improvements
+
+- **Session timeline cleanup** — `cost_snapshot` entry type + server-side dedup guard (92% noise reduction)
+- **Customer Statistics Card** — Dark capability-card-style metrics panel in customer detail view
+- **CodeMirror line wrapping** — Fixes horizontal overflow in all markdown editor views
+- **Actors FAQ** — 9 common questions about the Actor System
+
+**Tool versions:** nexus-mcp v0.9.0 · nexus-cli v0.9.2 · nexus-link v0.8.7
+
+---
+
+## v0.9.x — June 2026 {{ id: 'v0-9-x' }}
+
+### v0.9.1 — Documentation Site, Grill Me & Dispatch Skills
+
+**Feature: Nexus Docs Site**
+
+- **Dedicated documentation site** — [docs.nexus.gatewarden.eu](https://docs.nexus.gatewarden.eu) — MDX-based content, FlexSearch full-text search, dark mode, sidebar navigation with scroll-spy. Built on the tailwind-plus-protocol template, deployed as a separate Netlify site.
+
+**Skills: Grill Me & Dispatch**
+
+- **Grill Me** (`/nexus-grill-me`) — Upstream-preserving wrapper of the popular mattpocock/skills `grill-me` skill. Adds Nexus context resolution, depth control (quick/standard/deep/exhaustive), output routing to ADRs and Dispatches, loop guard, and anti-pattern documentation.
+- **Dispatch Sweep** (`/nexus-dispatch-sweep`) — Replaces `/nexus-vl-sweep`. Prioritized inbox processing via `dispatch_sweep` with typed action table for all 8 dispatch types.
+- **Dispatch Create** (`/nexus-dispatch`) — Structured dispatch creation with duplicate check, type guide, and output confirmation.
+
+**UI: Document Management**
+
+- **Email & chat message classification** — Two new ingest document types with per-classification icons across the docs list.
+- **Row context menu** — Hamburger menu on every document row for instant reclassification without opening the detail page.
+- **Tasks & Skills managers** — Inline `<select>` dropdowns replaced with styled Menu dropdowns.
+
+**Fix: Actor Registry & Workspace**
+
+- **Actor auto-seed** — New projects automatically get a `<slug>-agent` entry in `project_agents`, enabling `to_actor` dispatch routing without manual setup.
+- **RUSTFLAGS mold removed** — `RUSTFLAGS=-C link-arg=-fuse-ld=mold` removed from Rust and nexus-dev flavors, blueprint, and active forks. macOS Cargo builds no longer fail.
+
+---
+
+### v0.9.0 — Nexus Dispatch — Structured Work Routing for Agents
+
+**Feature: Nexus Dispatch**
+
+- **Vault Letters promoted to Nexus Dispatch** — Dispatches are the canonical product concept for Nexus-native routed agent work. Legacy `vl_*` MCP tools remain as compatibility aliases.
+- **9-status lifecycle with enforced transitions** — `open` → `acknowledged` → `in_progress` → `needs_review` → `resolved` → `closed`. Plus `waiting_for_requester`, `blocked`, and `cancelled`.
+- **8 Dispatch types** — `question`, `bug_report`, `implementation_request`, `review_request`, `decision_notice`, `blocker`, `status_update`, `handover`
+- **Routing fix** — `source_project_id` (sender) vs `target_project_id` (recipient) are now explicit and enforced
+
+**MCP Tools (`dispatch_*`)**
+
+- **13 new `dispatch_*` tools** — `dispatch_create`, `dispatch_reply`, `dispatch_inbox`, `dispatch_outbox`, `dispatch_ack`, `dispatch_assign`, `dispatch_forward`, `dispatch_resolve`, `dispatch_close`, `dispatch_sweep`, `dispatch_get`, `dispatch_related`. Tool count: 48 → 60.
+- **`dispatch_sweep`** — Session-start prioritized overview returning blocking, overdue, waiting-on-me, new assignments, and recent updates with recommended next actions.
+- **Central routing service** — `resolveDispatchRoute()` derives source project from authenticated identity, resolves actors via project registry, and enforces project-link gate.
+
+**Data Model**
+
+- **Migration 0116** — Three new tables: `dispatches`, `dispatch_messages`, `dispatch_participants` with full RLS, vector embedding column (`vector(1536)`), and HNSW index.
+- **Letter migration** — All existing Vault Letters migrated to the new `dispatches` schema. Legacy `letters` table kept for backward compatibility.
+
+**Tool versions:** nexus-mcp v0.9.0 · nexus-cli v0.8.0 · nexus-link v0.8.7
+
+---
+
+## v0.8.x — June 2026 {{ id: 'v0-8-x' }}
+
+### v0.8.2 — Compose Spec Library, YAML Editor & Log Viewer
+
+- **Compose Spec Library** — Reusable, versioned YAML templates at `/dashboard/ai-hardware/compose-specs` with list view, detail editor, and new-spec wizard
+- **Opt-in versioning** — Save dialog offers "Update current" or "Create new version" with change summary. Previous versions remain accessible in the version history sidebar.
+- **Deploy to Device** — Any spec can be deployed to an online node via a node-selector dialog via the compose command queue
+- **Save as Spec** — The compose editor on the node detail page now has a "Save as Spec" button
+- **CodeMirror YAML editor** — Full CodeMirror 6 editor with syntax highlighting, line numbers, fold gutter, bracket matching, and One Dark theme
+- **Two-step save** — Validate button enqueues a `validate_yaml` command to the device before allowing Save & Commit
+- **Fullscreen Log Viewer** — Expand button opens fullscreen overlay (Esc to close) with search, match highlighting, and container-name color prefixes
+- **AI Hardware: Alpha badge removed** — The feature is now considered fully supported
+
+---
+
+### v0.8.0 — Compose Management, C&C Security & Node Control
+
+**Feature: Compose YAML Management (ADR-0002)**
+
+- **Edit docker-compose.yaml from the dashboard** — read, edit, and atomically write the DGX LLM stack compose file. YAML validation before write, optional git commit on save.
+- **Activate Config button** — runs `docker compose up -d` on the device (120s timeout)
+- **Live SSE log stream** — `docker compose logs --follow` as Server-Sent Events with 500-line rolling buffer
+
+**Feature: C&C Channel Security — ADR-0051**
+
+- **Dedicated command token** — `nxs_cmd_*` credential generated at node registration alongside the telemetry token
+- **Ed25519 signed commands** — Nexus backend signs every write request. Replay protection via ±5-minute timestamp window and nonce.
+- **AES-256-GCM token encryption** — raw cmd token stored encrypted in the database, never reaches the browser
+- **Rotate-cmd endpoint** — `POST /api/nodes/[id]/rotate-cmd` rotates immediately (no grace period)
+
+**nexus-link v0.8.0**
+
+- Compose API handlers: `get_compose_file`, `put_compose_file`, `activate_compose`, `stream_compose_logs`
+- `refresh-cmd` subcommand — applies a rotated command token without service restart
+- Private IP auto-detection at registration time
+
+---
+
+## v0.7.x — June 2026 {{ id: 'v0-7-x' }}
+
+### v0.7.3 — nexus-link Integration — Live Hardware Telemetry & Device Management
+
+**Feature: nexus-link Hardware Agent**
+
+- **Full device lifecycle** — register, monitor, rotate tokens, and unlink on-premise AI hardware. Supports NVIDIA DGX Spark, DGX Station A100, DGX A100, and DGX H100.
+- **Live telemetry streaming** — GPU temperature, utilization, power draw, system CPU/RAM/disk, Docker container health pushed every 30 seconds
+- **Open source** — Rust-based agent, Apache-2.0 licensed. Install via `curl -fsSL https://nexus.gatewarden.eu/install-link.sh | bash`
+
+**Feature: Device Registration Wizard**
+
+- **3-step guided setup** — device classification, setup guide with generated token and install commands, connectivity verification with auto-polling
+- **One-time token display** — node token shown once during registration
+
+**Feature: Live Telemetry Dashboard**
+
+- **System metrics** — CPU, memory, disk, and uptime with 30-second auto-refresh
+- **GPU monitoring** — temperature (color-coded), utilization, power draw, and VRAM usage per GPU
+- **Container table** — all Docker containers with health status badge, CPU%, memory, and network I/O
+
+**Feature: Token Rotation with Auto-Rollback**
+
+- **Safe rotation** — 24-hour grace period where both old and new tokens are valid
+- **Auto-rollback** — if the device doesn't adopt the new token, the rotation is cancelled automatically
+
+---
+
+### v0.7.2 — Full Vector Search Stack, Session Vectorization & Multi-Model AI
+
+**Feature: Session Entries Vectorized**
+
+- **1,016 session entries embedded** — complete operational history is now semantically searchable
+- **`relevant_context` in `kb_memory`** — agents receive 8–10 semantically ranked items across all entity types in a single call
+- **Auto-embedding on `session_append`** — note, correction, handoff, and ADR entries embedded automatically
+
+**Feature: Complete Vector Search Foundation**
+
+- **Six entity types searchable** — decisions, ingest items, research notes, planning items, project documents, and session entries
+- **Semantic + hybrid search modes** — `kb_search` now supports `semantic` and `hybrid` (0.4/0.6 re-ranking) in addition to `keyword`
+- **All write paths covered** — 7 API routes have async embedding hooks with zero latency impact
+
+**Feature: Confidentiality-Aware AI Routing**
+
+- Code-enforced: OpenAI and AWS Textract automatically blocked for VS-NfD, GEHEIM, EU-RESTRICTED and higher
+- Local embedding for classified projects via DGX Spark (gte-Qwen2-1.5B-instruct, 1536-dim)
+
+**Feature: DGX Spark Multi-Model Stack**
+
+- Three models simultaneously: Qwen3-14B (code/reasoning), gte-Qwen2-1.5B-instruct (embedding), Qwen2.5-VL-7B (vision OCR)
+- All accessible via a single OpenAI-compatible LiteLLM endpoint
+
+---
+
+### v0.7.1 — Project README, Enriched Agent Context & Security Hardening
+
+- **pgvector semantic search** — three modes: `keyword`, `semantic`, `hybrid` across ADRs, documents, research notes, and planning items
+- **Project README field** — full Markdown overview editable via CodeMirror, surfaced in `kb_memory` and auto-generated AGENTS.md
+- **Security audit** — full OWASP Top 10 audit, 6 domains, 46 checks, 42 passed (91% score)
+- **ADRs 0044–0048** — skills, README, vector search, confidentiality routing, DGX Spark multi-model
+
+---
+
+### v0.7.0 — DGX Spark, Plugin Marketplace, Licensing Rework & Project Intelligence
+
+- **DGX Spark local LLM** — Qwen3-14B via vLLM + LiteLLM + Caddy on NVIDIA GB10. Local-first model routing policy.
+- **Plugin Marketplace** — dedicated catalog with free (compaction+, cost-control) and alpha tiers (vault-shield, knowledge-graph, llm-bridge, ci-bridge)
+- **Licensing rework** — self-hosted = full Pro for free, no license key, no phone-home
+- **Project Intelligence Layer positioning** — Nexus repositioned as the "project intelligence layer for agentic development"
+- **Project-scoped skills and agent files** (ADR-0044) — nullable `project_id` FK, RLS-enforced isolation
+- **nx-learnings skill** — project learnings capture as a core skill. Total core skills: 13.
+- **Performance scan: 98/100** — Lighthouse 99/100/100/100, all Core Web Vitals passing
+
+**CLI v0.7.0:** provider passthrough fix (`serde_json::Value`), 237 tests, GitHub release rebuilt.
+
+---
+
+## v0.6.x — April–May 2026 {{ id: 'v0-6-x' }}
+
+### v0.6.13 — Cost Tracking, Documents Merge, Performance & CLI Open-Source
+
+- **Cost detail page** — `/cost` route per project with summary cards, token breakdown, per-model table, and per-session collapsible detail
+- **Session cost snapshots** — cost snapshot entries as green cards with token breakdown and per-model table
+- **nexus-cost-control plugin v2.0** — captures token usage from native `AssistantMessage.info` data, zero external dependencies
+- **Unified Documents page** — Research + Ingest merged into a single tabbed interface (Notes, Files, Links)
+- **Repositories widget & page** — project repos with full CRUD
+- **Session timeline** — plain-text previews (max 200 chars) with expandable "Show full entry" toggle
+- **nexus-cli open-sourced** — released as open-source at `gwnexus/nexus-cli`
+
+---
+
+### v0.6.12 — Performance, Plugin Sync & UI Polish
+
+- **Font optimization** — Switzer migrated to `next/font/local` with CSS variable
+- **N+1 query fix** — skills export now batch-fetches pinned versions in a single query
+- **Parallel queries** — 4 server component pages use `Promise.all()` for independent database queries
+- **Plugin assignment sync** — plugin changes now sync `project_agent_files` on project creation and editing
+- **CLI v0.6.12** — background update check via GitHub API with 24h cache, 223 tests passing
+
+---
+
+### v0.6.11 — Demo Licensing, Impersonation & Admin Mail
+
+- **Demo license flow** — `platform_user` role with Demo Pro license (3 customers, 50 projects, 4 seats, 60-day validity)
+- **Impersonation** — `platform_owner` can impersonate any user via `nx-impersonate` cookie with amber warning banner
+- **License page** — Pro status, "Demo" badge, days-remaining, resource usage bars, tier limits grid
+- **Machine Registry** — MCP v0.8.8 tracks CLI instances (machine ID, hostname, OS, last-seen)
+
+---
+
+### v0.6.10 — Envelope Encryption, Git Identity Guard & Unified Editor
+
+- **Envelope encryption** (ADR-0037) — classification-driven AES-256-GCM + HKDF-SHA256, pluggable key providers (Local, Vault, KMS, Azure, GCP)
+- **Git Identity Guard** — per-project `user.name`, `user.email`, `signingkey`, `commit.gpgsign` stored and applied via `nexus git verify|apply`
+- **Vault Letter tickets** — assignee, resolved-at timestamp, project-scoped labels with color, PDF export with confidentiality watermarks
+- **Unified CodeMirror editor** — all markdown editing now uses CodeMirror 6 (oneDark, line numbers, syntax highlighting)
+
+---
+
+### v0.6.9 — Workspace Management & Shadow Mode
+
+- **Shadow mode** — workspace files excluded from git tracking via `.git/info/exclude` with fork-level toggle
+- **Auto-generated script files** — new forks receive boilerplate shell scripts from blueprint or defaults
+- **Upstream sync info box** — golden panel with 3-way merge behavior explanation and Ignore & Decouple button
+- **New baseline: Minimal K8s/Tilt** — kubectl, k9s, tilt, kustomize, helm, cosign, syft, grype, trivy
+- **New flavor: Go (Expert)** — go, gofumpt, golangci-lint, goreleaser, gotestsum, mockgen, protobuf, buf, delve, air
+- **CLI v0.6.9** — `nexus workspace shadow on|off|status`, auto-apply git-exclude on pull, 211 tests
+
+---
+
+### v0.6.8 — Smart Agent File Generation & Sync Protocol
+
+- **Smart agent file auto-generation** (ADR-0036) — AGENTS.md and CLAUDE.md with project-specific content including team members, skills, plugins, directives, and confidentiality rules
+- **Content hashing** — SHA-256 drift detection, bidirectional sync MCP actions (`af_sync_check`, `af_sync`, `af_sync_status`)
+- **Override source tracking** — tracks whether content is auto-generated, uploaded, or manually edited
+- **CLI v0.6.8** — `nexus status`, `nexus push`, `nexus reset` with content hash tracking
+
+---
+
+### v0.6.7 — Workspace Pull Fix — PAT-Authenticated Export
+
+- **`ws_export` MCP action** — workspace fork export with PAT authentication, single-call instead of two-step list + export
+- **Graceful handling** — clean info message when no workspace fork is assigned
+- **`ws-backup.sh`** — backup/restore script for pull-managed agentic files
+
+---
+
+### v0.6.6 — Workspace 2.0 — Blueprint + Fork Architecture
+
+- **Workspace Blueprints** — first-class entities composed from Baseline (core tools) + Flavor (language toolchain), 5-step creation wizard
+- **Project Forks** — deep-copy forks of blueprints with upstream-change detection via DB triggers
+- **Curated catalog** — 6 baselines (Minimal, DevOps, AWS/GCP/Azure Cloud, Docker/K8s) and 6 flavors (Node.js/TS, Rust, Python, Go, PHP, Nexus Dev)
+- **CLI v0.6.6** — v2 fork export with v1 fallback, upstream-changed awareness, shadow/direct mode indicators
+
+---
+
+### v0.6.5 — Import, Shadow Deprecation, Session Metadata
+
+- **Import API endpoint** — `POST /api/mcp/import` batch endpoint for agentic files, directives, and referenced documents. Imported directives created as disabled for review.
+- **Dynamic cross-references in af_export** — exported agent files include a "Customer Repository Context" block listing pre-existing agentic files
+- **Session entry metadata** — `session_append` persists model, toolstack, and machine_id via JSONB metadata column (migration 0072)
+- **CLI v0.6.4** — unified `.git/info/exclude` block (`nexus init`), `.gitignore` migration, `nexus deinit` cleanup
+- **ADR-0029** — .nexus as Local Workspace Cache: .git/exclude Strategy
+
+---
+
+### v0.6.4 — Project Tasks, Security Hardening, CLI Machine-ID
+
+- **Project-level Tasks (Phase 1)** — full CRUD dashboard UI with status/priority filters, task detail page with MarkdownDocument, notes timeline, and properties sidebar
+- **Tasks API** — project-scoped REST API for tasks CRUD and task notes
+- **OWASP Top 10 Audit** — 18 findings identified, 7 fixed: RLS hardening, open redirect fix, rate limiting (120/20/600 req/min), error sanitization
+- **CLI Machine-ID** — persistent UUID at `~/.config/nexus/machine.toml`, sent as `X-Nexus-Machine-Id` header
+
+---
+
+### v0.6.3 — Skill Resources, Auto-Generated Frontmatter & UI Consistency
+
+- **Skill resources** — multi-file support with accordion UI, full versioning via JSONB snapshots, pending resources during creation
+- **Auto-generated skill frontmatter** — metadata generated on-the-fly during MCP export, not stored in DB body
+- **MCP sk_get returns resources** — `resources` array alongside auto-frontmatted body
+- **nexus-compaction-plus v1.8.0** — stable release, `nexus_show_plugins` tool, TUI startup toast
+
+---
+
+### v0.6.2 — License Tier Refactoring and Per-User Licensing
+
+- **3-tier license model** — Community (€0/mo), Pro (€6.95/mo), Enterprise (€84.95/mo). Additional seats at €2.95/mo.
+- **Per-user license tables** — `user_licenses` and `user_license_history` with RLS, groundwork for per-user billing
+- **Community tier gate** — project wizard shows upgrade banner and disables member selection for Community tier
+- **ADR-0025** — License Tier Refactoring (supersedes ADR-0014)
+
+---
+
+### v0.6.1 — PDF Export for ADRs and Agent Skill Files
+
+- **PDF export for ADR/Decisions** — one-click PDF generation with S3 caching on decision detail pages
+- **OpenCode skill files** — added skill definitions for ADR drafting, code review, database migration, performance scanning, security scanning
+- **Compaction plugin fix** — session ID capture from `nexus_session_create` responses
+
+---
+
+### v0.6.0 — Security Hardening, PDF Export, Performance, and Classification UX
+
+- **Comprehensive security audit** — 20 files reviewed and hardened. IDOR fix on document download, MCP identity scoped, open redirect blocked, SVG sanitized, 10 API routes no longer leak raw DB errors.
+- **Markdown XSS protection** — `rehype-sanitize` added to all Markdown renderers
+- **PDF export for ingest documents** — async Markdown-to-PDF with S3 caching and one-click download
+- **Quick-classify** — classify ingest items directly from detail page with grouped dropdown, supports bulk-classify
+- **Database aggregation RPCs** — server-side functions replace N+1 counting for projects, letters, and sessions
+
+---
+
+## v0.5.x — April 2026 {{ id: 'v0-5-x' }}
+
+### v0.5.3 — Security Hardening, Project Editing & UX Polish
+
+- **Hybrid Supabase client strategy** (ADR-0023) — all API write operations use service client to prevent silent RLS failures. Migrated 14 API routes.
+- **Project editing** — existing documents in edit mode as inline tables; agent config persistence; tags, skills, repositories, contacts
+- **Default agentic root** — new projects default to `.nexus` instead of `.claude`
+- **Tags not saving fix** — resolved silent RLS failure preventing tag persistence
+
+---
+
+### v0.5.0 — Document Management, Vector Search & Onboarding
+
+- **Project documents** — upload, organize, and version documents per project with S3/CloudFront
+- **Vector search** — semantic search across uploaded documents using pgvector embeddings
+- **OCR and AI analytics** — automatic text extraction with AI-powered metadata tagging and categorization
+- **Demo license request** — new users can request a demo license to explore the full platform
+- **Community showcase** — read-only sample project with example ADRs, sessions, and documents
+- **Revised pricing** — consolidated to Community, Pro, and Enterprise tiers
+
+---
+
+## v0.4.x — April 2026 {{ id: 'v0-4-x' }}
+
+### v0.4.0 — Devbox Integration, Skill Lifecycle & Entity Reviews
+
+- **Devbox integration** — interactive developer shell with module system for local dev diagnostics and deployment tooling
+- **Skill lifecycle management** — full CRUD with versioning, review workflow, and project assignment
+- **Agent file management** — versioned agent configs with review pipeline and tenant-scoped access
+- **Entity review system** — structured review workflow for skills and agent files with inline comments and audit trail
+- **Notification subscriptions** — per-user preferences for ADR changes, session summaries, and letter updates
+- **Performance** — N+1 query elimination, batch loading; MCP expanded to 48 tools across 14 endpoints
+
+---
+
+## v0.3.x — April 2026 {{ id: 'v0-3-x' }}
+
+### v0.3.11 — Customer Billing Fields, Notification Subscriptions & CLI CDN Migration
+
+- **Billing fields** — `customer_number`, `vat_id`, `reverse_charge`, `short_id` on customers table with dedicated invoicing fieldset
+- **Topic-based notification subscriptions** — subscribe to release updates, feature previews, and beta releases per product
+- **GDPR unsubscribe** — public `/unsubscribe?token=...` page with `List-Unsubscribe` header in all subscription emails
+- **CDN installer** — `install.sh` migrated to S3/CloudFront for reliable access from private repo
+- **CLI v0.1.5** released
+
+---
+
+### v0.3.10 — Security Hardening, DB Indexes & Error Sanitization
+
+- **MCP project access** — `checkProjectAccess()` added to 14 MCP action handlers
+- **SQL injection fix** — `escapeIlike()` added to decisions search route
+- **Error sanitization** — 38 instances of raw Supabase error leaks replaced with `sanitizeDbError()` across 10 MCP route files
+- **CLI path traversal** — reject `..` components in agent file write paths
+- **DB indexes** — 10 B-tree indexes on FK columns across sessions, tasks, letters
+- **`force-dynamic`** — added to 59 cookie-dependent API routes to prevent Next.js static caching of auth-dependent responses
+
+---
+
+### v0.3.9 — Community License Tier with Full Quota Enforcement
+
+- **Hard quota limits** — 1 seat, 1 customer, 10 private-only projects, 50 sessions, 10 decisions, 1 GB storage
+- **Quota enforcement** — session, decision, storage, skill, and agent file creation blocked at quota via webapp and MCP APIs
+- **Community badge** — new tier badge styling; quota gauges for sessions and decisions on license page
+- **4-column plan comparison** — Community, Professional, Business, Enterprise
+
+---
+
+### v0.3.8 — Landing Page Preference, Agent File Assignments & Admin Mail
+
+- **Landing page preference** — configure which page to show after login (Settings > Landing Page)
+- **Agent file project assignments** — M:N junction table for assigning global agent files to projects with version pinning and enable/disable
+- **Project membership emails** — rich HTML templates for invite, role change, and removal
+- **Admin mail inbox** — full admin UI for inbound emails from Resend webhooks with search, pagination, bulk delete, and reply
+
+---
+
+### v0.3.7 — Skill Editor UX Overhaul
+
+- **Source-first editing** — skill editor opens in markdown source view with segmented Source/Preview toggle
+- **Integrated upload** — `.md` upload button moved into the editor toolbar
+- **Danger Zone** — archive/unarchive and permanent delete (slug-based confirmation)
+- **DELETE API** — cascading deletion of tags, commands, versions, assignments, reviews
+- **Blueprint template** — downloadable `skill-blueprint.md` on S3/CloudFront
+- **7 new default tags** — Workflow, Code Quality, DevOps, Testing, Documentation, Agent, Init
+
+---
+
+### v0.3.6 — Code Audit, Security Fixes & Dead Code Cleanup
+
+- **MCP auth fixes** — wrong column in profile query fixed; resolveActor now returns auth user UUID instead of surrogate PK
+- **Decision links security** — DELETE handler scopes by `decision_id`, preventing cross-project deletion
+- **Replaced framer-motion** — mobile nav animation uses pure CSS keyframes (~130 KB removed from client bundle)
+- **Removed 4 unused npm deps** — zod, dayjs, react-use-measure, framer-motion
+- **Removed ~64 template placeholder assets** across 12 directories
+
+---
+
+### v0.3.5 — Code Quality, Performance & Consistency Fixes
+
+- **N+1 query elimination** — letters and sessions list pages batch-fetch counts in a single query
+- **Query parallelization** — customer detail page runs 3 independent queries via `Promise.all`
+- **Safe error handling** — shared `toApiError()` utility replaces 29 unsafe casts across 13 API routes
+- **Unified status styles** — 7 duplicate `STATUS_COLORS` maps consolidated into single shared module
+
+---
+
+### v0.3.4 — Skill Versioning, Markdown Editing & UI Refinements
+
+- **Version history panel** — view and switch between all version snapshots on the skill detail page
+- **Create new version** — saves as new version (v{N+1}) and resets status to draft
+- **Markdown preview/source** — same MarkdownDocument component as ADRs, with live preview toggle
+- **File upload** — import `.md`/`.txt` files in edit mode with frontmatter extraction
+- **Custom command slug** — editable command name when auto-generate is enabled
+
+---
+
+### v0.3.3 — Performance Hardening, Error Recovery & Dead Code Cleanup
+
+- **Query parallelization** — dashboard, project detail, and decision detail pages batch queries via `Promise.all` (200–400ms latency reduction)
+- **N+1 elimination** — `getProjectsWithStats` from 4N to 4 queries; `getCustomerSummaries` from N to 1
+- **Error boundaries** — `global-error.tsx`, `dashboard/error.tsx`, `projects/[id]/error.tsx` with retry and fallback
+- **Removed 10 unused component files** (~3,000 lines of dead code)
+
+---
+
+### v0.3.2 — Governance, UX Polish & Billing Foundation
+
+- **ADR Governance Widget** — lifecycle buttons (submit, accept, reject) and community voting with required reason on downvotes
+- **Change request flow** — accepted ADRs show "Request Change"; creates new ADR with `supersedes` pointing to original
+- **Directive priorities** — `high / medium / low` enum with colored badges and client-side sort
+- **Top progress bar** — page transitions via nextjs-toploader
+- **Danger Zone** — slug-based delete confirmation
+
+---
+
+### v0.3.1 — CLI Install Pipeline, MCP npm Mode & Preflight Checks
+
+- **`install.sh` oneliner** — platform detection, pre-built binary download, SHA256 checksum verification, and cargo fallback
+- **GitHub Actions CI/CD** — 4-target release builds (aarch64/x86_64 macOS + Linux)
+- **`nexus preflight`** — environment readiness checks (git, node, npm, config, credentials, API reachability, workspace, MCP)
+- **npm distribution** — `npx @gwdn/nexus-mcp` for zero-install MCP server startup
+- **38 MCP tools** total (added `task_list`, `doc_list`, `session_delete`)
+
+---
+
+### v0.3.0 — Skills, Decisions, Sessions & Governance Workflows
+
+- **Skill management** — create, review, version, assign to projects; command auto-generation
+- **ADR decision lifecycle** — draft, review, accept/reject with governance widget
+- **Session UI** — user attribution, markdown rendering, date-range filter, status tab filter
+- **Decision voting** — up/down votes with RLS-scoped visibility
+- **Project directives system** — 8 categories, CRUD, enable/disable toggles
+- **License model** — Community/Pro/Enterprise with quota gauges
+- **Project star/favorites** — starred projects sort first across all listings
+
+---
+
+## v0.2.x — April 2026 {{ id: 'v0-2-x' }}
+
+### v0.2.6 — Session UI, Governance Actions & Skill Reviews
+
+- **User attribution** — avatars and display names in session timelines, markdown rendering, relative timestamps
+- **ADR governance actions** — submit for review, accept, reject with confirmation dialogs
+- **Decision comments** — append-only chronological thread, links, and file attachments
+- **Skill review workflow** — submit, accept, reject, request revision with inline comments
+
+---
+
+### v0.2.5 — MCP API Layer, Skill Management & Expanded Dashboard
+
+- **Full MCP API backend** — identity resolution, knowledge search, memory retrieval, sessions, tasks, letters, governance, skills, reviews
+- **Skill creation and editing** — markdown body, versioning, and auto-generated OpenCode commands
+- **Project skill assignments** — version pinning and enable/disable
+- **Dashboard** — My Work section with pending reviews and open tasks; project detail pages for sessions, decisions, tasks, letters
+
+---
+
+### v0.2.4 — Performance, Edit Forms & Deployment Automation
+
+- **Self-hosted Switzer fonts** — replacing external fontshare dependency for faster LCP
+- **Customer and project edit pages** — fieldsets for general info, contact, billing address
+- **Login redesign** — email/password above GitHub OAuth, forgot password flow
+- **GitHub Actions post-deploy healthcheck** — verifies site and login page after each push to main
+
+---
+
+### v0.2.3 — Multi-Step Wizards, Agent Setup & Document Management
+
+- **5-step project creation wizard** — basics, timeline & budget, document upload, agent setup, review
+- **4-step customer creation wizard** — adaptive flow, internal customers skip contact/billing/contract steps
+- **Agent configuration** — CLI flavor (OpenCode / Claude CLI) and plugin selection in wizard
+- **new `project_agents` table** — agent assignments per project; `project_offers` for offer/proposal documents
+
+---
+
+### v0.2.2 — Project Visibility, Private Projects & RLS Fixes
+
+- **Project visibility scopes** — private, members only, and team
+- **Optional customer assignment** — private projects no longer require a customer
+- **Fixed RLS infinite recursion** — project membership policies using `SECURITY DEFINER` helpers
+- **Redesigned project creation form** — visibility selector and conditional customer field
+
+---
+
+### v0.2.1 — Internal Customers & Tag System
+
+- **Internal customer flag** — marks customers like Gatewarden Labs as internal, hiding contact, billing, and contract fields
+- **Normalized tag system** — shared `tags` table and polymorphic `entity_tags` junction supporting 11 entity types
+- **New Customer form** — internal customer checkbox that conditionally hides contact fields
+
+---
+
+### v0.2.0 — Landing Page Redesign, CRUD Forms & Quality Improvements
+
+- **Hero banner** — gradient background, version pill, and quick-access buttons; public navigation with dark "Get access" button
+- **Roadmap page** — timeline with status legend and sidebar
+- **New Project and New Customer forms** — with customer selector, slug auto-generation, industry, contact info
+- **46 audit findings resolved** — DB-backed rate limiter, typed Supabase queries, N+1 fixes, pagination
+
+---
+
+## v0.1.0 — April 2026 {{ id: 'v0-1-0' }}
+
+**Initial platform launch.**
+
+- **GitHub OAuth** authentication with automatic profile creation
+- **Project-scoped RBAC** — admin, editor, reviewer, viewer roles
+- **Long-term memory schema** — sessions, decisions, research, planning, letters
+- **MCP server** — 11 tools across 3 layers (knowledge, coordination, governance)
+- **API key system** — delegated agent access via `nxs_pat_*` tokens
+- **Customer, contract, and SOW management**
+- **S3 document storage** with CloudFront delivery
+- **Transactional email** via Resend
+- **Netlify deployment** with CSP headers and HSTS hardening
