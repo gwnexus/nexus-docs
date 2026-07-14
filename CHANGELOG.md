@@ -1,5 +1,32 @@
 # Changelog
 
+All changes to the **nexus-docs site** itself (content, structure, navigation, build). Changes to the Nexus platform are documented on the [/changelog](/src/app/changelog/page.mdx) page.
+
+---
+
+## 2026-07-14
+
+- `mcp-server`: sync to nexus-mcp v0.10.3 — bump version ref, correct tool count to 62, Layer 1 to 6 tools, Layer 2 to 48 tools, add `project_update` entry, add Schema Version Envelope section
+- `mcp-tools`: update stub tool count to 62
+- `changelog`: add v0.10.3 entry; remove doc-site-internal artefacts (`Docs: Corrected Tool Count`) from changelog — doc-site changes belong here only
+- `changelog`: remove Nexus Docs Site launch note from v0.9.1 — doc-site-internal
+- `page` (homepage): update "New in" banner to v0.10.3
+- `roadmap`: update tool version ref to nexus-mcp v0.10.3
+- `cli`: add `nexus run` usage guide, offline mode (`--no-db`), `.nexus/env` vs `.env.nexus.local` table, Headroom troubleshooting section
+- `quickstart`: add step 4 — Headroom / cost control setup
+- `workspaces`: add "Files written by nexus pull" reference table
+- `plugins`: expand nexus-headroom-intercept — observed compression ratios, verify transform mode, cache and retrieval docs; remove stale distribution/auto-assignment section
+
+## 2026-06-27
+
+- Initial Nexus documentation site — deployed to docs.nexus.gatewarden.eu
+- MDX content for all routes: Getting Started, Tools, Core Concepts, Reference
+- FlexSearch build-time index, dark mode, sidebar navigation with scroll-spy
+- Built on tailwind-plus-protocol template (Tailwind Plus commercial license)
+- Netlify deployment as separate site from nexus-hub (ADR-0001, ADR-0002)
+
+---
+
 ## 2025-07-29
 
 - Update to React 19 and Next.js 15.4
