@@ -46,7 +46,35 @@ This command:
 - Writes `opencode.json` (or equivalent) with the MCP server config
 - Installs `nexus-mcp` automatically
 
-## Step 4: Start a session
+## Step 4: Enable cost control (optional)
+
+Nexus supports two token-saving tools that are auto-configured when enabled in
+the dashboard. After `nexus init` you can activate them:
+
+**Headroom — Context Compression**
+
+```bash
+pip install "headroom-ai[mcp]"
+headroom --version    # verify
+```
+
+`nexus init` (or a subsequent `nexus pull`) writes `.nexus/env` with the
+project's `HEADROOM_*` plugin configuration and updates `opencode.json` with
+the Headroom MCP server block.
+
+**Launch OpenCode with plugin vars injected:**
+
+```bash
+nexus run             # recommended — injects .nexus/env, then starts opencode
+```
+
+Or use `devbox shell` if you have a Nexus workspace — `dbx_init.sh` sources
+`.nexus/env` automatically on shell start.
+
+See [nexus run](/cli#nexus-run) and [nexus-headroom-intercept](/plugins#nexus-headroom-intercept)
+for full details.
+
+## Step 5: Start a session
 
 Open your AI coding agent (OpenCode, Claude Code, or any MCP-compatible tool). The `nexus-mcp` server is now available. Run the init skill to start a tracked session:
 

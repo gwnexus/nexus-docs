@@ -197,6 +197,75 @@ Plugin settings are managed in the Nexus dashboard under
 **Project > Agent Setup > Plugins**. After saving changes, run `nexus pull`
 to regenerate `.nexus/env` and then restart OpenCode (or use `nexus run`).
 
+### When to use nexus run vs devbox
+
+| Scenario | Recommended approach |
+|----------|---------------------|
+| Daily development with a full Nexus workspace | `devbox shell` — init hook sources `.nexus/env` automatically |
+| CI / scripted environments without Devbox | `nexus run` — zero dependencies beyond the CLI binary |
+| Quickly launching OpenCode outside devbox | `nexus run` — single command, no shell restart needed |
+| Running a different tool (Cursor, Claude Code, ...) | `nexus run --tool cursor` |
+| Debugging which env vars will be injected | `nexus run --dry-run` |
+| Laptop with no network access (offline) | `nexus run --no-db` — reads `.nexus/env` from disk, skips `af_export` |
+
+### Offline mode
+
+When `.nexus/env` already exists on disk (written by a previous `nexus pull`),
+`nexus run --no-db` works without any network connection. The `af_export` API
+call is skipped and the cached env file is used as-is:
+
+```bash
+nexus run --no-db      # use .nexus/env from disk, skip platform API
+```
+
+This is safe for short offline periods. Run `nexus pull` the next time you have
+connectivity to refresh plugin configuration.
+
+### `.nexus/env` vs `.env.nexus.local`
+
+Users familiar with dotenv conventions sometimes confuse these two files:
+
+| File | Owner | Content | Git-tracked |
+|------|-------|---------|-------------|
+| `.nexus/env` | Platform — written by `nexus pull` | Non-sensitive plugin config (`HEADROOM_*`, etc.) | No (`env` in `.nexus/.gitignore`) |
+| `.env.nexus.local` | Developer — maintained manually | Project secrets (`ANTHROPIC_API_KEY`, etc.) | No (`.env.nexus.local` in `.gitignore`) |
+
+**Rule of thumb:** never put secrets in `.nexus/env` and never put plugin
+config in `.env.nexus.local`. The files serve different purposes and have
+different owners.
+
+### Troubleshooting
+
+**Plugin runs in observe mode instead of transform**
+
+The plugin defaults to `observe` when the preflight check fails or
+`HEADROOM_MODE` is not set. Diagnose with:
+
+```bash
+nexus run --dry-run    # check HEADROOM_MODE value and source
+```
+
+If `HEADROOM_MODE` shows `observe` in the dry-run output, run `nexus pull` to
+refresh `.nexus/env` from the platform. If the variable is missing entirely,
+check **Project > Agent Setup > Plugins** in the dashboard and confirm Headroom
+is enabled.
+
+If `HEADROOM_MODE` shows `transform` in the dry-run but observe in practice,
+check the plugin log:
+
+```bash
+HEADROOM_DEBUG=true nexus run   # writes .nexus/headroom-intercept.jsonl
+```
+
+**`nexus run` exits with "tool not found"**
+
+The tool binary (`opencode` by default) must be on `$PATH`. Install OpenCode
+globally or specify the full path:
+
+```bash
+nexus run --tool /usr/local/bin/opencode
+```
+
 ## Preflight checks
 
 `nexus preflight` validates the local environment is ready for Nexus:

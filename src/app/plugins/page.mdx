@@ -210,92 +210,58 @@ compress candidates above the per-profile token threshold.
 | `entity-detail` | `nexus_kb_get` (single entity) | 3 000 |
 | `session-history` | Session-related reads | 1 500 |
 
-## Distribution
+**Observed compression ratios (v0.5.9, transform mode):**
 
-Plugins are distributed as **code-mirrors** — the TypeScript source lives in each project's `.opencode/plugins/` directory. They are not published to npm. Updates are synced via `nexus pull` (agent files mechanism).
+| Tool call | Original tokens | Compressed tokens | Reduction |
+|-----------|----------------|-------------------|-----------|
+| `nexus_kb_memory` (depth: standard, 54 ADRs) | 11 252 | 950 | **91.6 %** |
+| `nexus_dispatch_sweep` (3 dispatches) | 620 | 232 | **62.6 %** |
+| `nexus_kb_memory` (depth: deep, 17 tasks, 20 ADRs) | 6 868 | 981 | **85.7 %** |
 
-### Installation
+Typical session savings with transform mode active: **10 000–15 000 tokens per session**.
 
-1. Copy the plugin file to `.opencode/plugins/` in your project
-2. Ensure `@opencode-ai/plugin` is declared in `.opencode/package.json`
-3. Set the required environment variables (`NEXUS_API_URL`, `NEXUS_PRIVATE_TOKEN`)
-4. Restart OpenCode
+### Verify the plugin is in transform mode
 
-When using `nexus init` or `nexus pull`, recommended plugins are downloaded automatically based on your project wizard selection — no manual copy needed.
+After launching OpenCode via `nexus run`, check the plugin log to confirm
+the plugin loaded in `transform` mode:
 
-### Requirements
+```bash
+HEADROOM_DEBUG=true nexus run   # enables JSONL event log
+```
 
-- [OpenCode](https://opencode.ai) v1.14+ with plugin support
-- A Nexus platform account with MCP access configured
-- `NEXUS_API_URL` and `NEXUS_PRIVATE_TOKEN` environment variables
+Then inspect `.nexus/headroom-intercept.jsonl`:
 
-## Auto-assignment rules
+```jsonl
+{"event":"plugin_loaded","mode":"transform","version":"0.5.9","ts":"..."}
+{"event":"tool_intercepted","tool":"nexus_kb_memory","profile":"reference-data","original_tokens":11252,"compressed_tokens":950,"ts":"..."}
+```
 
-OpenCode plugins are only distributed to projects where the agent owner is set to `opencode` or `both`. Projects using `claude-cli` exclusively will not receive plugin files during `nexus pull`.
+The `plugin_loaded` event confirms the mode. If you see `"mode":"observe"` the
+env vars are not reaching the main process — run `nexus run --dry-run` to
+diagnose (see [CLI — Troubleshooting](/cli#nexus-run)).
 
-<div className="not-prose mt-8">
-  <Button href="https://github.com/gwnexus/nexus-oc-plugins" variant="text" arrow="right">
-    <>View on GitHub</>
-  </Button>
-</div>
+### Cache and retrieval
 
-# Plugins
+Compressed originals are stored in `.nexus/headroom-cache/<project-id>/` as
+JSON files keyed by content hash. The cache has a **TTL of 24 hours** — files
+older than 24 h are pruned automatically at startup.
 
-OpenCode plugins that extend the Nexus agent runtime with platform-aware behavior. {{ className: 'lead' }}
+```
+.nexus/
+  headroom-cache/
+    fdc7a78c-d0b9-46fd-8206-9fc57301de2d/
+      89e0f545a3b1....json    # original nexus_kb_memory response
+      3f2c1a09d7e4....json
+  headroom-intercept.jsonl    # debug log (only when HEADROOM_DEBUG=true)
+```
 
-Nexus ships open-source OpenCode plugins that integrate session tracking, context preservation across compaction events, and token usage and cost visibility. Plugins are distributed as TypeScript source files via `nexus init` / `nexus pull` and load automatically from the `.opencode/plugins/` directory at startup.
+Retrieval is gated by two limits set in `.nexus/env`:
 
-<div className="not-prose mt-6 mb-16 flex gap-3">
-  <Button href="https://github.com/gwnexus/nexus-oc-plugins" variant="outline">
-    <>View on GitHub</>
-  </Button>
-</div>
+- `HEADROOM_RETRIEVAL_MAX_LINES` (default: 200) — max lines per retrieval
+- `HEADROOM_RETRIEVAL_MAX_CHARS` (default: 24 000) — max characters per retrieval
 
-## nexus-compaction-plus
-
-**Version:** v1.8.0
-
-Preserves Nexus session context across OpenCode compaction events and records each compaction as an auditable entry in the active Nexus session. Ensures resuming agents have full context even after context window compaction.
-
-### Hooks
-
-<Properties>
-  <Property name="experimental.session.compacting" type="hook">
-    Fires before compaction. Injects active session and project IDs into the compaction prompt so the post-compaction agent retains Nexus context.
-  </Property>
-  <Property name="event (session.compacted)" type="hook">
-    Fires after compaction. Records a compaction entry in the Nexus session via the REST API, including token counts and compaction metadata.
-  </Property>
-</Properties>
-
-## nexus-cost-control
-
-**Version:** v2.0.0
-
-Tracks token usage and estimated cost for the current Nexus session by aggregating data from OpenCode's native `AssistantMessage` objects. No external dependencies — all data is sourced locally from the OpenCode session.
-
-### Custom tools
-
-<Properties>
-  <Property name="nexus_cost_summary" type="tool">
-    On-demand cost snapshot with input/output/reasoning/cache token counts and estimated cost in USD.
-  </Property>
-  <Property name="nexus_show_plugins" type="tool">
-    Discovers all loaded Nexus plugins, versions, API connection status, and registered hooks.
-  </Property>
-</Properties>
-
-### Events
-
-<Properties>
-  <Property name="session.idle" type="event">
-    Auto-appends cost snapshots to the active Nexus session timeline (debounced: 5 min).
-  </Property>
-</Properties>
-
-### Startup notification
-
-On load, each plugin shows a TUI toast confirming its name, version, and API connection status. Use the `/nexus-show-plugins` command to display detailed plugin information on demand.
+Set `HEADROOM_ALLOW_FULL_RETRIEVAL=true` (in `.nexus/env` or via the dashboard)
+to allow agents to retrieve the complete original without line/char limits.
 
 ## Distribution
 

@@ -1,7 +1,7 @@
 export const metadata = {
   title: 'nexus-mcp — MCP Server',
   description:
-    'The nexus-mcp server is the specification layer between your AI agents and the Nexus knowledge platform. Over 60 tools for knowledge access, coordination, and governance.',
+    'The nexus-mcp server is the specification layer between your AI agents and the Nexus knowledge platform. 62 tools for knowledge access, coordination, and governance.',
 }
 
 export const sections = [
@@ -10,6 +10,7 @@ export const sections = [
   { title: 'Tool layers', id: 'tool-layers' },
   { title: 'Tool naming convention', id: 'tool-naming-convention' },
   { title: 'Configuration', id: 'configuration' },
+  { title: 'Schema version envelope', id: 'schema-version-envelope' },
   { title: 'Skill lifecycle', id: 'skill-lifecycle' },
   { title: 'Auto-ingested scan reports', id: 'auto-ingested-scan-reports' },
   { title: 'Known issues', id: 'known-issues' },
@@ -19,7 +20,7 @@ export const sections = [
 
 The MCP server that connects your AI agents to the Nexus platform. {{ className: 'lead' }}
 
-`nexus-mcp` exposes 60+ structured tools across six families — sessions, knowledge, decisions, dispatch, tasks, and skills. It communicates exclusively with the Nexus HTTP API and holds no direct database credentials. Installed automatically when you run `nexus init`.
+`nexus-mcp` exposes **62 structured tools** across four layers — knowledge access, coordination, governance, and reviews. It communicates exclusively with the Nexus HTTP API and holds no direct database credentials. Installed automatically when you run `nexus init`.
 
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="/mcp-tools" arrow="right">
@@ -46,7 +47,7 @@ Or install globally:
 npm install -g @gwdn/nexus-mcp
 ```
 
-Published on npm as [`@gwdn/nexus-mcp`](https://www.npmjs.com/package/@gwdn/nexus-mcp). Current version: **v0.9.0**.
+Published on npm as [`@gwdn/nexus-mcp`](https://www.npmjs.com/package/@gwdn/nexus-mcp). Current version: **v0.10.3**.
 
 ## Architecture
 
@@ -71,9 +72,9 @@ Identity is resolved once at startup via `GET /api/mcp/identity` using the `NEXU
 
 ## Tool layers
 
-The server organizes its 60+ tools into four layers:
+The server organizes its 62 tools into four layers:
 
-### Layer 1 — Knowledge Access (5 tools)
+### Layer 1 — Knowledge Access (6 tools)
 
 | Tool | Description |
 | --- | --- |
@@ -82,13 +83,14 @@ The server organizes its 60+ tools into four layers:
 | `kb_get` | Retrieve a specific entity by type and ID |
 | `kb_related` | Find entities related to a given entity |
 | `project_list` | List accessible projects |
+| `project_update` | Patch project readme and/or description |
 
-### Layer 2 — Coordination (54 tools)
+### Layer 2 — Coordination (48 tools)
 
 | Group | Tools |
 | --- | --- |
 | **Sessions** | `session_create`, `session_close`, `session_list`, `session_append` |
-| **Tasks** | `task_create`, `task_update`, `task_list`, `task_note` |
+| **Tasks** | `task_create`, `task_update`, `task_delete`, `task_list`, `task_note` |
 | **Dispatch** | `dispatch_create`, `dispatch_reply`, `dispatch_inbox`, `dispatch_outbox`, `dispatch_ack`, `dispatch_assign`, `dispatch_forward`, `dispatch_resolve`, `dispatch_close`, `dispatch_sweep`, `dispatch_get`, `dispatch_related` |
 | **Dispatch (legacy)** | `vl_create`, `vl_reply`, `vl_inbox`, `vl_outbox`, `vl_ack` |
 | **Documents** | `doc_ingest`, `doc_list`, `doc_classify`, `doc_update`, `doc_delete` |
@@ -171,6 +173,19 @@ After `nexus init`, your agent config contains an entry like:
 | `NEXUS_MODEL` | No | Model identifier injected into session metadata (e.g. `claude-sonnet-4.6`) |
 | `NEXUS_TOOLSTACK` | No | Toolstack identifier for session metadata (e.g. `opencode`, `claude-code`) |
 
+## Schema version envelope
+
+Since v0.10.0, structured tool responses are wrapped in a version envelope:
+
+```json
+{
+  "schema": "nexus.{tool-name}.v1",
+  "data": { ... }
+}
+```
+
+The `schema` field identifies the response shape and version, enabling forward-compatible parsing. Currently 12 tools emit this envelope. Tools that return simple confirmations or single-value results may omit the envelope.
+
 ## Skill lifecycle
 
 Skills are managed centrally in the Nexus platform and delivered to agents at runtime.
@@ -202,6 +217,10 @@ When agents append a session entry with `entry_type` set to `security_scan` or `
 
 ## Known issues
 
+### task_note actor constraint (fixed in v0.10.1)
+
+`nexus_task_note` previously returned `Database operation failed` in some environments. Root cause: the `task_notes.actor` column is a UUID FK referencing `auth.users`. Prior versions passed a display name or email string, violating the constraint. Fixed in nexus-mcp v0.10.1 and the nexus-hub backend.
+
 ### npx cache prevents version upgrade
 
 When using `npx` to run the MCP server, npm caches the resolved package in `~/.npm/_npx/`. Subsequent invocations may continue to use the cached (outdated) version even after a new release is published.
@@ -219,6 +238,6 @@ find ~/.npm/_npx -path "*/node_modules/@gwdn/nexus-mcp" -type d \
 
 <div className="not-prose mt-8">
   <Button href="/mcp-tools" variant="text" arrow="right">
-    <>Browse all 60+ tools</>
+    <>Browse all 62 tools</>
   </Button>
 </div>

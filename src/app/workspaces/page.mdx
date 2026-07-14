@@ -57,6 +57,24 @@ The Nexus CLI pulls workspace forks and materializes them as local Devbox config
 | `nexus pull --scope workspace` | Download the active workspace fork and write `devbox.json` + init scripts |
 | `nexus status` | Shows workspace fork status including upstream change detection |
 
+### Files written by nexus pull
+
+`nexus pull` writes or updates the following files in the `.nexus/` workspace cache:
+
+| File | Description | Git-tracked |
+| --- | --- | --- |
+| `AGENTS.md` | Auto-generated agent identity and role definition | No |
+| `CLAUDE.md` | Claude-specific agent context and cross-reference | No |
+| `skills/*.md` | Cached skill files for offline reference and IDE autocompletion | No |
+| `.nexus/env` | Plugin configuration vars (`HEADROOM_*`, etc.) — non-sensitive, fully overwritten on every pull | No |
+| `opencode.json` | MCP server config, plugin assignments, and Headroom MCP block | Project-dependent |
+
+`.nexus/env` is the platform-managed source for all OpenCode plugin environment
+variables. It is git-ignored and must never be edited manually — changes in the
+Nexus dashboard propagate here on the next `nexus pull`. Use
+[`nexus run`](/cli#nexus-run) to launch OpenCode with these vars automatically
+injected into the child process.
+
 ## devbox.json reference
 
 The `devbox.json` file is the heart of every Nexus workspace. It defines a reproducible, Nix-based development environment.
