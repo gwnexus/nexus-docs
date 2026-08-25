@@ -1,4 +1,12 @@
 node_modules/
 .next/
-.env*.local
+.env
+.env.*
+!.env.example
 *.tsbuildinfo
+
+# Secrets and keys
+*.pem
+*.key
+*.p12
+gitleaks-report.json
