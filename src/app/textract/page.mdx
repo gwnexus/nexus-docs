@@ -1,0 +1,50 @@
+export const metadata = {
+  title: 'Document Extraction (Textract)',
+  description: 'Alpha AWS Textract pipeline for asynchronous document text extraction, gated by confidentiality and feature flags.',
+}
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Access requirements', id: 'access-requirements' },
+  { title: 'Extraction status', id: 'extraction-status' },
+  { title: 'Confidentiality gating', id: 'confidentiality-gating' },
+]
+
+# Document Extraction (Textract)
+
+Asynchronous document text extraction powered by AWS Textract. {{ className: 'lead' }}
+
+<Note>
+  Textract extraction is an alpha capability. It is gated behind the `textract_extraction` feature flag and the confidentiality action-gating framework, so it is not available by default.
+</Note>
+
+Introduced in v0.12.0, the Textract pipeline extracts text from uploaded documents asynchronously. Access is controlled at two layers: a per-user feature flag and the project confidentiality policy.
+
+## Overview
+
+- Asynchronous extraction: documents are queued and processed in the background
+- Per-document status badges reflect the current extraction state
+- Extracted text feeds the existing document and search subsystems
+
+## Access requirements
+
+A user can trigger extraction only when both conditions hold.
+
+1. The user holds the `textract_extraction` [feature flag](/feature-flags).
+2. The project confidentiality policy permits extraction for the target project (see below).
+
+## Extraction status
+
+Each document surfaces a status badge indicating where it is in the pipeline. Status is shown per document in the documents view so users can see at a glance which documents have been processed.
+
+## Confidentiality gating
+
+Extraction is a gated action under [Confidentiality Action Gating](/confidentiality).
+
+- For lower-severity projects, extraction is allowed.
+- For medium-severity projects (C.2 and C.3), extraction is gated: it returns `warn_and_override`, and proceeding requires an explicit override that is written to the [audit trail](/audit-siem).
+- Higher-severity classifications block external processing at the AI-routing layer.
+
+<Note>
+  Because Textract is an external AWS service, extraction on classified projects is governed by the same confidentiality principle that blocks external model providers.
+</Note>

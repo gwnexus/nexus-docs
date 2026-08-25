@@ -1,0 +1,63 @@
+export const metadata = {
+  title: 'Confidentiality Action Gating',
+  description: 'Policy-based gating of sensitive actions against project confidentiality severity, with allow, warn-and-override, and block outcomes.',
+}
+
+export const sections = [
+  { title: 'How it works', id: 'how-it-works' },
+  { title: 'Policy outcomes', id: 'policy-outcomes' },
+  { title: 'Severity levels', id: 'severity-levels' },
+  { title: 'Override and audit trail', id: 'override-and-audit-trail' },
+  { title: 'Evaluation endpoint', id: 'evaluation-endpoint' },
+]
+
+# Confidentiality Action Gating
+
+Policy-based control of sensitive actions, evaluated against each project's confidentiality severity. {{ className: 'lead' }}
+
+Introduced in v0.12.0 (ADR-0079), confidentiality action gating decides whether a sensitive action may proceed, must warn the user first, or is blocked outright. It complements the existing confidentiality-aware AI routing (which blocks external model providers for classified projects) by extending the same principle to user- and agent-initiated actions.
+
+<Note>
+  Action gating governs actions such as document extraction. AI routing governs which model providers may process project data. Both derive from the project confidentiality severity.
+</Note>
+
+## How it works
+
+Every gated action is evaluated by a server-side policy engine before it runs. The engine takes the action, the project confidentiality severity, and the acting identity, and returns one of three outcomes.
+
+1. The client requests a gated action.
+2. The backend evaluates the request via `POST /api/confidentiality-gate`.
+3. The engine returns an outcome: `allow`, `warn_and_override`, or `block`.
+4. The client proceeds, prompts for an override, or is denied accordingly.
+
+## Policy outcomes
+
+| Outcome | Meaning | Client behavior |
+| --- | --- | --- |
+| `allow` | The action is permitted for this severity | Proceed silently |
+| `warn_and_override` | The action is sensitive but may proceed with an explicit acknowledgment | Show the override dialog; record the override if confirmed |
+| `block` | The action is not permitted for this severity | Deny the action |
+
+## Severity levels
+
+Confidentiality severity is a per-project attribute. Gating decisions are keyed to the severity band. Medium-severity projects (C.2 and C.3) are the primary target of extraction gating: document text extraction via Textract is gated for these projects rather than blocked outright, so a user with authority can override with an audit record.
+
+<Note>
+  Higher-severity classifications continue to fully block external processing at the AI-routing layer. Action gating adds a graduated response for medium-severity projects.
+</Note>
+
+## Override and audit trail
+
+When an action returns `warn_and_override`, the user is presented with a confidentiality override dialog. Confirming the override writes a permanent record to the audit trail, including the actor, the action, the project, and the timestamp. Overrides are not silent and cannot be retracted from the log; they are surfaced in the Admin Audit Log alongside other security-relevant events.
+
+See [Audit Log and SIEM](/audit-siem) for how override events are stored, filtered, and exported.
+
+## Evaluation endpoint
+
+<Properties>
+  <Property name="POST /api/confidentiality-gate" type="endpoint">
+    Server-side evaluation of a gated action. Returns the policy outcome for the given action, project, and identity.
+  </Property>
+</Properties>
+
+The endpoint is the single source of truth for gating decisions. Clients must not infer outcomes locally; the server evaluates every request so that policy changes take effect immediately and every override is recorded centrally.

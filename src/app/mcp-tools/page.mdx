@@ -6,10 +6,19 @@ export const sections = []
 
 # MCP Tool Index
 
-Complete reference for all 62 tools exposed by `nexus-mcp`. {{ className: 'lead' }}
+Complete reference for the tools exposed by `nexus-mcp`. {{ className: 'lead' }}
 
 <Note>
-  This page is under construction. Full tool reference coming soon.
+  This page is under construction. Full tool reference coming soon. The authoritative tool count and version are published by `nexus-mcp`; consult its release for the exact number rather than relying on a fixed count here.
 </Note>
 
 See the [nexus-mcp page](/mcp-server) for an overview of tool families. The full tool reference with parameters, examples, and response schemas will be published here.
+
+## Workspace sync actions
+
+Added in v0.12.0.
+
+| Action | Description |
+| --- | --- |
+| `ws_push` | Push workspace changes. In v0.12.1 this action gains a dedicated write role and atomic fork replacement. |
+| `af_status` | Report agent-file sync status for the workspace. |

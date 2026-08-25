@@ -1,0 +1,58 @@
+export const metadata = {
+  title: 'Feature Flags',
+  description: 'Per-user, time-limited, revocable feature flags that gate access to alpha capabilities.',
+}
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Available flags', id: 'available-flags' },
+  { title: 'Flag properties', id: 'flag-properties' },
+  { title: 'Administration', id: 'administration' },
+]
+
+# Feature Flags
+
+Per-user entitlements that gate access to alpha capabilities. {{ className: 'lead' }}
+
+<Note>
+  Feature flags are an alpha capability. They are an entitlement mechanism, not a general-availability switch: a flag grants one user time-limited, revocable access to a gated feature.
+</Note>
+
+Introduced in v0.12.0, feature flags let administrators grant selected users access to capabilities that are not generally available. A flag is scoped to a single user, can carry an expiry, and can be revoked at any time.
+
+## Overview
+
+- **Per-user** — a grant applies to one user, not to a whole tenant
+- **Time-limited** — a flag can expire automatically
+- **Revocable** — an administrator can revoke a flag immediately
+- **Admin-managed** — flags are toggled from an admin UI
+
+## Available flags
+
+| Flag | Gates |
+| --- | --- |
+| `textract_extraction` | AWS Textract document extraction (see [Document Extraction](/textract)) |
+| `knowledge_graph` | Knowledge graph capability (alpha) |
+| `llm_bridge` | LLM bridge capability (alpha) |
+| `ci_bridge` | CI bridge capability (alpha) |
+
+## Flag properties
+
+<Properties>
+  <Property name="user" type="uuid">
+    The user the grant applies to.
+  </Property>
+  <Property name="flag" type="string">
+    The capability being gated (for example `textract_extraction`).
+  </Property>
+  <Property name="expires_at" type="timestamp">
+    Optional expiry. After this time the grant no longer applies.
+  </Property>
+  <Property name="revoked" type="boolean">
+    Whether the grant has been revoked. Revocation takes effect immediately.
+  </Property>
+</Properties>
+
+## Administration
+
+Flags are managed through an admin toggle UI. The underlying `user_feature_flags` table is service-role scoped, so grants can only be created and changed through server-side administrative paths, not through end-user clients. See [Security and Hardening](/security).

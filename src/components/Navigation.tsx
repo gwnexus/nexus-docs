@@ -249,6 +249,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'nexus-cli',      href: '/cli' },
       { title: 'nexus-link',     href: '/nexus-link' },
       { title: 'Plugins',        href: '/plugins' },
+      { title: 'Document Extraction', href: '/textract' },
     ],
   },
   {
@@ -275,10 +276,20 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
+    title: 'Security',
+    links: [
+      { title: 'Confidentiality Gating', href: '/confidentiality' },
+      { title: 'Audit & SIEM',           href: '/audit-siem' },
+      { title: 'Feature Flags',          href: '/feature-flags' },
+      { title: 'Security & Hardening',   href: '/security' },
+    ],
+  },
+  {
     title: 'Reference',
     links: [
       { title: 'MCP Tool Index', href: '/mcp-tools' },
       { title: 'REST API',       href: '/api' },
+      { title: 'Platform Settings', href: '/platform-settings' },
       { title: 'Changelog',      href: '/changelog' },
       { title: 'Roadmap',        href: '/roadmap' },
     ],

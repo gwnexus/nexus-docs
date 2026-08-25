@@ -1,0 +1,61 @@
+export const metadata = {
+  title: 'Security and Hardening',
+  description: 'Security posture of the Nexus platform: access-policy scoping, fail-closed guards, secret scanning, and safe export encoding.',
+}
+
+export const sections = [
+  { title: 'Access policy scoping', id: 'access-policy-scoping' },
+  { title: 'Fail-closed guards', id: 'fail-closed-guards' },
+  { title: 'Secret scanning', id: 'secret-scanning' },
+  { title: 'Safe export encoding', id: 'safe-export-encoding' },
+  { title: 'Related controls', id: 'related-controls' },
+]
+
+# Security and Hardening
+
+The platform-level security controls that protect tenant data, audit integrity, and the deployment pipeline. {{ className: 'lead' }}
+
+This page collects the security posture hardening shipped in v0.12.0. It complements the confidentiality model ([action gating](/confidentiality) and AI routing) and the [audit and SIEM](/audit-siem) subsystem.
+
+## Access policy scoping
+
+Sensitive tables are scoped to the service role so that they cannot be read or written through the standard request-scoped client.
+
+- `user_feature_flags` — feature-flag grants are managed only through server-side, service-role paths
+- `audit_events` — audit records are write-only from application code and never exposed to end-user clients
+
+This prevents privilege escalation via direct table access and keeps the audit trail tamper-resistant.
+
+## Fail-closed guards
+
+Guards default to denying the operation when preconditions are not met.
+
+- **Staging seed guard** — the staging database seed refuses to run unless an explicit target allowlist is provided and the connection is HTTPS. A misconfigured or unexpected target aborts the seed rather than proceeding.
+
+<Note>
+  Fail-closed means the safe default is to stop. An unset or ambiguous configuration results in denial, not a best-effort attempt.
+</Note>
+
+## Secret scanning
+
+- **gitleaks pre-commit hook** — runs fail-closed. A commit that would introduce a secret is blocked before it can enter history.
+
+This keeps credentials, tokens, and private keys out of the repository at the earliest possible point.
+
+## Safe export encoding
+
+- **CEF output escaping** — the SIEM CEF export escapes field values on the server so that event data cannot inject or break out of CEF fields in downstream parsers.
+
+See [Audit Log and SIEM](/audit-siem) for the export endpoints and formats.
+
+## Related controls
+
+The following controls documented elsewhere form part of the same security posture.
+
+| Control | Where |
+| --- | --- |
+| Confidentiality action gating | [Confidentiality Action Gating](/confidentiality) |
+| Audit log and SIEM export | [Audit Log and SIEM](/audit-siem) |
+| Feature-flag entitlements | [Feature Flags](/feature-flags) |
+| C&C channel security (Ed25519, AES-256-GCM) | [Changelog v0.8.0](/changelog#v0-8-x) |
+| Envelope encryption | [Changelog v0.6.10](/changelog#v0-6-x) |

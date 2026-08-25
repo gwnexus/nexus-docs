@@ -1,0 +1,63 @@
+export const metadata = {
+  title: 'Audit Log and SIEM',
+  description: 'Admin audit log with search and filtering, plus SIEM export in NDJSON and CEF formats via token-authenticated endpoints.',
+}
+
+export const sections = [
+  { title: 'Admin Audit Log', id: 'admin-audit-log' },
+  { title: 'SIEM export', id: 'siem-export' },
+  { title: 'Export formats', id: 'export-formats' },
+  { title: 'SIEM tokens', id: 'siem-tokens' },
+]
+
+# Audit Log and SIEM
+
+A centralized, searchable record of security-relevant events, with export to external SIEM systems. {{ className: 'lead' }}
+
+Introduced in v0.12.0, the audit subsystem captures security-relevant platform events (including confidentiality overrides) and makes them available both in the dashboard and as a machine-readable export for security information and event management (SIEM) pipelines.
+
+## Admin Audit Log
+
+The Admin Audit Log lives at `/dashboard/admin/audit-log` and is available to administrators.
+
+- Full-text search across audit events
+- Filter by severity and by flag
+- Event detail view for inspecting a single event's full context
+
+Events recorded here include confidentiality overrides (see [Confidentiality Action Gating](/confidentiality)) and other security-relevant mutations.
+
+## SIEM export
+
+Audit events can be streamed to an external SIEM using a token-authenticated endpoint.
+
+<Properties>
+  <Property name="GET /api/siem/events" type="endpoint">
+    Token-authenticated export of audit events. Authenticate with a SIEM token (`nxs_siem_*` prefix). Returns NDJSON or CEF.
+  </Property>
+  <Property name="GET /api/admin/audit-events/export" type="endpoint">
+    Admin download of audit events for offline analysis.
+  </Property>
+</Properties>
+
+## Export formats
+
+| Format | Description | Use case |
+| --- | --- | --- |
+| NDJSON | Newline-delimited JSON, one event per line | Ingestion into log pipelines and JSON-native SIEMs |
+| CEF | Common Event Format | Ingestion into CEF-compatible SIEMs (for example ArcSight) |
+
+<Note>
+  CEF output is escaped on the server to prevent field-injection into downstream SIEM parsers. See [Security and Hardening](/security).
+</Note>
+
+## SIEM tokens
+
+SIEM export is authenticated with dedicated tokens carrying the `nxs_siem_*` prefix. Token management is owner-only.
+
+- **One-time display** — the secret is shown once at creation and never again
+- **Expiry** — tokens can be given a configurable expiry
+- **Revoke** — tokens can be revoked immediately
+
+<Note>
+  Store the SIEM token securely at creation time. It cannot be retrieved later; a lost token must be revoked and replaced.
+</Note>

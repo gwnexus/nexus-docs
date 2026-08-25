@@ -4,6 +4,8 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.12.0', id: 'v0-12-0' },
+  { title: 'v0.11.x', id: 'v0-11-x' },
   { title: 'v0.10.3', id: 'v0-10-3' },
   { title: 'v0.10.1', id: 'v0-10-1' },
   { title: 'v0.10.0', id: 'v0-10-0' },
@@ -21,6 +23,129 @@ export const sections = [
 # Changelog
 
 Full release history for the Nexus platform and its tools. {{ className: 'lead' }}
+
+---
+
+## v0.12.0 — August 2026
+
+**Confidentiality Action Gating, Audit + SIEM, Feature Flags, and Textract**
+
+A large feature and security release. It introduces confidentiality-aware action gating, an admin audit log with SIEM export, per-user feature flags, and an alpha document-extraction pipeline.
+
+### Feature: Confidentiality-Aware Action Gating (ADR-0079)
+
+- Policy engine that evaluates sensitive actions against project confidentiality severity and returns one of three outcomes: `allow`, `warn_and_override`, or `block`
+- Textract extraction is gated for medium-severity (C.2/C.3) projects
+- Confidentiality override dialog with a permanent override audit trail
+- New server-side evaluation endpoint: `POST /api/confidentiality-gate`
+
+### Feature: Admin Audit Log + SIEM Export
+
+- Admin Audit Log at `/dashboard/admin/audit-log` with full-text search, severity and flag filters, and an event detail view
+- SIEM export via `GET /api/siem/events` with token authentication (`nxs_siem_*` prefix), returning NDJSON and CEF formats
+- Admin download at `GET /api/admin/audit-events/export`
+- SIEM token management: owner-only, one-time secret display, configurable expiry, and revoke
+
+### Feature: Feature Flags (Alpha)
+
+- Per-user, time-limited, revocable feature flags with an admin toggle UI
+- Initial flags: `textract_extraction`, `knowledge_graph`, `llm_bridge`, `ci_bridge`
+- Flags are an entitlement mechanism, not a general-availability switch
+
+### Feature: AWS Textract Pipeline (Alpha)
+
+- Asynchronous document text extraction, gated behind the confidentiality action-gating framework and the `textract_extraction` feature flag
+- Per-document status badges reflecting extraction state
+
+### Feature: Platform + User Settings
+
+- Tenant management with name and slug editor, plus tabbed platform settings
+- Editable user profiles and password change for email-auth accounts
+- Landing-page tree picker navigation
+
+### CodeRabbit Review Workflow
+
+- New `coderabbit_review` ingest-document classification and `coderabbit_fix` task category
+- Surfaced with badges, icons, and quick filters across the documents and tasks views
+
+### Operational Tooling
+
+- Three-file environment model: `.env.shared` + `.env.staging` + `.env.production`
+- Deploy pipeline via Makefile, Sentry environment and release correlation, and S3 structured logging
+- Workspace sync API: new `ws_push` and `af_status` MCP actions
+
+### Security Posture
+
+- Service-role access policy scoping for `user_feature_flags` and `audit_events`
+- Fail-closed staging seed guard requiring an explicit target allowlist and HTTPS
+- gitleaks fail-closed pre-commit hook
+- CEF output escaping for SIEM export
+
+<Note>
+  For MCP tool additions in this release (`ws_push`, `af_status`), see the [MCP Tool Index](/mcp-tools). The authoritative tool count and version are published by `nexus-mcp`.
+</Note>
+
+---
+
+## v0.11.x — July to August 2026
+
+The 0.11 line focused on cross-project knowledge access, public product pages, observability, and workspace editing.
+
+### v0.11.12 — August 14, 2026
+
+- **WorkspaceIDE script editor** (ADR-0076)
+- **Tabbed fork edit view** (ADR-0077)
+- **Package table** with bidirectional JSON sync
+
+### v0.11.11 — August 10, 2026
+
+- **Personal address** (nickname / first name) with a `nickname` column on profiles
+- **CURRENT USER block** injected into generated agent files
+
+### v0.11.10 — August 8, 2026
+
+- Patch release. See the nexus-hub `CHANGELOG.md` for the full bullet detail.
+
+### v0.11.9 — August 5, 2026
+
+- **Ingest document Source/Preview toggle**
+- **`pr_draft` classification type** for ingest documents
+
+### v0.11.8 — August 5, 2026
+
+- **Dashboard ADR section** with ADR search and status filter
+
+### v0.11.7 — July 29, 2026
+
+- **Time investment widget** and time-stats API
+
+### v0.11.6 — July 24, 2026
+
+- **`/why-nexus` product story page** and a living design-system page
+
+### v0.11.5 — July 21, 2026
+
+- **ISR for public pages** and critical CSS inlining
+
+### v0.11.4 — July 19, 2026
+
+- **Sentry integration** and session timeline filter tabs
+
+### v0.11.3 — July 17, 2026
+
+- **FAQ / Why-Nexus page** and landing page
+
+### v0.11.2 — July 16, 2026
+
+- **Shared DataTable and CardGrid components**
+
+### v0.11.1 — July 16, 2026
+
+- **User UI preferences** and document versioning
+
+### v0.11.0 — July 14, 2026
+
+- **Cross-Project Knowledge Browser** and public API routes
 
 ---
 

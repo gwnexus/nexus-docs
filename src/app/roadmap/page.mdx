@@ -17,7 +17,7 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ## Upcoming
 
-### v1.0.0-beta — August 2026
+### v1.0.0-beta — Planned
 
 **Production-ready release**
 
@@ -30,37 +30,68 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ---
 
-### v0.11.0 — Planned
+### v0.13.0 — Planned
 
-**Self-hosted stack, Helm charts, and intelligence layer**
+**Self-hosted, multi-tenant, and org-scoped routing**
 
-- Helm charts for full Nexus stack (webapp, MCP server, Supabase, Caddy) on user-owned Kubernetes clusters
-- Community/Pro self-hosted deployment with zero license enforcement and no phone-home
-- One-command deployment for single-node setups via Docker Compose
-- Configuration wizard for self-hosted setup: database, storage, auth, and domain
-- Cross-project vector search: pgvector-based semantic retrieval across all project documents and knowledge
-- Comprehensive audit trail with event sourcing for all platform mutations
-- Advanced session analytics with trend visualization and team productivity insights
-- Multi-tenant SaaS onboarding with self-service registration and tenant provisioning
+- Self-hosted / multi-tenant deployment model
+- Org-scoped URL routing (ADR-0081)
 - Stripe billing integration with metered usage tracking and invoice generation
+- Self-service tenant onboarding and provisioning
+- Helm charts for the full Nexus stack (webapp, MCP server, Supabase, Caddy) on user-owned Kubernetes clusters
+- One-command deployment for single-node setups via Docker Compose
 
 ---
 
 ## In progress
 
-### v0.10.x — Actor Refinements, Dark Mode Polish & Customer Analytics
+### v0.12.1 — Patch
 
-- Dark mode content-level polish across all dashboard pages
-- Customer Statistics Card: dark capability-card-style metrics panel
-- Actor metrics and activity tracking (daily aggregation, ratings)
-- Actor semantic search embedding (profile + capabilities indexed)
-- Landing page: Actor System feature promotion section
-- Actor Profile Normalizer CLI: `nexus actors normalize/validate/import`
-- FAQ: Nexus Actors section (9 answered questions)
+**Stabilization and hardening (nexus-hub issues #4 to #14)**
+
+- Request-scoped RLS restoration for dashboard reads
+- `ws_push` write-role plus atomic fork replacement
+- Extraction-job claim race fix
+- SNS signature verification
+- Accessibility cluster fixes
+- Script hardening
 
 ---
 
 ## Released
+
+### v0.12.0 — August 2026
+
+**Confidentiality Action Gating, Audit + SIEM, Feature Flags, and Textract**
+
+- Confidentiality-aware action gating (ADR-0079): policy outcomes allow / warn_and_override / block, Textract gating for C.2/C.3 projects, override dialog with permanent audit trail, and `POST /api/confidentiality-gate`
+- Admin Audit Log at `/dashboard/admin/audit-log` with SIEM export (`GET /api/siem/events`, NDJSON + CEF) and owner-only SIEM token management
+- Per-user feature flags (alpha): `textract_extraction`, `knowledge_graph`, `llm_bridge`, `ci_bridge` with admin toggle UI
+- AWS Textract extraction pipeline (alpha), gated by confidentiality and feature flag
+- Platform and user settings: tenant management, tabbed settings, editable profiles, password change, landing-page tree picker
+- CodeRabbit review workflow: `coderabbit_review` classification and `coderabbit_fix` task category
+- Security posture: service-role scoping, fail-closed staging seed guard, gitleaks pre-commit, CEF output escaping
+- Workspace sync API: `ws_push` and `af_status` MCP actions
+
+---
+
+### v0.11.0 — July to August 2026
+
+**Cross-Project Knowledge, Public Pages, Observability & Workspace Editing**
+
+- Cross-Project Knowledge Browser and public API routes (0.11.0)
+- User UI preferences and document versioning (0.11.1)
+- Shared DataTable and CardGrid components (0.11.2)
+- FAQ / Why-Nexus and landing pages (0.11.3, 0.11.6)
+- Sentry integration and session timeline filter tabs (0.11.4)
+- ISR for public pages and critical CSS inlining (0.11.5)
+- Time investment widget and time-stats API (0.11.7)
+- Dashboard ADR section with search and status filter (0.11.8)
+- Ingest Source/Preview toggle and `pr_draft` classification (0.11.9)
+- Personal address and CURRENT USER block in agent files (0.11.11)
+- WorkspaceIDE script editor and tabbed fork edit view (ADR-0076, ADR-0077, 0.11.12)
+
+---
 
 ### v0.10.0 — June 2026
 

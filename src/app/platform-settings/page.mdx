@@ -1,0 +1,43 @@
+export const metadata = {
+  title: 'Platform and User Settings',
+  description: 'Tenant management, platform settings, editable user profiles, password change, and landing-page navigation.',
+}
+
+export const sections = [
+  { title: 'Tenant management', id: 'tenant-management' },
+  { title: 'Platform settings', id: 'platform-settings' },
+  { title: 'User profiles', id: 'user-profiles' },
+  { title: 'Landing page navigation', id: 'landing-page-navigation' },
+]
+
+# Platform and User Settings
+
+Administration of tenants and platform configuration, plus per-user profile management. {{ className: 'lead' }}
+
+Introduced in v0.12.0, the settings surfaces let administrators manage the tenant and platform configuration, and let users manage their own profile.
+
+## Tenant management
+
+Administrators can edit the tenant identity.
+
+- **Name** — the tenant display name
+- **Slug** — the tenant slug used in routing and references
+
+## Platform settings
+
+Platform configuration is organized into a tabbed settings interface, grouping related administrative options under a single page.
+
+## User profiles
+
+Users can manage their own account.
+
+- **Editable profile** — update personal profile fields
+- **Password change** — available for email-authenticated accounts
+
+<Note>
+  Password change applies to email-auth accounts. Accounts authenticated through an external identity provider manage credentials with that provider.
+</Note>
+
+## Landing page navigation
+
+The landing-page selector uses a tree picker, letting users choose which page they land on after login from a hierarchical navigation view.
