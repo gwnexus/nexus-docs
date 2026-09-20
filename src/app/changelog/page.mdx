@@ -4,6 +4,7 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'nexus-cli v0.10.0 - v0.16.6', id: 'nexus-cli-v0-10-0-v0-16-6' },
   { title: 'v0.13.x', id: 'v0-13-x' },
   { title: 'v0.12.0', id: 'v0-12-0' },
   { title: 'v0.11.x', id: 'v0-11-x' },
@@ -24,6 +25,58 @@ export const sections = [
 # Changelog
 
 Full release history for the Nexus platform and its tools. {{ className: 'lead' }}
+
+---
+
+## nexus-cli v0.10.0 — v0.16.6
+
+**Command-line tool release history.** The sections below group the nexus-cli changes since v0.10.0 by feature area rather than strict version order; see the [CLI reference](/cli) for full usage of each command. Current release: v0.16.6.
+
+### `nexus run` lifecycle (v0.11.0 to v0.16.6)
+
+- Pre-launch check suite: workspace state, auth, MCP config, plugin env vars, tool binary, and live Headroom preflight mode verification
+- Launch countdown / confirmation prompt before exec-launching the target tool
+- New flags: `--force` (skip countdown), `--skip-checks` (skip the check suite), `--exec` (replace process image instead of spawning a child)
+- Post-session summary: git activity, token usage and cost, Nexus activity stats, and Headroom compression stats
+
+### `nexus config` local/global precedence (v0.16.0)
+
+- Git-style two-layer configuration: `--local` (project-scoped) and `--global` (machine-wide)
+- Read-side precedence: local overrides global overrides built-in default
+- `nexus config show` now displays provenance (which layer each value was read from)
+
+### `nexus push` / `nexus stash` (v0.14.0 to v0.15.1)
+
+- `nexus push`: bidirectional workspace sync via a fork-based publish model, with an origin guard requiring a prior `nexus pull`
+- `nexus push --adopt-local`: first-time bootstrap path that adopts local state as the project baseline
+- `nexus stash save|pop|list`: snapshot, restore, and list local workspace state around a `pull` or `push`
+
+### `nexus project link/rotate/unlink/status` (v0.15.0)
+
+- Project-scoped Nexus Model Gateway inference token (`nxs_proj_*`) issuance, zero-downtime rotation, and revocation
+- Token status inspection independent of the general `nexus status` command
+
+### Credential resolution and auto-sync (v0.14.1, v0.14.4, v0.16.6)
+
+- Documented resolution order: CLI flag > environment variable > local config > global config > built-in default, for `NEXUS_API_URL`, `NEXUS_PRIVATE_TOKEN`, and `NEXUS_PROJECT_TOKEN`
+- `nexus run` auto-syncs MCP credentials baked into `opencode.json` / `.claude/mcp.json` with the current login on every invocation
+
+### `nexus status` / `nexus preflight` server-side validation (v0.16.0, v0.16.5)
+
+- Real API-backed project existence and access checks, replacing local-cache-only checks
+- Live-verified Headroom preflight that distinguishes an active `transform` mode from a silently-downgraded `observe` mode
+
+### `nexus pull` / `nexus init` behavior changes (v0.16.1, v0.16.2)
+
+- `export_warnings` gate: model-routing or provider configuration issues now block the export with an interactive confirm prompt, bypassable with `--yes` / `--force`
+- `opencode_instructions` merged automatically into the generated `opencode.json`
+- `NEXUS_PROJECT_ID` written into the MCP server environment block
+
+### Security hardening (v0.13.1, v0.13.5, v0.16.3)
+
+- `nexus shadow` git index safety fix (v0.13.1): guard against silently staging deletion of files with existing commit history
+- Path traversal protection on sync manifest paths, automatic git-exclude of token-bearing config files, install-script checksum verification for `nexus upgrade`, allowlist sanitization of server-supplied preflight check commands, and reduced PAT token exposure in preflight/status output (v0.13.5)
+- Clean error output (v0.16.3): raw Rust stack backtraces no longer leak on auth/API errors regardless of `RUST_BACKTRACE`
 
 ---
 

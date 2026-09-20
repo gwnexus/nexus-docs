@@ -8,10 +8,16 @@ export const sections = [
   { title: 'Quick start', id: 'quick-start' },
   { title: 'Commands', id: 'commands' },
   { title: 'nexus run', id: 'nexus-run' },
+  { title: 'nexus run lifecycle', id: 'nexus-run-lifecycle' },
   { title: 'Plugin environment', id: 'plugin-environment' },
-  { title: 'Preflight checks', id: 'preflight-checks' },
+  { title: 'Config precedence', id: 'config-precedence' },
+  { title: 'Credential resolution', id: 'credential-resolution' },
+  { title: 'Workspace sync: push and stash', id: 'workspace-sync-push-and-stash' },
+  { title: 'Project tokens', id: 'project-tokens' },
+  { title: 'Preflight and status checks', id: 'preflight-and-status-checks' },
   { title: 'Import workflow', id: 'import-workflow' },
   { title: 'Workspace cache', id: 'workspace-cache' },
+  { title: 'Security hardening', id: 'security-hardening' },
   { title: 'Cost control tools', id: 'cost-control-tools' },
 ]
 
@@ -70,19 +76,22 @@ nexus pull               # Sync skills and agent files from the platform
 | `nexus init [path]` | Initialize a Nexus project workspace |
 | `nexus login` | Authenticate with the Nexus platform |
 | `nexus logout` | Remove stored credentials |
-| `nexus status` | Show auth, project, and workspace status |
+| `nexus status` | Show auth, project, and workspace status (server-verified since v0.16.0) |
 | `nexus link [--project-id <id>]` | Bind a project to the current workspace |
 | `nexus unlink` | Remove project binding from the workspace |
 | `nexus pull [--project-id <id>]` | Pull skills and config from the Nexus platform |
+| `nexus push [--adopt-local]` | Publish local workspace state back to the platform (fork-based) |
+| `nexus stash save\|pop\|list` | Save, restore, or list local workspace snapshots before a `pull` or `push` |
+| `nexus project link\|rotate\|unlink\|status` | Manage the project-scoped Nexus Model Gateway inference token (`nxs_proj_*`) |
 | `nexus import` | Scan workspace for existing agentic files and import into linked project |
 | `nexus skills export [--project-id <id>]` | Export enabled skills as JSON |
-| `nexus preflight` | Run environment readiness checks |
+| `nexus preflight` | Run environment readiness checks (server-verified since v0.16.5) |
 | `nexus deinit [--force]` | Remove all AI scaffold files from the workspace |
-| `nexus config show` | Display configuration |
-| `nexus config set K=V` | Update a configuration value |
-| `nexus config path` | Show the config file path |
-| `nexus upgrade` | Upgrade CLI to latest release version |
-| `nexus run [--tool <t>]` | Inject plugin env vars and launch OpenCode (or another tool) |
+| `nexus config show [--local\|--global]` | Display configuration, with provenance per key |
+| `nexus config set K=V [--local\|--global]` | Update a configuration value in the local or global layer |
+| `nexus config path [--local\|--global]` | Show the config file path |
+| `nexus upgrade` | Upgrade CLI to latest release version (checksum-verified since v0.13.5) |
+| `nexus run [--tool <t>]` | Run pre-launch checks, inject plugin env vars, and launch OpenCode (or another tool) |
 
 ### Global flags
 
@@ -117,6 +126,9 @@ nexus run -- --model anthropic/claude-opus-4  # pass args through
 | `--dry-run` | false | Print resolved env block, do not exec |
 | `--show-env` | false | Print env block then exec |
 | `--no-db` | false | Skip `af_export` API call; read `.nexus/env` from disk only |
+| `--force` | false | Skip the launch countdown/confirmation prompt |
+| `--skip-checks` | false | Skip the pre-launch check suite entirely |
+| `--exec` | false | Replace the current process image instead of spawning a child |
 | `-- <args...>` | — | Forwarded verbatim to the launched tool |
 
 The default tool is `opencode`. To change it globally, set `run.default_tool`
@@ -153,6 +165,36 @@ default_tool = "opencode"
 .env.nexus.local        (2) project secrets — overrides (1)
 shell / process.env     (3) already-set vars — never overwritten
 ```
+
+## nexus run lifecycle
+
+Since v0.11.0, `nexus run` wraps the environment injection described above with a full pre-launch and post-session lifecycle.
+
+### Pre-launch check suite
+
+Before launching, `nexus run` verifies:
+
+- Workspace state (linked project, clean `.nexus/` cache)
+- Auth (valid stored credentials)
+- MCP configuration (`opencode.json` / `.claude/mcp.json` reference the current project)
+- Plugin environment variables (`.nexus/env` present and current)
+- Tool binary availability on `$PATH`
+- Headroom preflight mode (live-verified `transform` vs. silently-downgraded `observe`, see [Preflight and status checks](#preflight-and-status-checks))
+
+Pass `--skip-checks` to bypass the entire suite (not recommended outside of trusted CI environments).
+
+### Launch countdown and confirmation
+
+After checks pass, `nexus run` shows a short countdown before exec-launching the target tool, giving you a window to abort if something looks wrong. Use `--force` to skip the countdown and launch immediately, and `--exec` to replace the current process image (`execve`) instead of spawning a child process.
+
+### Post-session summary
+
+When the launched tool exits, `nexus run` prints a summary covering:
+
+- Git activity during the session (files changed, commits made)
+- Token usage and estimated cost for the session
+- Nexus activity stats (sessions, tasks, and Dispatches touched)
+- Headroom compression stats, if the plugin was active
 
 ## Plugin environment
 
@@ -266,7 +308,7 @@ globally or specify the full path:
 nexus run --tool /usr/local/bin/opencode
 ```
 
-## Preflight checks
+## Preflight and status checks
 
 `nexus preflight` validates the local environment is ready for Nexus:
 
@@ -281,6 +323,86 @@ nexus run --tool /usr/local/bin/opencode
 | API | Nexus API reachable and token valid |
 | Workspace | `.nexus/` workspace marker present |
 | MCP | Agent MCP configurations reference nexus-mcp |
+
+<Note>
+  As of v0.16.5, `nexus preflight` and `nexus status` perform real, API-backed validation instead of checking only for the presence of environment variables. This includes a live-verified Headroom preflight check that distinguishes an actually-active `transform` mode from a silently-downgraded `observe` mode -- previously the two could look identical from local config alone.
+</Note>
+
+`nexus status` (server-verified since v0.16.0) confirms project existence and access against the Nexus API rather than trusting cached local state.
+
+## Config precedence
+
+Since v0.16.0, `nexus config` uses a git-style two-layer configuration model:
+
+- `--local` — project-scoped, stored under `.nexus/config.toml` in the current workspace
+- `--global` — machine-wide, stored under `~/.config/nexus/config.toml`
+
+```bash
+nexus config set run.default_tool=cursor --local   # this project only
+nexus config set run.default_tool=opencode --global # machine default
+```
+
+### Read-side precedence
+
+```
+--local value    (1) highest priority, if a local config file exists
+--global value    (2) falls back to the global config
+built-in default (3) lowest priority
+```
+
+`nexus config show` displays the resolved value for each key along with its provenance (which layer it was read from), so it is always clear whether a setting came from the project or the machine.
+
+## Credential resolution
+
+Nexus API credentials and project bindings are resolved in the following order, highest priority first:
+
+```
+1. CLI flag            (e.g. --project-id)
+2. Environment variable (NEXUS_API_URL, NEXUS_PRIVATE_TOKEN, NEXUS_PROJECT_TOKEN)
+3. Local config          (--local layer)
+4. Global config         (--global layer)
+5. Built-in default
+```
+
+Since v0.14.1 and v0.16.6, `nexus run` also auto-syncs the MCP credentials baked into `opencode.json` and `.claude/mcp.json` with the currently logged-in Nexus account on every invocation, so a stale token in a generated config file no longer silently diverges from the active login.
+
+## Workspace sync: push and stash
+
+`nexus push` (v0.14.0) and `nexus stash` (v0.15.1) round out bidirectional workspace sync, complementing `nexus pull`.
+
+### nexus push
+
+`nexus push` publishes local workspace state (directives, skill assignments, and other project-scoped artifacts) back to the platform using a fork-based publish model: your local changes are proposed as a fork of the project's current state rather than overwriting it directly.
+
+```bash
+nexus push                  # publish local changes as a fork
+nexus push --adopt-local    # first-time bootstrap: adopt local state as the project baseline
+```
+
+`nexus push` requires a prior `nexus pull` for the current project (an origin guard prevents pushing from a workspace that was never synced from the platform).
+
+### nexus stash
+
+```bash
+nexus stash save   # snapshot local workspace state before a pull or push
+nexus stash pop     # restore the most recent snapshot
+nexus stash list    # list saved snapshots
+```
+
+Use `nexus stash save` before running `nexus pull` if you have uncommitted local changes you are not ready to publish with `nexus push`, then `nexus stash pop` afterward to reapply them.
+
+## Project tokens
+
+`nexus project link|rotate|unlink|status` (v0.15.0) manages the project-scoped inference token (`nxs_proj_*`) used by the Nexus Model Gateway.
+
+| Subcommand | Description |
+| --- | --- |
+| `nexus project link` | Issue a new project-scoped gateway token and bind it to the workspace |
+| `nexus project rotate` | Rotate the current token with zero downtime (old and new tokens both remain valid during a short overlap window) |
+| `nexus project unlink` | Revoke and remove the stored project token |
+| `nexus project status` | Show token validity and binding status |
+
+Project tokens are stored alongside other workspace credentials and resolved using the same [precedence order](#credential-resolution) as other Nexus credentials.
 
 ## Import workflow
 
@@ -297,6 +419,12 @@ nexus run --tool /usr/local/bin/opencode
 
 During `nexus init`, the CLI automatically detects existing agentic files and offers to run the import.
 
+### nexus pull / nexus init behavior changes
+
+- **`export_warnings` gate** (v0.16.1): if the platform export reports model-routing or provider configuration issues, `nexus pull` and `nexus init` now stop and show the warnings with an interactive confirm prompt before writing files, rather than exporting silently. Pass `--yes` or `--force` to bypass the prompt in non-interactive contexts.
+- **`opencode_instructions` merge** (v0.16.2): project-level `opencode_instructions` are now merged into the generated `opencode.json` instead of requiring manual copy-paste.
+- **`NEXUS_PROJECT_ID` in the MCP environment block**: `nexus pull` now writes `NEXUS_PROJECT_ID` into the MCP server `environment` block of `opencode.json`, so MCP subprocesses can resolve the active project without an extra lookup.
+
 ## Workspace cache
 
 The CLI creates a `.nexus/` directory in your project root to store workspace metadata, project bindings, and cached configuration. This directory is automatically excluded from Git via `.git/info/exclude` (not `.gitignore`) to avoid polluting the shared ignore file. The `nexus deinit` command cleans up both the cache directory and the exclude entries.
@@ -304,6 +432,18 @@ The CLI creates a `.nexus/` directory in your project root to store workspace me
 <Note>
   Local agent file changes are overwritten by `nexus pull`. Files managed by the Nexus platform (AGENTS.md, CLAUDE.md, .cursorrules, plugin configs, etc.) are pulled from the server and will overwrite local modifications. Edit agent files in the Nexus dashboard and run `nexus pull` to sync.
 </Note>
+
+## Security hardening
+
+A set of CLI-specific security fixes shipped alongside the v0.13.5 platform hardening pass and later releases:
+
+- **Path traversal protection** on sync manifest paths used by `nexus pull` and `nexus push`
+- **Automatic git-exclude** of token-bearing config files, so a token file can never be accidentally committed even without a `.gitignore` entry
+- **Install-script checksum verification** for `nexus upgrade`, matching the SHA-256 verification already performed by the install one-liner
+- **Allowlist sanitization** of server-supplied prerequisite check commands run during `nexus preflight`
+- **Reduced PAT token exposure** in preflight and status output (tokens are masked rather than printed in full)
+- **`nexus shadow` git index safety fix** (v0.13.1): a guard now prevents `nexus shadow` from silently staging the deletion of files that have existing commit history
+- **Clean error output** (v0.16.3): raw Rust stack backtraces no longer leak into CLI output on auth or API errors, regardless of the `RUST_BACKTRACE` environment variable
 
 ## Cost control tools
 
