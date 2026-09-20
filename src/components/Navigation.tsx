@@ -249,6 +249,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'nexus-cli',      href: '/cli' },
       { title: 'nexus-link',     href: '/nexus-link' },
       { title: 'Plugins',        href: '/plugins' },
+      { title: 'AI Gateway',     href: '/ai-gateway' },
       { title: 'Document Extraction', href: '/textract' },
     ],
   },

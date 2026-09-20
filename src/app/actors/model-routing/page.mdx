@@ -16,6 +16,10 @@ export const sections = [
 
 Stable route aliases decouple actor definitions from volatile provider model IDs. {{ className: 'lead' }}
 
+<Note>
+  As of v0.13.2, the AI Gateway catalog is split into **Registry** (curated, routable models) and **Discover** (the full raw upstream feed). The Model Route catalog described below resolves against Registry entries only. See [AI Gateway](/ai-gateway) for the full model catalog and BYOK provider credentials.
+</Note>
+
 AI model identifiers change frequently -- providers rename models, release new versions, or deprecate old ones. Model Routing provides a stable abstraction layer so actor profiles reference route aliases instead of raw provider/model pairs.
 
 ## Why route aliases?

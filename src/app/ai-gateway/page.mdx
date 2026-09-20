@@ -1,0 +1,106 @@
+export const metadata = {
+  title: 'AI Gateway',
+  description: 'BYOK provider credentials, the Registry/Discover model catalog, evidence-based Routing Lab suitability, and gateway operations tooling.',
+}
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'BYOK: provider credentials', id: 'byok-provider-credentials' },
+  { title: 'Model catalog: Registry and Discover', id: 'model-catalog-registry-and-discover' },
+  { title: 'Routing Lab: evidence-based suitability', id: 'routing-lab-evidence-based-suitability' },
+  { title: 'Gateway operations', id: 'gateway-operations' },
+]
+
+# AI Gateway
+
+Bring your own provider keys, browse a curated model registry, evaluate routing suitability with evidence, and operate the gateway with a live decision trail. {{ className: 'lead' }}
+
+Introduced across the v0.13.n release line, the AI Gateway groups the provider-credential, model-catalog, routing-suitability, and operations tooling that sits behind projects running in `execution_mode = nexus_gateway`.
+
+## Overview
+
+The AI Gateway is made up of four cooperating parts:
+
+| Area | Version | Purpose |
+| --- | --- | --- |
+| BYOK / Provider Credentials | v0.13.1 | Bring your own OpenRouter, Anthropic, or OpenCode Zen key; bind projects to a specific credential |
+| Model Catalog Rebuild | v0.13.2 | Registry (curated, routable) vs. Discover (raw upstream feed) split |
+| Routing Lab | v0.13.3 | Evidence-based model suitability scoring for scenario recommendations |
+| Gateway Operations | v0.13.4 | Route simulation, decision audit trail, and cost reconciliation |
+
+## BYOK: provider credentials
+
+Under **Settings → Provider Keys**, a user can add their own API key for a supported provider:
+
+- OpenRouter
+- Anthropic
+- OpenCode Zen
+
+Keys are encrypted at rest and non-destructively verified against the provider's own key-info endpoint before being accepted -- no test request is made against a billable model endpoint.
+
+Projects running in `execution_mode = nexus_gateway` now carry an explicit, audited **billing binding**: a record of which credential the project draws from. Previously this was inferred from whoever created the project's runtime token; it is now a first-class, auditable relationship.
+
+Relevant surface:
+
+- UI: Settings → Provider Keys (`provider-credentials-manager`), add-key form
+- API: `POST /api/user-credentials`, `PATCH /api/projects/[projectId]/provider-binding`
+
+See ADR-0096 for the credential model and audit requirements.
+
+## Model catalog: Registry and Discover
+
+<Note>
+  "Catalog" as a standalone term is now ambiguous. As of v0.13.2, the AI Gateway catalog tab is split into two distinct views: **Registry** and **Discover**.
+</Note>
+
+- **Registry** -- the curated set of Nexus-admitted models. Only Registry models are routable by actors and route aliases.
+- **Discover** -- the full raw feed pulled from OpenRouter and models.dev, used to browse and pull in new candidate models.
+
+A nightly `pg_cron` job syncs the OpenRouter and models.dev catalogs directly into Postgres. OpenCode Zen is now a first-class aggregator alongside OpenRouter.
+
+### Catalog drift log
+
+Upstream changes to price, alias, or context-length on models backing an **active** deployment are recorded in a drift log before being applied, so operators can review a change before it silently affects cost or capability.
+
+See ADR-0097 (catalog rebuild) and ADR-0100 (Registry/Discover terminology) for the full model.
+
+<Note>
+  Existing documentation that refers to a single unified "Model Route catalog" (see [Model Routing](/actors/model-routing)) predates this split and describes the Registry side specifically. Route aliases resolve against Registry entries only.
+</Note>
+
+## Routing Lab: evidence-based suitability
+
+Routing Lab adds an **evidence layer** to model selection. Suitability scores are informed by:
+
+- LiveBench
+- LMArena
+- Nexus's own scenario fixtures (deterministic and LLM-judged test runs against your configured deployments)
+
+Each evidence source carries a trust/precedence weight (ADR-0104). Scenario-based recommendations present quality, cost, and latency as separate, honestly labeled lenses -- a dimension with no supporting evidence is shown as **missing**, never faked as a zero score.
+
+Relevant surface:
+
+- UI: scenario recommendation panel, evidence sources panel, evidence mappings panel (Platform admin)
+- Core logic: suitability scoring, evidence ingest, HTTP/JSON and Hugging Face dataset adapters, judge scoring
+
+## Gateway operations
+
+Three operator-facing tools ship as part of Gateway Operations (v0.13.4):
+
+### Route Simulator
+
+Dry-run a routing profile or scenario against live gateway policy before committing to it. Once a simulated change is actually observed in production routing, a live confirmation banner surfaces to close the loop.
+
+### Route decision audit trail
+
+Every gateway routing decision -- selected deployment, fallback reason, budget state -- is recorded as a queryable, project-scoped history. This history is visible to project members, not only platform admins.
+
+### Cost reconciliation
+
+A platform-admin-only view that compares a provider's own account usage and credit balance (for example, OpenRouter) against Nexus's internal cost ledger, surfacing discrepancies for investigation.
+
+- API: `GET /api/admin/cost-reconciliation`
+
+## Security and data-integrity hardening
+
+v0.13.5 shipped a set of internal hardening changes alongside the gateway features above: consistent `apiError()` responses, atomic credential/skill/evidence writes, outbound request timeouts, a cache-invalidation race fix, closing a project re-parenting authorization gap, and a compliance-jurisdiction fix for OpenRouter-routed vendor/model IDs. These are operational improvements with no direct user-facing surface.

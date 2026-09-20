@@ -4,6 +4,7 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.13.x', id: 'v0-13-x' },
   { title: 'v0.12.0', id: 'v0-12-0' },
   { title: 'v0.11.x', id: 'v0-11-x' },
   { title: 'v0.10.3', id: 'v0-10-3' },
@@ -23,6 +24,46 @@ export const sections = [
 # Changelog
 
 Full release history for the Nexus platform and its tools. {{ className: 'lead' }}
+
+---
+
+## v0.13.x — September 2026
+
+**AI Gateway: BYOK, Model Catalog Rebuild, Routing Lab & Gateway Operations**
+
+### v0.13.1 — BYOK: Provider Credentials & Project Billing Bindings (ADR-0096)
+
+- Bring-your-own API key for OpenRouter, Anthropic, or OpenCode Zen under Settings → Provider Keys
+- Keys encrypted at rest and verified against the provider's own key-info endpoint (no billable test request)
+- Explicit, audited billing binding per project on `execution_mode = nexus_gateway`, replacing inference from the runtime-token creator
+- New API surface: `POST /api/user-credentials`, `PATCH /api/projects/[projectId]/provider-binding`
+
+### v0.13.2 — Model Catalog Rebuild (ADR-0097, ADR-0100)
+
+- Catalog tab split into Registry (curated, routable) and Discover (full raw OpenRouter + models.dev feed)
+- Nightly `pg_cron` sync job pulling OpenRouter and models.dev catalogs into Postgres
+- OpenCode Zen added as a first-class aggregator alongside OpenRouter
+- Catalog drift log recording upstream price/alias/context-length changes before they apply to active deployments
+
+### v0.13.3 — Routing Lab: Evidence-Based Model Suitability (ADR-0104)
+
+- Evidence layer combining LiveBench, LMArena, and Nexus scenario fixtures, each source weighted by trust/precedence
+- Scenario-based recommendations with separately labeled quality/cost/latency lenses; missing evidence shown as missing, never faked
+- Deterministic and LLM-judged fixture evaluations against configured deployments
+
+### v0.13.4 — Gateway Operations
+
+- Route Simulator: dry-run a routing profile/scenario against live gateway policy, with a live confirmation banner once observed in production
+- Project-scoped route decision audit trail (selected deployment, fallback reason, budget state)
+- Platform-admin cost reconciliation comparing provider account usage/credits against the internal cost ledger (`GET /api/admin/cost-reconciliation`)
+
+### v0.13.5 — Security & Data-Integrity Hardening
+
+- Consistent `apiError()` responses across the gateway API surface
+- Atomic credential, skill, and evidence writes
+- Outbound request timeouts and a cache-invalidation race fix
+- Closed a project re-parenting authorization gap
+- Fixed a compliance-jurisdiction bug for OpenRouter-routed vendor/model IDs
 
 ---
 
