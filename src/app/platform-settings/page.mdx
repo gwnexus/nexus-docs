@@ -25,7 +25,13 @@ Administrators can edit the tenant identity.
 
 ## Platform settings
 
-Platform configuration is organized into a tabbed settings interface, grouping related administrative options under a single page.
+Platform configuration is organized into a tabbed settings interface under **Dashboard > System > Settings**, grouping related administrative options under a single page. Since v0.15.0, each section shows its title and description in a header band with a section selector beside it.
+
+| Section | Since | Purpose |
+| --- | --- | --- |
+| Workspace Profiles | v0.15.0 | Claude Code workspace presets and the system default preset; see [Claude Code Workspace](/claude-code/workspace#managing-presets). The former "Claude Code Workspace" sidebar entry redirects here. |
+
+**Platform > Directives** (v0.16.0) holds the platform directive catalog: rule texts written once for all projects, with usage and version per rule. See [Directives](/directives#platform-catalog).
 
 ## User profiles
 
@@ -37,6 +43,10 @@ Users can manage their own account.
 <Note>
   Password change applies to email-auth accounts. Accounts authenticated through an external identity provider manage credentials with that provider.
 </Note>
+
+### My Settings > Workspace Profiles
+
+Since v0.15.0, every user chooses a Claude Code workspace preset, switches panels and tabs, sets sizes and personal Zellij settings here. See [Claude Code Workspace](/claude-code/workspace#personal-settings).
 
 ## Landing page navigation
 

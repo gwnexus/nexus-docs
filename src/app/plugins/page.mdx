@@ -17,6 +17,10 @@ OpenCode plugins that extend the Nexus agent runtime with platform-aware behavio
 
 Nexus ships open-source OpenCode plugins that integrate session tracking, context preservation across compaction events, and token usage and cost visibility. Plugins are distributed as TypeScript source files via `nexus init` / `nexus pull` and load automatically from the `.opencode/plugins/` directory at startup.
 
+<Note>
+  Claude Code projects get the same hooks (session guard, headroom intercept, compaction plus, routing guard, cost control and the agent observer) through the **nexus-core** Claude Code plugin and the hook adapters `nexus pull` writes to `.claude/hooks/`. See [Claude Code Plugins](/claude-code/plugins#nexus-core).
+</Note>
+
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="https://github.com/gwnexus/nexus-oc-plugins" variant="outline">
     <>View on GitHub</>
@@ -284,7 +288,7 @@ When using `nexus init` or `nexus pull`, recommended plugins are downloaded auto
 
 ## Auto-assignment rules
 
-OpenCode plugins are only distributed to projects where the agent owner is set to `opencode` or `both`. Projects using `claude-cli` exclusively will not receive plugin files during `nexus pull`.
+OpenCode plugins are only distributed to projects where the agent owner is set to `opencode` or `both`. Projects using `claude-cli` exclusively will not receive OpenCode plugin files during `nexus pull`; they get the nexus-core Claude Code plugin and hook adapters instead ([Claude Code Plugins](/claude-code/plugins)).
 
 <div className="not-prose mt-8">
   <Button href="https://github.com/gwnexus/nexus-oc-plugins" variant="text" arrow="right">

@@ -4,6 +4,11 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.16.x', id: 'v0-16-x' },
+  { title: 'v0.15.0', id: 'v0-15-0' },
+  { title: 'nexus-cli v0.28.5 - v0.28.10', id: 'nexus-cli-v0-28-5-v0-28-10' },
+  { title: 'nexus-mcp v0.10.14 - v0.10.16', id: 'nexus-mcp-v0-10-14-v0-10-16' },
+  { title: 'nexus-core v1.1.0 - v1.2.1', id: 'nexus-core-v1-1-0-v1-2-1' },
   { title: 'nexus-cli v0.10.0 - v0.16.6', id: 'nexus-cli-v0-10-0-v0-16-6' },
   { title: 'v0.13.x', id: 'v0-13-x' },
   { title: 'v0.12.0', id: 'v0-12-0' },
@@ -28,9 +33,82 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
+## v0.16.x
+
+**Short rules, curated plugins and public-repo safety.** Requires nexus-cli 0.28.9 or later (0.28.10 recommended). After upgrading: `nexus upgrade`, `nexus pull --force`, restart agent sessions.
+
+### v0.16.1 — October 11, 2026
+
+- **Workspace assignment in the project form:** the blueprint picker works again (it was clipped and could not be opened). Editing a project now saves the choice: the current blueprint is preselected, a different one is forked on save and the previous fork archived. See [Workspaces](/workspaces#assigning-a-workspace-to-a-project).
+- **Workspace access follows project roles:** members can view forks, admins and editors can change them, platform admins both. Before, any signed-in user could reach the workspace fork routes. See [Workspaces](/workspaces#access).
+
+### v0.16.0 — October 10, 2026
+
+- **Directives as short rules (ADR-0125):** a platform catalog written once, rule (240 characters) and description (2000 characters, never sent to agents), MUST / SHOULD levels with seals, fixed categories, a render budget of 40 rules and about 600 words with a "What agents get" preview, a writing guide and an icon legend. New page **Platform > Directives**. Existing directives were migrated. See [Directives](/directives).
+- **Project settings:** artifact and docs language, Conventional Commits, no em-dashes and personal address as switches that render their rule; `nexus env set policy.<key>`. See [Project Settings](/project-settings).
+- **Shadow levels** `off`, `ai`, `nexus`: agent files kept out of git through a managed block in `.git/info/exclude`; `nexus` adds a rule against Nexus references. Tracked files need `git rm --cached` once.
+- **Rendering per runtime:** Claude Code loads `.claude/rules/15-nexus-directives.md` in every session with only a pointer in `AGENTS.md` / `CLAUDE.md`; OpenCode gets a compact list in `AGENTS.md`; `.nexus/directives.md` is a compact readable copy.
+- **Claude Code plugins per project (ADR-0117):** curated catalog of official plugins with roles (complement, engine, guardrail, overlap) and language servers; installed by nexus-cli on `nexus pull --force` and `nexus run`. See [Claude Code Plugins](/claude-code/plugins).
+- **Capability routing rule (ADR-0124):** `.claude/rules/40-nexus-capability-routing.md` names the Nexus skill that owns each workflow and the plugins and built-ins that must not replace it.
+- **nexus-core 1.2.1:** hooks and engine agents only; hook logs rotate at 5 MB.
+- **Skills:** catalog cleanup (archived skills removed, `nx-vl-sweep` merged into `nx-dispatch-sweep`), description required, run-only-on-request skills (`invocation: user`), resource files delivered on pull. See [Skills](/skills).
+- **Security:** role checks for MCP skill and directive changes, DNS rebinding protection for node calls, eight more tables closed to direct reads (SEC-007 follow-up). See [Security and Hardening](/security).
+- **Smaller changes:** project budgets are USD only; `nexus env set executioner=...` returns an error for a project without an agent setup instead of reporting success; `project_update` separates the one-sentence description from the long-form readme; dark theme fixes.
+
+---
+
+## v0.15.0
+
+**Configurable Claude Code workspace.** September 28, 2026. Requires nexus-cli 0.28.7 or later.
+
+- **Workspace profiles (ADR-0119):** system presets (Standard + Terminal as the new default, Focus, Review), a project team default (`nexus env set claude.workspace_preset`) and personal settings in My Settings > Workspace Profiles: panels and tabs, sizes, custom layouts, rendered preview, validate-then-save. See [Claude Code Workspace](/claude-code/workspace).
+- **Personal Zellij settings:** clipboard program, copy on select, mouse mode, theme and raw KDL for keybinds; `nexus run` applies them with `zellij --config`; `nexus doctor claude` shows the config in use.
+- **Agent observer pane (ADR-0120):** `nexus status --agents --watch` next to Claude Code, fed by the new agent observer hook; AgentHUD as an experimental alternative.
+- **Zellij sessions named after the project:** a second `nexus run` joins the running workspace.
+- **Routing changes reach the gateway immediately** through a policy reload; the bundle poll stays the fallback. See [AI Gateway](/ai-gateway#gateway-operations).
+- **Settings navigation:** workspace presets moved to Dashboard > System > Settings, tab Workspace Profiles; settings sections get a header band with a section selector.
+- **Stable agent file exports:** `AGENTS.md`, `CLAUDE.md` and related files no longer change on every pull.
+- **Security:** cross-tenant reads through the data API closed on fourteen tables (SEC-007). See [Security and Hardening](/security#tenant-isolation-sec-007).
+
+---
+
+## nexus-cli v0.28.5 — v0.28.10
+
+**CLI side of NEXUS-APP 0.15.0 and 0.16.0.** See the [CLI reference](/cli#claude-code-projects).
+
+- **v0.28.10:** readable `nexus status` layout with aligned sections and git identity status; `CLAUDE.md` bootstrap names the always-loaded directives file; clearer `nexus shadow status`; gitleaks config fixed and covered by a CI self-test.
+- **v0.28.9:** compact `.nexus/directives.md` (`- MUST:` / `- SHOULD:` lines); `nexus shadow` as a client of `policy.shadow`; server exclude list applied on every pull as a managed block in `.git/info/exclude`; `invocation: user` rendered as `disable-model-invocation: true`.
+- **v0.28.8:** managed Claude Code plugins are installed at project scope on `nexus pull --force` and `nexus run`; `enabledPlugins` merged per entry; `[managed]` in `nexus status`; `NEXUS_SKIP_PLUGIN_SYNC=1` to skip.
+- **v0.28.7:** personal Zellij config written on pull and init and passed to Zellij with `--config`; `nexus doctor claude` shows the config source.
+- **v0.28.6:** `NEXUS_PROJECT_ID` written into `.mcp.json`; export warnings shown for Claude Code projects; AgentHUD check in `nexus doctor claude`; compact model names in `nexus status --agents`.
+- **v0.28.5:** personal workspace layout on pull; `nexus status --agents [--watch] [--json] [--all]`; `nexus doctor claude [--fix]`; `nexus env set` shows assigned and unassigned agent files.
+
+---
+
+## nexus-mcp v0.10.14 — v0.10.16
+
+See [nexus-mcp](/mcp-server#changes-in-v0-10-14-to-v0-10-16) for details.
+
+- **v0.10.16:** short directive fields (`rule`, `rationale`, `level`, `category`, `sort_order`) and catalog references (`template_slug`, `template_id`) for `pd_create` / `pd_update`, with `title`, `body`, `priority` as deprecated aliases; `sk_create` requires a description; `invocation` for `sk_create` / `sk_update`; `serverInfo` reports the real version; SDK floor `^1.31.0` and 0 audit findings.
+- **v0.10.15:** `category` (`coderabbit_fix`) for tasks; `coderabbit_review` classification for documents.
+- **v0.10.14:** `NEXUS_PROJECT_ID` fallback applies when the client omits `project_id`.
+
+---
+
+## nexus-core v1.1.0 — v1.2.1
+
+The Nexus plugin for Claude Code. See [Claude Code Plugins](/claude-code/plugins#nexus-core).
+
+- **v1.2.1:** hook logs in `.nexus/` rotate at 5 MB (one old generation kept).
+- **v1.2.0:** workflow skills removed; hooks and the engine agents `architect`, `reviewer`, `security-reviewer`, `documentation-reviewer` kept.
+- **v1.1.1:** hooks resolve the project root instead of the current directory and no longer create stray `.nexus/` folders.
+- **v1.1.0:** new agent observer hook for `nexus status --agents`.
+
+---
+
 ## nexus-cli v0.10.0 — v0.16.6
 
-**Command-line tool release history.** The sections below group the nexus-cli changes since v0.10.0 by feature area rather than strict version order; see the [CLI reference](/cli) for full usage of each command. Current release: v0.16.6.
+**Command-line tool release history.** The sections below group the nexus-cli changes since v0.10.0 by feature area rather than strict version order; see the [CLI reference](/cli) for full usage of each command. Later releases are listed above.
 
 ### `nexus run` lifecycle (v0.11.0 to v0.16.6)
 

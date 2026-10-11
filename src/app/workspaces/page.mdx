@@ -5,6 +5,8 @@ export const metadata = {
 
 export const sections = [
   { title: 'Blueprint + Fork architecture', id: 'blueprint-fork-architecture' },
+  { title: 'Assigning a workspace to a project', id: 'assigning-a-workspace-to-a-project' },
+  { title: 'Access', id: 'access' },
   { title: 'Baselines and flavors', id: 'baselines-and-flavors' },
   { title: 'CLI integration', id: 'cli-integration' },
   { title: 'devbox.json reference', id: 'devbox-json-reference' },
@@ -38,6 +40,28 @@ Creating a blueprint uses a 5-step wizard:
 5. **Metadata** — project-level variables
 
 Blueprints can be activated, deactivated, or archived. Only active blueprints appear in the project assignment modal.
+
+## Assigning a workspace to a project
+
+Pick the workspace blueprint in the project form, both when creating and when editing a project (v0.16.1):
+
+- **Create:** the chosen blueprint is forked for the new project.
+- **Edit:** the picker preselects the blueprint of the project's active fork. Choosing a **different** blueprint forks it on save and archives the previous fork. Keeping the blueprint, or choosing no workspace, leaves the current fork unchanged.
+- The picker stays disabled until the current fork has been read; if that fails, it stays disabled with a hint.
+
+If the new fork cannot be created, Nexus tries to restore the archived fork. If that also fails, activate the archived fork again on the project's workspace page.
+
+## Access
+
+Workspace access follows the project roles:
+
+| Role | View forks (scripts, meta variables) | Create, edit, activate, sync, export or delete forks |
+| --- | --- | --- |
+| Project member (viewer) | Yes | No |
+| Project editor or admin | Yes | Yes |
+| Platform admin | Yes | Yes |
+
+This applies to the dashboard and to the workspace fork REST API, matching the role check of the MCP `ws_push` tool. Forks contain the devbox scripts that `nexus pull` writes to developer machines, so only editors and admins can change them.
 
 ## Baselines and flavors
 

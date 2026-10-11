@@ -91,6 +91,10 @@ Three operator-facing tools ship as part of Gateway Operations (v0.13.4):
 
 Dry-run a routing profile or scenario against live gateway policy before committing to it. Once a simulated change is actually observed in production routing, a live confirmation banner surfaces to close the loop.
 
+### Immediate policy reload
+
+Since v0.15.0, routing policy changes reach the gateway right away. After a routing policy write (the Route Simulator quick switch or a change to a route policy), the control plane asks the gateway to reload its policy instead of waiting for the regular bundle poll (about 30 seconds). This is best effort: a failed reload never fails the write, the poll remains the fallback, and the simulator's confirmation still checks the policy version (now immediately after a successful reload).
+
 ### Route decision audit trail
 
 Every gateway routing decision -- selected deployment, fallback reason, budget state -- is recorded as a queryable, project-scoped history. This history is visible to project members, not only platform admins.

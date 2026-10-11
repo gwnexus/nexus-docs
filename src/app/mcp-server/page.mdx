@@ -12,6 +12,7 @@ export const sections = [
   { title: 'Configuration', id: 'configuration' },
   { title: 'Schema version envelope', id: 'schema-version-envelope' },
   { title: 'Skill lifecycle', id: 'skill-lifecycle' },
+  { title: 'Changes in v0.10.14 to v0.10.16', id: 'changes-in-v0-10-14-to-v0-10-16' },
   { title: 'Auto-ingested scan reports', id: 'auto-ingested-scan-reports' },
   { title: 'Known issues', id: 'known-issues' },
 ]
@@ -205,7 +206,42 @@ Skills are managed centrally in the Nexus platform and delivered to agents at ru
 **Scope:**
 
 - **Core skills** (`project_id = NULL`) are tenant-wide and available to all projects. Only platform owners and admins can create or modify them.
-- **Project-scoped skills** belong to a single project and are managed by project admins. They do not appear in other projects unless explicitly promoted to core.
+- **Project-scoped skills** belong to a single project and are managed by project admins and editors. They do not appear in other projects unless explicitly promoted to core.
+
+See [Skills](/skills) for descriptions, run-only-on-request skills and permissions.
+
+## Changes in v0.10.14 to v0.10.16
+
+### v0.10.16
+
+- **Short directive rules:** `pd_create` / `pd_update` accept `rule` (max 240 characters), `rationale` (max 2000, never sent to agents), `level` (`must` | `should`), `category` (`commits`, `language`, `docs`, `security`, `workflow`, `operations`, `communication`) and `sort_order`. `title`, `body` and `priority` stay accepted as deprecated aliases. See [Directives](/directives#mcp-tools).
+- **Catalog references:** `pd_create` takes `template_slug` or `template_id` to add a default or optional rule from the platform catalog. Combining a catalog reference with rule fields, or sending neither, is rejected before the backend is called.
+- **`pd_list`** documents the effective list: each entry has a `source` (`mandatory`, `flag`, `template`, `project`); mandatory and flag rules cannot be edited with `pd_update`.
+- **Skills:** `sk_create` requires a `description` (1 to 500 characters); `sk_update` rejects a blank one. Both accept `invocation` (`model` | `user`).
+- **`project_update`:** `description` is one short plain-text sentence (listing subtitle); long-form Markdown goes into `readme`, which agents see at depth standard.
+- **Fixed:** the server version reported in MCP `serverInfo` was stuck at `0.10.2`; it is now read from the installed package.
+- **Security:** `@modelcontextprotocol/sdk` floor raised to `^1.31.0` (GHSA-6qxp-vccf-f47h; nexus-mcp does not use the SDK's OAuth client), lockfile refresh, `npm audit` reports 0 vulnerabilities.
+
+### v0.10.15
+
+- `task_create` / `task_update` accept an optional `category` (`coderabbit_fix`; `null` clears it).
+- `doc_classify` accepts the classification `coderabbit_review`.
+
+### v0.10.14
+
+- **`project_id` fallback fixed:** `NEXUS_PROJECT_ID` is now applied even when the client omits the `project_id` key entirely (the common case). Together with nexus-cli 0.28.6, which writes `NEXUS_PROJECT_ID` into `.mcp.json`, project-scoped tools work in Claude Code without an explicit `project_id`.
+
+### Role checks (NEXUS-APP 0.16.0)
+
+The backend now enforces roles for skill and directive changes made through MCP:
+
+| Tools | Required role |
+| --- | --- |
+| `sk_create` | platform admin (creates a core skill) |
+| `sk_update`, `sk_activate`, `sk_delete` | platform admin for core skills, project admin or editor for project skills |
+| `sk_assign`, `sk_unassign` | project admin or editor |
+| `pd_create`, `pd_update`, `pd_toggle` | project admin or editor |
+| `pd_delete` | project admin |
 
 ## Auto-ingested scan reports
 

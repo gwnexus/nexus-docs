@@ -5,7 +5,6 @@ export const metadata = {
 
 export const sections = [
   { title: 'Upcoming', id: 'upcoming' },
-  { title: 'In progress', id: 'in-progress' },
   { title: 'Released', id: 'released' },
 ]
 
@@ -17,7 +16,7 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ## Upcoming
 
-### v1.0.0-beta — Planned
+### v1.0.0-beta — Planned (Q2 2027)
 
 **Production-ready release**
 
@@ -30,35 +29,63 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ---
 
-### v0.14.0 — Planned
+### v0.17.0 — Planned (Q1 2027)
 
-**Self-hosted, multi-tenant, and org-scoped routing**
+**Self-hosted stack, multi-tenant and Nexus Spark (BYOH)**
 
-- Self-hosted / multi-tenant deployment model
-- Org-scoped URL routing (ADR-0081)
-- Stripe billing integration with metered usage tracking and invoice generation
-- Self-service tenant onboarding and provisioning
-- Helm charts for the full Nexus stack (webapp, MCP server, Supabase, Caddy) on user-owned Kubernetes clusters
-- One-command deployment for single-node setups via Docker Compose
-
----
-
-## In progress
-
-### v0.12.1 — Patch
-
-**Stabilization and hardening (nexus-hub issues #4 to #14)**
-
-- Request-scoped RLS restoration for dashboard reads
-- `ws_push` write-role plus atomic fork replacement
-- Extraction-job claim race fix
-- SNS signature verification
-- Accessibility cluster fixes
-- Script hardening
+- Nexus Spark (BYOH): deeper provisioning and lifecycle wiring for user-owned DGX Spark and private GPU nodes in the AI Gateway routing surface
+- Cost Control: sharper per-project and per-session cost attribution, refined budget enforcement, clearer reconciliation on top of the BYOK provider credentials
+- Organization-scoped URL routing: `/o/[orgSlug]/` prefix for all authenticated routes (ADR-0081)
+- Multi-tenant support: tenant resolution via middleware and row-level security session variables
+- Helm charts for the full Nexus stack on user-owned Kubernetes clusters, plus a one-command single-node deployment
+- Community / Pro self-hosted deployment with no license enforcement and no phone-home, with a configuration wizard for database, storage, auth and domain
+- Stripe billing with metered usage tracking and invoice generation; self-service tenant onboarding
+- nexus-cli organization context (`NEXUS_ORG`, organization binding in `config.toml`)
 
 ---
 
 ## Released
+
+### v0.16.0 — October 2026
+
+**Short rules, curated plugins and public-repo safety**
+
+- Project directives as short rules (ADR-0125): a platform catalog written once, MUST / SHOULD levels, descriptions for humans only, render budget and preview. See [Directives](/directives)
+- Project settings for artifact and docs language, Conventional Commits, em-dashes and personal address, each rendering its rule. See [Project Settings](/project-settings)
+- Shadow levels `off`, `ai` and `nexus`: untracked agent files kept out of git for public repositories, optional rule against Nexus references
+- Claude Code plugins per project (ADR-0117) and a managed capability routing rule that keeps workflows in Nexus skills (ADR-0124). See [Claude Code Plugins](/claude-code/plugins)
+- Skill catalog cleanup: archived skills removed, dispatch sweeps merged, descriptions required, run-on-request skills
+- Security: role checks for MCP skill and directive changes, DNS rebinding protection for node calls, eight more tables closed to direct reads (SEC-007 follow-up)
+- v0.16.1: workspace assignment in the project form fixed; workspace access follows project roles
+
+---
+
+### v0.15.0 — September 2026
+
+**Configurable Claude Code workspace**
+
+- Workspace profiles (ADR-0119): system presets, a project default and personal settings, validated and previewed before saving. See [Claude Code Workspace](/claude-code/workspace)
+- New default preset Standard + Terminal: Claude Code at 75% with token usage, the agent observer and a devbox terminal in the sidebar
+- Agent observer pane (ADR-0120) via `nexus status --agents`, AgentHUD as an experimental alternative
+- Zellij sessions named after the project, and personal Zellij settings applied by `nexus run`
+- Routing policy changes reach the gateway right away (best effort; the bundle poll remains the fallback)
+- Security: cross-tenant reads closed on fourteen tables (SEC-007)
+
+---
+
+### v0.14.0 — September 2026
+
+**Claude Code as a first-class runtime**
+
+- One agent executioner per project: OpenCode (default) or Claude Code; `nexus run` starts whatever the project selects, with `--plain` / `--workspace` overrides
+- Claude Code Experience bundles (ADR-0117): profiles compiled into Nexus-managed rules, a statusline, plugins and a preview of every generated file
+- Claude Code workspace in Zellij with Claude Code, lazygit and a Nexus usage panel
+- Claude Code hook adapters (session guard, headroom intercept, compaction plus, routing guard, cost control), also available through the nexus-core plugin
+- Project settings from the CLI (ADR-0118): `nexus env get|set|keys` with dry run, audit events and regenerated agent files
+- GitHub CLI profiles (ADR-0116) and AI attribution control that keeps Co-Authored-By trailers out of commits by default
+- Tool versions: nexus-cli v0.28.x
+
+---
 
 ### v0.13.0 — September 2026
 

@@ -15,6 +15,9 @@ export const sections = [
   { title: 'Workspace sync: push and stash', id: 'workspace-sync-push-and-stash' },
   { title: 'Project tokens', id: 'project-tokens' },
   { title: 'Preflight and status checks', id: 'preflight-and-status-checks' },
+  { title: 'Claude Code projects', id: 'claude-code-projects' },
+  { title: 'Directives, skills and shadow', id: 'directives-skills-and-shadow' },
+  { title: 'Upgrading', id: 'upgrading' },
   { title: 'Import workflow', id: 'import-workflow' },
   { title: 'Workspace cache', id: 'workspace-cache' },
   { title: 'Security hardening', id: 'security-hardening' },
@@ -91,7 +94,11 @@ nexus pull               # Sync skills and agent files from the platform
 | `nexus config set K=V [--local\|--global]` | Update a configuration value in the local or global layer |
 | `nexus config path [--local\|--global]` | Show the config file path |
 | `nexus upgrade` | Upgrade CLI to latest release version (checksum-verified since v0.13.5) |
-| `nexus run [--tool <t>]` | Run pre-launch checks, inject plugin env vars, and launch OpenCode (or another tool) |
+| `nexus run [--tool <t>]` | Run pre-launch checks, inject plugin env vars, and launch the project's AI tool (OpenCode, Claude Code, or the Claude Code workspace) |
+| `nexus env get\|set\|keys` | Read and change project settings, including `policy.*` and `claude.workspace_preset`; `set` shows the agent files a change assigns or unassigns |
+| `nexus status --agents [--watch]` | Agent observer view of Claude Code sessions (v0.28.5) |
+| `nexus doctor claude [--fix]` | Check the tools the Claude Code workspace needs (v0.28.5) |
+| `nexus shadow ai\|nexus\|off\|status` | Set or show the project's shadow level (server-backed since v0.28.9) |
 
 ### Global flags
 
@@ -330,6 +337,74 @@ nexus run --tool /usr/local/bin/opencode
 
 `nexus status` (server-verified since v0.16.0) confirms project existence and access against the Nexus API rather than trusting cached local state.
 
+## Claude Code projects
+
+Since nexus-cli 0.28.5, the CLI supports the configurable [Claude Code workspace](/claude-code/workspace) and the [curated plugins](/claude-code/plugins) of NEXUS-APP 0.15.0 and 0.16.0.
+
+### Workspace layout and Zellij config (0.28.5, 0.28.7)
+
+- `nexus pull` and `nexus init` write your personal layout (`.nexus/claude/workspace.local.kdl`) and Zellij settings (`.nexus/claude/zellij.local.kdl`) after checking path and `sha256`, and add them to `.git/info/exclude`.
+- Both are recorded in the pull manifest: regenerated on every pull, a local edit is reported and kept unless `--force` (not `-y`); `nexus status`, `diff` and `reset` show them, `nexus push` refuses them.
+- `nexus run` starts Zellij with `--config <zellij.local.kdl> --layout <workspace.local.kdl>`. Before the first pull it falls back to the committed `.nexus/claude/nexus-claude.kdl` and the global Zellij config, with a WARN row. An explicit `ZELLIJ_CONFIG_FILE` wins.
+
+### Agent observer (0.28.5, 0.28.6)
+
+```bash
+nexus status --agents            # snapshot
+nexus status --agents --watch    # live, redraws once per second
+nexus status --agents --json     # full DTO, full model ids
+nexus status --agents --all      # include sessions finished > 30 min ago
+```
+
+Reads `.nexus/claude/observer/events.jsonl` locally (no login, no network). Model names are shown compact (`haiku-4-5`).
+
+### nexus doctor claude (0.28.5 to 0.28.7)
+
+Detects `claude`, `zellij`, `lazygit`, `ccusage` and `delta`. The required set comes from the workspace's `requires`; missing required tools fail (exit 1), optional ones are INFO, and the Claude Code version is checked against the supported range. `--fix` prints devbox, brew or npm install commands and runs them only after confirmation or `-y`. When the observer is set to AgentHUD, doctor checks `agenthud` as an unsupported third-party tool and only prints its install instruction. Also shows which Zellij config the workspace uses. Supports `--output json`.
+
+### Plugin installation (0.28.8)
+
+`nexus pull --force` and `nexus run` install missing managed Claude Code plugins at project scope (`claude plugin install ... --scope project`), adding the marketplace first when needed. Results are reported as `INSTALLED`, `PRESENT`, `FAILED` or `RELEASED`; a failure never blocks. `NEXUS_SKIP_PLUGIN_SYNC=1` skips the step. `nexus status` marks managed plugins `[managed]`. Details: [Claude Code Plugins](/claude-code/plugins#installation).
+
+### MCP binding and export warnings (0.28.6)
+
+- `nexus init`, `nexus pull` and `nexus run` write `NEXUS_PROJECT_ID` into `mcpServers.nexus.env` of `.mcp.json`, so project-scoped MCP tools work without an explicit `project_id`. Existing workspaces are repaired on the next `nexus run`.
+- `export_warnings` (for example `actors_not_exported`) are now printed for Claude Code projects too, without a prompt.
+
+### nexus status layout (0.28.10)
+
+All sections (General, Claude Code runtime, Git Identity Verification) share one key column. Git identity rows put the status before the expected value (`local=<value>   [OK] expected=<value>`), so the status stays visible next to long values such as signing keys; `nexus git verify` uses the same layout.
+
+## Directives, skills and shadow
+
+### Directives (0.28.9, 0.28.10)
+
+- `.nexus/directives.md` is a compact rule list: one `- MUST: <rule>` or `- SHOULD: <rule>` line per directive, grouped by category in server order.
+- Claude Code projects get the rules in `.claude/rules/15-nexus-directives.md`; the root `CLAUDE.md` bootstrap names that file (readable copy: `directives.md`). The root `CLAUDE.md` is still created once and never overwritten.
+- See [Directives](/directives).
+
+### Skills (0.28.8, 0.28.9)
+
+- Skill resource files are written next to `SKILL.md` in `.claude/skills/<skill>/` and the agentic root.
+- `invocation: user` renders `disable-model-invocation: true` into the `SKILL.md` frontmatter. See [Skills](/skills#run-only-on-request).
+
+### Shadow and git exclude (0.28.9, 0.28.10)
+
+- `af_export.git_exclude` is applied on every pull as a managed block in `.git/info/exclude` (`# >>> nexus managed exclude (server)`). Your own lines are never touched; tracked files are never untracked automatically (pull prints a `git rm -r --cached <path>` hint).
+- `nexus shadow on|ai|nexus|off` sets the project's `policy.shadow` (`on` = `ai`) and applies the exclude list at once; `nexus shadow status` shows the server level and block.
+- See [Project Settings](/project-settings#shadow-levels).
+
+## Upgrading
+
+For NEXUS-APP 0.16.x, use nexus-cli **0.28.10 or later**:
+
+```bash
+nexus upgrade
+nexus pull --force
+```
+
+Then restart running agent sessions: a running session keeps the files and environment it started with.
+
 ## Config precedence
 
 Since v0.16.0, `nexus config` uses a git-style two-layer configuration model:
@@ -443,6 +518,7 @@ A set of CLI-specific security fixes shipped alongside the v0.13.5 platform hard
 - **Allowlist sanitization** of server-supplied prerequisite check commands run during `nexus preflight`
 - **Reduced PAT token exposure** in preflight and status output (tokens are masked rather than printed in full)
 - **`nexus shadow` git index safety fix** (v0.13.1): a guard now prevents `nexus shadow` from silently staging the deletion of files that have existing commit history
+- **Gitleaks config fixed** (v0.28.10): the repository's gitleaks pre-commit config now extends the built-in ruleset (before, the custom config replaced it and every scan passed); a CI self-test guards it. A full history scan found no real secrets.
 - **Clean error output** (v0.16.3): raw Rust stack backtraces no longer leak into CLI output on auth or API errors, regardless of the `RUST_BACKTRACE` environment variable
 
 ## Cost control tools

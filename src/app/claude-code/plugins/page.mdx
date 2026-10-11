@@ -1,0 +1,150 @@
+export const metadata = {
+  title: 'Claude Code Plugins',
+  description: 'Curated Claude Code plugins per project, plugin roles, language servers, installation by nexus-cli, the nexus-core plugin and the capability routing rule.',
+}
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Curated catalog', id: 'curated-catalog' },
+  { title: 'Plugin roles', id: 'plugin-roles' },
+  { title: 'Language servers', id: 'language-servers' },
+  { title: 'Installation', id: 'installation' },
+  { title: 'nexus-core', id: 'nexus-core' },
+  { title: 'Capability routing', id: 'capability-routing' },
+]
+
+# Claude Code Plugins
+
+Curated plugins per project, installed by the CLI, with a routing rule that keeps Nexus workflows in Nexus skills. {{ className: 'lead' }}
+
+Since v0.16.0, Claude Code projects pick their plugins in Nexus. The selection is rendered into the project's `.claude/settings.json` and installed by `nexus pull --force` and `nexus run`. Your user-level Claude Code settings are never touched.
+
+## Overview
+
+In the project form's **Plugins** step, Claude Code projects choose:
+
+- **nexus-core** from the Gatewarden Nexus marketplace (`nexus-core@gatewarden-nexus`): hooks and engine agents, see [nexus-core](#nexus-core)
+- official Anthropic plugins from a **curated catalog** (marketplace `claude-plugins-official`)
+- further plugins of `claude-plugins-official` by name; these are marked **uncurated**
+
+The Claude Code Experience panel shows the number of enabled plugins and points to the Plugins step.
+
+## Curated catalog
+
+| Plugin | Category | Role | Description |
+| --- | --- | --- | --- |
+| `feature-dev` | Workflow | complement | Guided feature workflow with agents for codebase exploration, architecture design and quality review. |
+| `frontend-design` | Workflow | complement | Production-grade frontend interfaces with high design quality. Suggested for Node.js and Next.js codebases. |
+| `code-simplifier` | Workflow | engine | Refines recently changed code for clarity and consistency without changing behavior. Runs inside `/nexus-code-review`. |
+| `claude-md-management` | Workflow | complement | Audits and improves CLAUDE.md files and captures session learnings. The CLAUDE.md managed block is rendered by Nexus; only `CLAUDE.local.md` and project notes are yours to edit. |
+| `pr-review-toolkit` | Review & quality | engine | Review agents for comments, tests, error handling, type design and code quality. Runs inside `/nexus-code-review`. |
+| `security-guidance` | Security | guardrail | Warnings on risky edits, a diff review when Claude stops and a commit reviewer for injection, XSS, SSRF, secrets and more. Its hooks make their own model calls, which Nexus does not meter. |
+| `commit-commands` | Workflow | overlap | Not offered: overlaps `/nexus-git-commit`. |
+| `code-review` | Review & quality | overlap | Not offered: overlaps `/nexus-code-review`. |
+
+Hovering a plugin in the Plugins step explains how it relates to the Nexus skills.
+
+## Plugin roles
+
+Nexus skills own every workflow that reads or writes a Nexus artifact. Plugins are classified by how they relate to that:
+
+| Role | Meaning | Offered? |
+| --- | --- | --- |
+| **complement** | No Nexus equivalent. | Yes |
+| **engine** | Agents a Nexus skill may run internally; the skill persists the results in Nexus. | Yes |
+| **guardrail** | Automatic hooks without an alternative workflow. | Yes, with a cost note |
+| **overlap** | A second path to a Nexus-owned workflow. | No, also not as an extra |
+
+A project that enabled an overlap plugin before keeps it; the Plugins step shows it as "overlaps /nexus-..." so it can be removed.
+
+## Language servers
+
+Language server plugins give Claude code intelligence for a language. They are suggested from the project's Codebase Character, and **each needs its language server installed** locally (devbox or host).
+
+| Plugin | Language | Server binary |
+| --- | --- | --- |
+| `typescript-lsp` | TypeScript / JavaScript | `typescript-language-server` |
+| `pyright-lsp` | Python | `pyright` |
+| `gopls-lsp` | Go | `gopls` |
+| `rust-analyzer-lsp` | Rust | `rust-analyzer` |
+| `csharp-lsp` | C# | `csharp-ls` |
+| `jdtls-lsp` | Java | `jdtls` |
+| `kotlin-lsp` | Kotlin | `kotlin-lsp` |
+| `clangd-lsp` | C / C++ | `clangd` |
+| `php-lsp` | PHP | `intelephense` |
+| `ruby-lsp` | Ruby | `ruby-lsp` |
+| `swift-lsp` | Swift | `sourcekit-lsp` |
+
+## Installation
+
+Since nexus-cli 0.28.8, managed plugins are **installed**, not only enabled. `nexus pull --force` and `nexus run` (before every launch) install each managed plugin Claude Code does not have yet:
+
+```bash
+claude plugin install <plugin>@<marketplace> --scope project --json
+```
+
+- A plugin counts as present when it is installed at user scope, or at project or local scope **for this workspace**.
+- A marketplace a missing plugin needs (for example `gatewarden-nexus`) is added first, or refreshed if already registered.
+- Each plugin is reported as `INSTALLED`, `PRESENT` or `FAILED` (with the reason). A failure never blocks the pull or the launch; nothing is printed when everything is present.
+- Nexus never passes `--yes` or similar flags that accept commands on your behalf.
+- `nexus run` installs into the selected `--account`.
+- Set `NEXUS_SKIP_PLUGIN_SYNC=1` to skip the step.
+
+`enabledPlugins` and `extraKnownMarketplaces` in `.claude/settings.json` are merged per entry: plugins you enabled yourself at project scope are kept. A plugin that drops out of the managed list is reported as `RELEASED`; nothing is uninstalled. `.nexus/claude/manifest.lock.json` records the plugins Nexus installed.
+
+`nexus status` marks managed plugins with `[managed]` and shows the install scope and whether Nexus installed them (JSON: `managed`, `installed`, `scope`, `installed_by_nexus`).
+
+## nexus-core
+
+`nexus-core` is the Nexus plugin for Claude Code, published in the `gatewarden-nexus` marketplace. Nexus pins the version it installs; v0.16.0 moves the pin to **nexus-core 1.2.1**.
+
+Since 1.2.0, nexus-core ships **hooks and engine agents only**:
+
+| Part | Contents |
+| --- | --- |
+| Hooks | `session-guard`, `headroom-intercept`, `compaction-plus`, `routing-guard`, `cost-control`, `agent-observer` |
+| Engine agents | `architect`, `reviewer`, `security-reviewer`, `documentation-reviewer` (they carry the review checklists inline) |
+
+The workflow skills of earlier versions (`adr-review`, `architecture-review`, `code-review`, `documentation-review`, `implementation-plan`, `test-ops`) were removed: the project's `/nexus-*` skills own those workflows.
+
+| Version | Change |
+| --- | --- |
+| 1.1.0 | New `agent-observer` hook that feeds the [agent observer pane](/claude-code/workspace#agent-observer). |
+| 1.1.1 | Hooks resolve the project root (`CLAUDE_PROJECT_DIR`, then the git top level) instead of the session's current directory, so they no longer create stray `.nexus/` folders in subdirectories. |
+| 1.2.0 | Workflow skills removed; hooks and agents kept. |
+| 1.2.1 | Hook logs in `.nexus/` (`session-guard.log`, `compaction-plus.log`, `cost-control.log`, `routing-guard.log`) rotate to `<name>.1` at 5 MB; one old generation is kept. |
+
+The hook adapters `nexus pull` writes to `.claude/hooks/` are built from the same nexus-core release. Run `nexus pull --force` to get the new version.
+
+## Capability routing
+
+Claude Code projects get a managed rule file, `.claude/rules/40-nexus-capability-routing.md`, which Claude Code loads in every session. OpenCode projects get the same content as a "Capability Routing" section in `AGENTS.md`.
+
+The rule is built from the project's assigned skills and enabled plugins. For each capability it names:
+
+- the **Nexus skill** that owns it
+- the **engine agents** that may run inside that skill (engine plugins and nexus-core agents); results go to Nexus
+- the **plugins and Claude Code built-ins** that must not replace it (for example `/code-review` and `/security-review`)
+
+Guardrail plugins are listed as running automatically without replacing the owning skill; complement plugins are listed as free to use.
+
+Example for a project with the default skills and nexus-core:
+
+```md
+# Capability routing (managed by Nexus)
+
+Nexus owns every workflow that reads or writes a Nexus artifact: sessions, dispatches,
+ADRs, reviews, scan reports, tasks, memory, commit and PR conventions. For these, use
+the Nexus skill below, even when a plugin, agent or built-in command looks similar.
+Other tools may only complement it.
+
+| Capability | Use | Notes |
+|---|---|---|
+| Session start and close | `/nexus-init`, `/nexus-session-close` |  |
+| Dispatches | `/nexus-dispatch-sweep`, `/nexus-dispatch-create` |  |
+| Code review | `/nexus-code-review` | May run nexus-core reviewer agent inside it; results go to Nexus. Not instead: `/code-review` (built-in). |
+| Security audit | `/nexus-sec-scan` | May run nexus-core security-reviewer agent inside it; results go to Nexus. Not instead: `/security-review` (built-in). |
+| Commits and pull requests | `/nexus-pr-draft` |  |
+```
+
+Capabilities without an assigned skill are left out. If the assigned skills cannot be read, the export carries the warning `capability_routing_incomplete` instead of silently dropping the rule.

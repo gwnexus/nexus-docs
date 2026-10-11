@@ -1,0 +1,149 @@
+export const metadata = {
+  title: 'Claude Code Workspace',
+  description: 'Workspace profiles for the Zellij workspace nexus run opens: presets, panels and tabs, team default, personal Zellij settings, the agent observer and project-named sessions.',
+}
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Presets', id: 'presets' },
+  { title: 'Which preset applies', id: 'which-preset-applies' },
+  { title: 'Personal settings', id: 'personal-settings' },
+  { title: 'Zellij settings', id: 'zellij-settings' },
+  { title: 'Agent observer', id: 'agent-observer' },
+  { title: 'Sessions named after the project', id: 'sessions-named-after-the-project' },
+  { title: 'Managing presets', id: 'managing-presets' },
+  { title: 'Files and CLI', id: 'files-and-cli' },
+]
+
+# Claude Code Workspace
+
+The terminal workspace `nexus run` opens for Claude Code projects, configurable per user and per project. {{ className: 'lead' }}
+
+Since v0.15.0, the Zellij workspace around Claude Code is built from **workspace profiles**: a preset defines the panes, tabs and sizes, a project can pick a team default, and every user can adjust panels, sizes and Zellij behavior for themselves. Requires nexus-cli 0.28.7 or later.
+
+## Overview
+
+A project selects its AI tool (the executioner) in the project form: OpenCode or Claude Code. For Claude Code projects with the Claude Code Experience enabled, `nexus run` starts a Zellij workspace instead of a bare terminal:
+
+- exactly one **Claude Code** pane; ending Claude Code ends the workspace and prints the session summary
+- a **sidebar** with token usage, the [agent observer](#agent-observer) and, in the default preset, a terminal
+- extra tabs such as **GIT** (lazygit), **TEST** and **LOGS**
+
+The layout is stored as a multiplexer-neutral model and rendered to Zellij KDL for each user. The renderer guarantees the invariants (one Claude pane, managed-file marker, escaped strings) and lists the host tools the layout needs (`requires`, for example `zellij`, `lazygit`, `ccusage`, `node`).
+
+Use `nexus run --plain` to start Claude Code without the workspace, or `--workspace` to force it.
+
+## Presets
+
+| Preset | Claude Code pane | Sidebar | Tabs |
+| --- | --- | --- | --- |
+| **Standard + Terminal** (system default) | 75% | Usage on top, agent observer, terminal at the bottom (a shell in the devbox session) | GIT, TEST, LOGS |
+| **Focus** | 75% | Agent observer and usage | none; Git off by default |
+| **Review** | 55% | Agent observer and usage | GIT, TEST, LOGS |
+
+lazygit lives only in the separate GIT tab. When a layout contains the usage panel, `requires` lists `node` and the exported `devbox.json` gets a Node.js package if none is present.
+
+## Which preset applies
+
+The workspace for a user is resolved in this order:
+
+1. the user's own preset pick (My Settings > Workspace Profiles)
+2. the project's team default
+3. the system default (Standard + Terminal)
+
+Set the team default in the project form's **Claude Code Experience** panel or from the CLI:
+
+```bash
+nexus env set claude.workspace_preset=focus
+```
+
+<Note>
+  The v0.15.0 upgrade removed every project-level preset so that all projects follow the new system default. Set a team default again if a project needs a different one.
+</Note>
+
+## Personal settings
+
+Under **My Settings > Workspace Profiles**, every user can:
+
+- pick a preset
+- switch panels and tabs on or off: **Agent observer**, **Usage**, **Git (lazygit)**, **Tests tab**, **Logs tab** (switching Git on for a preset without a GIT tab adds one)
+- change pane sizes
+- paste a **custom Zellij layout** (advanced)
+- see the rendered preview, the effective model and the generated KDL with line numbers
+
+Only deviations from the preset are stored. **Reset** removes the personal settings and returns to the preset.
+
+Changing a preset or a custom layout takes two steps: **Validate** runs the server-side validation and shows errors or the rendered preview; **Save** is enabled only for exactly the validated content.
+
+## Zellij settings
+
+My Settings > Workspace Profiles > **Zellij settings** holds personal Zellij options:
+
+| Option | Values |
+| --- | --- |
+| Copy to clipboard | `pbcopy`, `wl-copy`, `xclip`, or the terminal's OSC 52 (default) |
+| Copy on select | on / off |
+| Mouse mode | on / off |
+| Theme | a Zellij theme name |
+| Advanced (raw KDL) | keybinds and theme definitions; no layout blocks, no option set twice; validated before saving |
+
+`nexus pull` writes them to `.nexus/claude/zellij.local.kdl`, and `nexus run` starts the workspace with:
+
+```bash
+zellij --config .nexus/claude/zellij.local.kdl --layout .nexus/claude/workspace.local.kdl
+```
+
+- While any setting is set, this file **replaces** your global `~/.config/zellij/config.kdl` for `nexus run` (Zellij has no include or merge). Options you leave unset keep the Zellij defaults, not your global values.
+- An explicit `ZELLIJ_CONFIG_FILE` in your environment wins: no `--config` is passed.
+- If the file has not been pulled yet, the session starts with the global config and the pre-launch check shows a warning ("run nexus pull").
+
+`nexus doctor claude` shows which Zellij config a workspace uses: project-local, `ZELLIJ_CONFIG_FILE` or global.
+
+## Agent observer
+
+The observer pane shows the agents of the current workspace at a glance: the main agent with its subagents as a tree, background processes, state, current tool, runtime, model and repository or worktree.
+
+It is fed by the `nexus-agent-observer` hook (part of [nexus-core](/claude-code/plugins#nexus-core)), which writes one `nexus.agent-observation.v1` record per hook event to `.nexus/claude/observer/events.jsonl`. The pane runs:
+
+```bash
+nexus status --agents --watch
+```
+
+| Flag | Effect |
+| --- | --- |
+| `--watch` | Read incrementally once per second and redraw in place. |
+| `--json` | Print the full DTO (one compact array per change with `--watch`); model ids are not shortened. |
+| `--all` | Also show sessions that finished more than 30 minutes ago. |
+| `--file <path>` | Read another events file. |
+
+The command is local only (no login, no network), so it also works in a second terminal next to a `--plain` session.
+
+### AgentHUD (experimental)
+
+Under the observer switch you can choose **AgentHUD**, a third-party observer, instead of the Nexus observer. The pane then runs `agenthud` and `requires` lists it; it is never added to `devbox.json`. `nexus doctor claude` checks for it and fails when it is missing; `--fix` only prints the upstream install instruction (`npm i -g agenthud`) and never runs it.
+
+## Sessions named after the project
+
+Rendered layouts set the Zellij session name to the project slug (lowercase, `a-z`, `0-9` and `-`, at most 32 characters) and attach to an existing session. A second `nexus run` in the same project **joins the running workspace** instead of failing. A custom layout that sets its own `session_name` keeps it.
+
+## Managing presets
+
+Platform admins manage the presets and the system default under **Dashboard > System > Settings**, tab **Workspace Profiles**. The same component serves the admin view and My Settings: runtime tabs (Claude Code; OpenCode is in development), preset list, panel switches, preset JSON editor and rendered preview, with the same Validate and Save steps.
+
+## Files and CLI
+
+| File | Written by | Git |
+| --- | --- | --- |
+| `.nexus/claude/workspace.local.kdl` | `nexus pull`, `nexus init`: your personal rendered layout | excluded |
+| `.nexus/claude/zellij.local.kdl` | `nexus pull`, `nexus init`: your Zellij settings | excluded |
+| `.nexus/claude/nexus-claude.kdl` | team default layout (project default preset, else Standard + Terminal) | committed; fallback for older CLIs and before the first pull |
+| `.nexus/claude/observer/events.jsonl` | the agent observer hook | excluded |
+
+The personal files are checked against their `sha256`, recorded in the pull manifest and shown by `nexus status`, `nexus diff` and `nexus reset`. A local edit is reported and kept unless you pull with `--force`; `nexus push` refuses them.
+
+| Command | Purpose |
+| --- | --- |
+| `nexus run` | Start the workspace; uses the personal layout, falls back to the committed team layout with a warning |
+| `nexus status --agents` | Agent observer view (see above) |
+| `nexus doctor claude [--fix]` | Check `claude`, `zellij`, `lazygit`, `ccusage`, `delta` and AgentHUD against the layout's `requires`; `--fix` prints (and with confirmation or `-y` runs) install commands |
+| `nexus env set claude.workspace_preset=<slug>` | Set the project's team default |

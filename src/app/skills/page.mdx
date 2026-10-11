@@ -7,6 +7,9 @@ export const sections = [
   { title: 'What is a skill?', id: 'what-is-a-skill' },
   { title: 'How skills work', id: 'how-skills-work' },
   { title: 'Built-in skills', id: 'built-in-skills' },
+  { title: 'Descriptions', id: 'descriptions' },
+  { title: 'Run only on request', id: 'run-only-on-request' },
+  { title: 'Skill resources', id: 'skill-resources' },
   { title: 'Skill scope', id: 'skill-scope' },
   { title: 'MCP tools', id: 'mcp-tools' },
 ]
@@ -31,7 +34,7 @@ Skills are versioned, searchable, and exposed to agents as slash commands (e.g. 
 ## How skills work
 
 1. **Assignment** — skills are assigned to projects in the Nexus dashboard or via MCP tools
-2. **Sync** — `nexus pull` writes a local cache of skill files to `.nexus/skills/` for reference
+2. **Sync** — `nexus pull` writes the skill files (with their resources) to the agentic root (`.nexus/skills/`) and, for Claude Code projects, to `.claude/skills/<skill>/`
 3. **Invocation** — the agent invokes a slash command (e.g. `/nexus-sec-scan`)
 4. **Loading** — the skill body is fetched live from the backend via the MCP server
 5. **Execution** — the agent follows the skill's instructions
@@ -55,14 +58,50 @@ Skills are versioned, searchable, and exposed to agents as slash commands (e.g. 
 | Security Scan | `/nexus-sec-scan` | OWASP Top 10 security audit with structured findings report |
 | Performance Scan | `/nexus-perf-scan` | Performance audit using Lighthouse (web) or profiling tools (CLI) |
 | Learnings | `/nexus-learnings` | Capture surprises, unexpected findings, and gotchas as research notes |
-| Dispatch Sweep | `/nexus-dispatch-sweep` | Process open Dispatches: prioritized inbox sweep and routing |
-| Dispatch Create | `/nexus-dispatch` | Create a structured Dispatch for agent coordination |
+| Dispatch Sweep | `/nexus-dispatch-sweep` | Process open Dispatches: prioritized sweep, acknowledge, act by type, reply, resolve and close |
+| Dispatch Create | `/nexus-dispatch-create` | Create a structured Dispatch for agent coordination |
 | Show Plugins | `/nexus-show-plugins` | Display loaded Nexus plugins and connection status |
+
+### Catalog cleanup (v0.16.0)
+
+- Archived skills were removed from the catalog: `nx-sec-check`, `nx-perf-check`, `nx-sprint-plan`, `nx-test-runner`, `nx-research-digest` and `nx-init-nexus`.
+- `nx-vl-sweep` was merged into `nx-dispatch-sweep` (`/nexus-dispatch-sweep`); its project assignments moved over.
+- `nx-cr-review` (CodeRabbit findings) is a short skill with four resource files.
+- `nx-grill-me` has a real description and runs only on request.
+
+Which skill owns which workflow, and which plugins or built-in commands must not replace it, is written into each project's [capability routing rule](/claude-code/plugins#capability-routing).
+
+## Descriptions
+
+Every skill needs a **description** of at most 500 characters. Agents pick skills by this line, so it should say what the skill does and when to use it. Create and update reject a missing or blank description, in MCP (`sk_create`, `sk_update`) and REST alike.
+
+## Run only on request
+
+Some skills should run only when the user asks for them, never because the model decided to. Switch on **Run only on request** in the skill form, or set `invocation` in `sk_create` / `sk_update`:
+
+| `invocation` | Behavior |
+| --- | --- |
+| `model` (default) | The agent may start the skill on its own when it fits the task. |
+| `user` | The skill runs only when the user invokes it. |
+
+For Claude Code, `nexus pull` (nexus-cli 0.28.9 or later) renders `invocation: user` as `disable-model-invocation: true` in the skill's `SKILL.md` frontmatter. OpenCode has no equivalent; its command stub is unchanged.
+
+## Skill resources
+
+Multi-file skills ship resource files (references, policies, examples) next to the skill body. `sk_export` returns them, and `nexus pull` writes them into the skill's folder (`.claude/skills/<skill>/` and the agentic root). Before v0.16.0, resource files of skills such as `nx-cr-review` or `nx-grill-me` never reached the workspace.
 
 ## Skill scope
 
 - **Core skills** (`project_id = NULL`) are tenant-wide and available to all projects. Only platform owners and admins can create or modify them.
-- **Project-scoped skills** belong to a single project and are managed by project admins. They do not appear in other projects unless explicitly promoted to core.
+- **Project-scoped skills** belong to a single project and are managed by project admins and editors. They do not appear in other projects unless explicitly promoted to core.
+
+### Permissions (v0.16.0)
+
+| Tool | Core skill | Project skill |
+| --- | --- | --- |
+| `sk_create` | platform admin (`sk_create` always creates a core skill) | n/a |
+| `sk_update`, `sk_activate`, `sk_delete` | platform admin | project admin or editor |
+| `sk_assign`, `sk_unassign` | project admin or editor | project admin or editor |
 
 ## MCP tools
 
@@ -70,9 +109,9 @@ Skills are versioned, searchable, and exposed to agents as slash commands (e.g. 
 | --- | --- |
 | `sk_list` | List skills for the current tenant |
 | `sk_get` | Get full skill content by identifier |
-| `sk_create` | Create a new skill in draft status |
-| `sk_update` | Update skill content (increments version) |
+| `sk_create` | Create a new skill in draft status (`description` required, optional `invocation`) |
+| `sk_update` | Update skill content (increments version; optional `invocation`) |
 | `sk_activate` | Change skill status (draft, active, archived) |
 | `sk_assign` | Assign a skill to a project |
 | `sk_unassign` | Remove a skill assignment from a project |
-| `sk_export` | Export all skill assignments for a project |
+| `sk_export` | Export all skill assignments for a project, including `invocation` and resource files |

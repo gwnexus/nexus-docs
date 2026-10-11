@@ -14,6 +14,32 @@ Complete reference for the tools exposed by `nexus-mcp`. {{ className: 'lead' }}
 
 See the [nexus-mcp page](/mcp-server) for an overview of tool families. The full tool reference with parameters, examples, and response schemas will be published here.
 
+## Directive fields
+
+Since nexus-mcp v0.10.16. See [Directives](/directives#mcp-tools) for details.
+
+| Tool | Fields |
+| --- | --- |
+| `pd_create` | `rule`, `rationale`, `level`, `category`, `sort_order`, or `template_slug` / `template_id` for a catalog rule |
+| `pd_update` | `rule`, `rationale`, `level`, `category`, `sort_order` (project rules only) |
+| `pd_list` | Returns the effective list with `source`: `mandatory`, `flag`, `template`, `project` |
+| `directive_export` | Exports the effective list; returns 503 instead of an incomplete list |
+
+## Skill fields
+
+| Tool | Fields |
+| --- | --- |
+| `sk_create` | `description` required (1 to 500 characters), optional `invocation` (`model` \| `user`) |
+| `sk_update` | optional `invocation`; a blank `description` is rejected |
+| `sk_export`, `sk_get` | Return `invocation`; `sk_export` also returns skill resource files |
+
+## Task and document fields
+
+| Tool | Field |
+| --- | --- |
+| `task_create`, `task_update` | optional `category` (`coderabbit_fix`), since v0.10.15 |
+| `doc_classify` | classification `coderabbit_review`, since v0.10.15 |
+
 ## Workspace sync actions
 
 Added in v0.12.0.

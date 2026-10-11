@@ -254,6 +254,13 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
+    title: 'Claude Code',
+    links: [
+      { title: 'Workspace',      href: '/claude-code/workspace' },
+      { title: 'Plugins',        href: '/claude-code/plugins' },
+    ],
+  },
+  {
     title: 'Core Concepts',
     links: [
       { title: 'Sessions',       href: '/sessions' },
@@ -261,6 +268,8 @@ export const navigation: Array<NavGroup> = [
       { title: 'Dispatch',       href: '/dispatch' },
       { title: 'Knowledge Base', href: '/knowledge-base' },
       { title: 'Skills',         href: '/skills' },
+      { title: 'Directives',     href: '/directives' },
+      { title: 'Project Settings', href: '/project-settings' },
       { title: 'Workspaces',     href: '/workspaces' },
       { title: 'Actors',         href: '/actors' },
     ],

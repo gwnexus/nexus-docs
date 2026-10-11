@@ -6,6 +6,9 @@ export const metadata = {
 export const sections = [
   { title: 'Access policy scoping', id: 'access-policy-scoping' },
   { title: 'Fail-closed guards', id: 'fail-closed-guards' },
+  { title: 'Tenant isolation (SEC-007)', id: 'tenant-isolation-sec-007' },
+  { title: 'Role checks', id: 'role-checks' },
+  { title: 'Node calls and DNS rebinding', id: 'node-calls-and-dns-rebinding' },
   { title: 'Secret scanning', id: 'secret-scanning' },
   { title: 'Safe export encoding', id: 'safe-export-encoding' },
   { title: 'Related controls', id: 'related-controls' },
@@ -15,7 +18,7 @@ export const sections = [
 
 The platform-level security controls that protect tenant data, audit integrity, and the deployment pipeline. {{ className: 'lead' }}
 
-This page collects the security posture hardening shipped in v0.12.0. It complements the confidentiality model ([action gating](/confidentiality) and AI routing) and the [audit and SIEM](/audit-siem) subsystem.
+This page collects the security posture hardening shipped since v0.12.0, including the tenant isolation and role checks of v0.15.0 to v0.16.1. It complements the confidentiality model ([action gating](/confidentiality) and AI routing) and the [audit and SIEM](/audit-siem) subsystem.
 
 ## Access policy scoping
 
@@ -32,9 +35,37 @@ Guards default to denying the operation when preconditions are not met.
 
 - **Staging seed guard** — the staging database seed refuses to run unless an explicit target allowlist is provided and the connection is HTTPS. A misconfigured or unexpected target aborts the seed rather than proceeding.
 
+- **Complete directive lists only** (v0.16.0) — when the directive catalog, a project's rules or its settings cannot be read, the agent file export, `pd_list`, `directive_export` and the directives REST endpoint answer 503 with the missing sources instead of returning a list without the platform rules. Agent files are not regenerated from an incomplete list.
+
 <Note>
   Fail-closed means the safe default is to stop. An unset or ambiguous configuration results in denial, not a best-effort attempt.
 </Note>
+
+## Tenant isolation (SEC-007)
+
+Database tables must not be readable across tenants through the public data API, even by signed-in users with their own token.
+
+- **v0.15.0:** fourteen tables (including licenses, skill versions, reviews and their comments and participants, workspaces, baselines, flavors, blueprint versions, machines, actors and actor assets) had a permissive read policy for every signed-in user. These policies were dropped; the application reads these tables only through server-side paths, so its behavior did not change.
+- **v0.16.0:** eight more tables (tags, entity tags, model routes, runtime and model profiles, provider deployments, route policies and provider subscriptions) followed.
+- Both migrations fail if a permissive read policy for signed-in, anonymous or public roles remains afterwards, so the gap cannot silently reopen.
+
+## Role checks
+
+| Area | Since | Rule |
+| --- | --- | --- |
+| Skills via MCP | v0.16.0 | Core skills: platform admins only. Project skills: project admin or editor. Assigning and unassigning: project admin or editor (before: any member, including viewers). |
+| Directives via MCP | v0.16.0 | Create, update and toggle: project admin or editor. Delete: project admin. Update, delete and toggle write audit entries. |
+| Workspace forks | v0.16.1 | Viewing forks needs project membership; creating, editing, activating, syncing, exporting or deleting them needs a project admin or editor role. Platform admins keep access. Before, any signed-in user could reach these routes. |
+
+See [Workspaces](/workspaces#access) and [Skills](/skills#skill-scope).
+
+## Node calls and DNS rebinding
+
+Since v0.16.0, calls from the control plane to registered AI nodes (compose file, logs and activation) are protected against DNS rebinding. Every address a node hostname resolves to is checked when the connection is made:
+
+- loopback, link-local and cloud metadata addresses are refused
+- public names must resolve to public addresses; LAN names may resolve privately
+- redirects from a node are no longer followed or passed through; they return 502
 
 ## Secret scanning
 

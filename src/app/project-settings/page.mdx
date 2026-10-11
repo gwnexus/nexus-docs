@@ -1,0 +1,109 @@
+export const metadata = {
+  title: 'Project Settings',
+  description: 'Project policy flags for languages, Conventional Commits, em-dashes, personal address and AI attribution, plus the shadow levels that keep agent files out of git.',
+}
+
+export const sections = [
+  { title: 'Policy flags', id: 'policy-flags' },
+  { title: 'Setting them from the CLI', id: 'setting-them-from-the-cli' },
+  { title: 'Shadow levels', id: 'shadow-levels' },
+  { title: 'The managed exclude block', id: 'the-managed-exclude-block' },
+  { title: 'Already tracked files', id: 'already-tracked-files' },
+  { title: 'nexus shadow', id: 'nexus-shadow' },
+]
+
+# Project Settings
+
+Switches for shared standards that render their own directive, and a shadow level for public repositories. {{ className: 'lead' }}
+
+Since v0.16.0, common standards are no longer written as project directives. A project switches them on as **settings** (stored in the project's `policy`), and each switched-on setting renders its rule into the [directives](/directives) agents receive.
+
+## Policy flags
+
+| Setting | Key | Values | Level | Rule agents get |
+| --- | --- | --- | --- | --- |
+| Artifact language | `policy.artifacts_language` | `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt` | MUST | Write Nexus knowledge artifacts (ADRs, documents, sessions, tasks, dispatches) in *language*, whatever language you use with the user. |
+| Docs language | `policy.docs_language` | same as above | MUST | Write code comments, README files and repository docs in *language*. |
+| Conventional Commits | `policy.conventional_commits` | `true` / `false` | MUST | Write commit messages as Conventional Commits: type(scope): subject under 72 characters, no emojis. |
+| No em-dashes | `policy.no_em_dashes` | `true` / `false` | MUST | Do not use em-dashes in any output; use commas, colons, semicolons or parentheses instead. |
+| Personal address | `policy.personal_address` | `true` / `false` | SHOULD | Address the user by the nickname (or first name) from the agent file where it adds warmth or clarity. |
+| Shadow level | `policy.shadow` | `off`, `ai`, `nexus` | MUST (`nexus` only) | See [Shadow levels](#shadow-levels). |
+
+New projects start with the artifact language set to English; everything else is opt-in. Unset values, `false` and `shadow: off` are not stored.
+
+**AI attribution** is not a `policy.*` key: it keeps using the project's Git configuration (Co-Authored-By trailers are off by default). When attribution is off, the project gets the rule "Do not add AI attribution (Co-Authored-By lines, generated-with notes) to commits or pull requests." Claude Code projects also get the matching attribution setting.
+
+## Setting them from the CLI
+
+The `policy.*` keys appear in `nexus env keys` and can be read and written like any other project setting:
+
+```bash
+nexus env get policy.docs_language
+nexus env set policy.conventional_commits=true
+nexus env set policy.no_em_dashes=true --dry-run
+```
+
+After a change, run `nexus pull` and restart the agent sessions so the new rule reaches them.
+
+## Shadow levels
+
+The shadow level keeps the files Nexus writes for agents out of git. Use it for repositories that are public or shared with people outside the team.
+
+| Level | Effect |
+| --- | --- |
+| `off` | Agent files may be committed. Default. |
+| `ai` | `nexus pull` adds every agent file it writes to the local git exclude list. Use it for product and public repositories. |
+| `nexus` | As `ai`, plus a rule against Nexus references in commits, pull requests, code comments and docs. Not for repositories of Nexus itself. |
+
+With `ai` or `nexus`, the exclude list covers:
+
+- `.claude/`, the agentic root (for example `.nexus/`), `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `opencode.json` and `.opencode/`
+- every other agent file path the export writes, for example `.cursorrules`, `.github/copilot-instructions.md`, `.rtk/filters.toml` or the Taskmaster config
+
+### Why product repositories use `ai`
+
+Product repositories usually want the agent setup locally but not in their history or in pull requests. `ai` achieves that without any rule text. `nexus` is for repositories where the code itself must not mention the tooling, for example open-source projects.
+
+## The managed exclude block
+
+Since nexus-cli 0.28.9, `nexus pull` applies the server's exclude list on every pull as a managed block in `.git/info/exclude`:
+
+```text
+# >>> nexus managed exclude (server)
+.claude/
+.nexus/
+AGENTS.md
+CLAUDE.md
+...
+# <<< nexus managed exclude (server)
+```
+
+- Paths the server stops sending (for example after switching back to `off`) leave the block.
+- Lines you wrote yourself are never touched, and paths already listed elsewhere are not duplicated.
+- Unsafe entries (absolute paths, `..`, `!`, `#`, line breaks) are ignored.
+
+`.git/info/exclude` is local to the checkout and never committed, so the setting does not change `.gitignore`.
+
+## Already tracked files
+
+The exclude list only affects **untracked** files. Agent files that are already committed stay tracked until you remove them from the index once:
+
+```bash
+git rm -r --cached .claude .nexus AGENTS.md CLAUDE.md
+git commit -m "chore: stop tracking agent files"
+```
+
+`nexus pull` never untracks files automatically; it prints a `git rm -r --cached <path>` hint for each tracked path.
+
+## nexus shadow
+
+`nexus shadow` is a thin client of `policy.shadow`:
+
+| Command | Effect |
+| --- | --- |
+| `nexus shadow ai` (or `on`) | Sets `policy.shadow=ai` and applies the exclude list at once. |
+| `nexus shadow nexus` | Sets `policy.shadow=nexus` and applies the exclude list. |
+| `nexus shadow off` | Sets `policy.shadow=off`; also removes the old local shadow block. |
+| `nexus shadow status` | Shows the server level and the server exclude block. |
+
+When the server sets a level, `nexus shadow status` shows any older local block as `Local shadow block (legacy)` and the devbox block as `Workspace shadow (devbox files)`. Unlinked workspaces and backends without `policy.shadow` keep the old local mode.

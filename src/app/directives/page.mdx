@@ -1,0 +1,232 @@
+export const metadata = {
+  title: 'Directives',
+  description: 'Project directives as short rules: sources, MUST and SHOULD levels, categories, the render budget, the platform catalog, writing guide and icon legend.',
+}
+
+export const sections = [
+  { title: 'What directives are', id: 'what-directives-are' },
+  { title: 'Sources', id: 'sources' },
+  { title: 'Rule and description', id: 'rule-and-description' },
+  { title: 'Levels', id: 'levels' },
+  { title: 'Categories', id: 'categories' },
+  { title: 'Render budget and preview', id: 'render-budget-and-preview' },
+  { title: 'Writing good rules', id: 'writing-good-rules' },
+  { title: 'Icon legend', id: 'icon-legend' },
+  { title: 'Platform catalog', id: 'platform-catalog' },
+  { title: 'What agents get', id: 'what-agents-get' },
+  { title: 'MCP tools', id: 'mcp-tools' },
+  { title: 'Migration from old directives', id: 'migration-from-old-directives' },
+]
+
+# Directives
+
+Binding rules every agent gets on every turn, written once and kept short. {{ className: 'lead' }}
+
+Since v0.16.0, project directives are **short rules**. Shared rules live in a platform catalog and are referenced by projects instead of being copied; each project adds only the facts that hold for it alone. Every rule costs context in every request, so keep them few and short.
+
+## What directives are
+
+A directive is one imperative sentence that an agent must follow without being asked: a lock, a notice duty, a build quirk, a commit convention. Directives apply to the whole project and to every agent working in it.
+
+What does **not** belong in directives:
+
+- **Shared standards** such as language, commit style or em-dashes: use the [project settings](/project-settings) or a catalog rule.
+- **Workflows**: they are [skills](/skills).
+- **Explanations and how-tos**: they belong in [knowledge base](/knowledge-base) documents.
+
+## Sources
+
+The effective directive list of a project is built from four sources:
+
+| Source | Shown on the project page as | Can a project turn it off? |
+| --- | --- | --- |
+| **Platform rules** | Platform rules | No. They apply to every project. |
+| **Project settings** | Project settings | Yes, by switching the setting off. Each setting renders its rule when switched on (project page or `nexus env set policy.<key>`). |
+| **Default rules** (catalog) | Nexus rules | Yes. New projects start with them. |
+| **Optional rules** (catalog) | Nexus rules | Added by the project when it needs them. |
+| **Project rules** | Project rules | Yes. Facts that hold for one project only, written on that project. |
+
+On a project page, default and optional catalog rules are listed together as **Nexus rules**.
+
+## Rule and description
+
+Each directive has two texts:
+
+<Properties>
+  <Property name="rule" type="string, max 240 characters">
+    One imperative sentence. This is the only text agents receive. Always rendered.
+  </Property>
+  <Property name="description (rationale)" type="string, max 2000 characters">
+    Why the rule exists, for the people who maintain it. Shown in the UI only and never sent to agents.
+  </Property>
+</Properties>
+
+The editor shows a live character budget for both fields: amber at 90%, red past the limit, with the overflow highlighted in the rule editor.
+
+## Levels
+
+`level` replaces the old `priority` field and has two values:
+
+| Level | Meaning | Seal |
+| --- | --- | --- |
+| **MUST** | No exceptions, also when it is inconvenient. | Amber **M** (red **M** for platform rules) |
+| **SHOULD** | The default; the agent follows it unless the user says otherwise. | Gray **S** |
+
+Within a category, rules are ordered by `sort_order`.
+
+## Categories
+
+Categories are a fixed set:
+
+| Category | Covers |
+| --- | --- |
+| Commits | Commit messages, attribution, pull requests. |
+| Language | Language of artifacts, docs and code comments. |
+| Docs | Repository documentation and code style. |
+| Security | Secrets, locks and what must never leave the repository. |
+| Workflow | How agents work with Nexus: sessions, dispatches, branches. |
+| Operations | Deploys, migrations, builds and infrastructure. |
+| Communication | How agents write and address people. |
+
+## Render budget and preview
+
+Keep a project within **40 rules and about 600 words**. The directives panel on the project page counts the enabled rules and their words against this budget and shows a **What agents get** preview: the exact list that will be rendered into the agent files, grouped by category.
+
+## Writing good rules
+
+The directives panel has a slide-over guide ("How to write a good rule"). Its key points:
+
+### The rule
+
+One imperative sentence: what to do or not do, and when. Name the concrete trigger; leave out the why.
+
+<div className="not-prose my-6 space-y-3 text-sm">
+  <div className="rounded-lg border border-emerald-500/30 bg-emerald-50 px-4 py-3 text-zinc-800 dark:bg-emerald-400/5 dark:text-zinc-200">
+    <strong className="text-emerald-700 dark:text-emerald-400">Good:</strong> Tell the operator before any deploy or infrastructure apply that can affect the customer's production VM.
+  </div>
+  <div className="rounded-lg border border-emerald-500/30 bg-emerald-50 px-4 py-3 text-zinc-800 dark:bg-emerald-400/5 dark:text-zinc-200">
+    <strong className="text-emerald-700 dark:text-emerald-400">Good:</strong> Run database migrations only through the Makefile targets, never with ad hoc SQL.
+  </div>
+  <div className="rounded-lg border border-rose-500/30 bg-rose-50 px-4 py-3 text-zinc-800 dark:bg-rose-400/5 dark:text-zinc-200">
+    <strong className="text-rose-700 dark:text-rose-400">Avoid:</strong> Please always be very careful with deployments, because the customer runs an important instance and downtime would be really bad, so ideally check with someone first if possible.
+    <span className="mt-1 block text-zinc-500 dark:text-zinc-400">Vague trigger, soft wording, reasons mixed in.</span>
+  </div>
+  <div className="rounded-lg border border-rose-500/30 bg-rose-50 px-4 py-3 text-zinc-800 dark:bg-rose-400/5 dark:text-zinc-200">
+    <strong className="text-rose-700 dark:text-rose-400">Avoid:</strong> Version policy: 0.14.x development series ...
+    <span className="mt-1 block text-zinc-500 dark:text-zinc-400">Project state, not a rule; it is outdated by the next release.</span>
+  </div>
+</div>
+
+### The description
+
+The description says why the rule exists. A few sentences, plus a link or reference for the background. Agents never see it.
+
+- **Good:** names who is affected, which systems and environments the rule covers, and why the notice is needed.
+- **Avoid:** a full runbook with commands, verification steps and incident history. Put it in a knowledge base document and link it.
+
+## Icon legend
+
+The directives panel and the platform catalog open an icon legend from the right ("Icon legend" in the panel header, or a click on any level seal). It explains:
+
+### Level seals
+
+| Seal | Meaning |
+| --- | --- |
+| Red **M** | Platform rule: MUST, set by the platform for every project; it cannot be changed or turned off on a project. |
+| Amber **M** | MUST: no exceptions, also when it is inconvenient. |
+| Gray **S** | SHOULD: the default; the agent follows it unless the user says otherwise. |
+
+The same seal component is used for the classification levels elsewhere in Nexus.
+
+### Source icons
+
+| Icon | Source |
+| --- | --- |
+| Lock | Platform rules: apply to every project and cannot be turned off. |
+| Sliders | Project settings: rendered when a project switches the setting on. |
+| Book | Default rules: catalog rules new projects start with; a project can turn them off. |
+| Plus circle | Optional rules: catalog rules a project adds when it needs them. |
+| Folder | Project rules: facts that hold for one project only. |
+
+### Labels
+
+| Label | Meaning |
+| --- | --- |
+| `slug` | Stable name of a catalog rule, used to add it to a project (for example with `pd_create`). |
+| `policy` | The project setting that renders the rule, for example `policy: no_em_dashes` or `policy: shadow=nexus`. |
+| `3 of 9` | Usage: how many projects currently get the rule; green when at least one does. |
+| `v2` | Version: goes up when the text of a catalog rule changes; the new text reaches projects on the next `nexus pull`. |
+
+### Row actions
+
+| Action | Effect |
+| --- | --- |
+| Edit | Change the rule text, description, level, category or order (platform admins in the catalog). |
+| Delete | In the catalog: removes an optional rule from all projects. On a project page: removes a catalog or project rule from that project only. |
+| Locked | Platform rules on a project page; they cannot be edited there. |
+
+## Platform catalog
+
+Platform admins manage the catalog under **Platform > Directives**. Rule texts are written once there and used by every project that references them.
+
+- **Usage:** each catalog rule shows how many projects get it.
+- **Versioning:** editing a rule text bumps its version (`v2`, `v3`, ...). Projects receive the new text on their next `nexus pull`; nothing has to be changed per project.
+- **Kinds:** mandatory (platform rules), flag (rendered by a project setting), default and optional.
+
+## What agents get
+
+Only enabled rule texts are sent; descriptions, labels and seals stay in the UI. How the list reaches the agent depends on the runtime:
+
+| Runtime | Where the directives go |
+| --- | --- |
+| **Claude Code** (with the Claude Code Experience) | `.claude/rules/15-nexus-directives.md`, which Claude Code loads in every session. `AGENTS.md` and `CLAUDE.md` contain only a pointer to it. |
+| **OpenCode** | A compact rule list in `AGENTS.md`. |
+| **All runtimes** | `.nexus/directives.md`: a compact, readable copy with one `- MUST: <rule>` or `- SHOULD: <rule>` line per directive, grouped by category in server order. |
+
+The `CLAUDE.md` bootstrap of Claude Code projects names the always-loaded rules file (and `directives.md` as its readable copy) instead of asking the agent to load `directives.md`, which Claude Code never loads on its own.
+
+<Note>
+  After changing directives, run `nexus pull` and restart the agent sessions. A running session keeps the rules it loaded at start.
+</Note>
+
+If the catalog, the project's rules or its settings cannot be read, Nexus answers with an error instead of exporting an incomplete list: `af_export`, `pd_list`, `directive_export` and the directives REST endpoint return 503 with the missing sources, and the agent files are not regenerated.
+
+## MCP tools
+
+The `pd_*` tools work on the effective list. Since nexus-mcp v0.10.16:
+
+| Field | Tools | Description |
+| --- | --- | --- |
+| `rule` | `pd_create`, `pd_update` | One imperative sentence, max 240 characters. |
+| `rationale` | `pd_create`, `pd_update` | Max 2000 characters, never sent to agents. |
+| `level` | `pd_create`, `pd_update` | `must` or `should`. |
+| `category` | `pd_create`, `pd_update` | `commits`, `language`, `docs`, `security`, `workflow`, `operations` or `communication`. |
+| `sort_order` | `pd_create`, `pd_update` | Integer order within the category. |
+| `template_slug` / `template_id` | `pd_create` | Add a default or optional rule from the platform catalog. Cannot be combined with rule fields. |
+
+- `pd_list` returns each entry with its `source`: `mandatory`, `flag`, `template` or `project`. Mandatory and flag rules cannot be edited with `pd_update`.
+- `title`, `body` and `priority` are still accepted as **deprecated aliases** for `rule`, `rationale` and `level`.
+- `pd_create`, `pd_update` and `pd_toggle` require a project admin or editor; `pd_delete` requires a project admin. Update, delete and toggle write audit entries.
+
+```json
+{
+  "tool": "pd_create",
+  "arguments": {
+    "rule": "Run database migrations only through the Makefile targets, never with ad hoc SQL.",
+    "rationale": "Ad hoc SQL bypasses the migration log and the staging dry run.",
+    "level": "must",
+    "category": "operations"
+  }
+}
+```
+
+## Migration from old directives
+
+The v0.16.0 migration converted existing directives automatically:
+
+- Texts that were copies of shared standards became **project settings** or **catalog references**.
+- Remaining project facts were shortened into rules; the old text was kept as the description.
+- Directives already covered by the core skills or the [capability routing rule](/claude-code/plugins#capability-routing) were removed.
+- Model routing notes and similar background moved to the knowledge base.
+
+This also fixed the alphabetical priority sort, the double inclusion in `AGENTS.md` and `CLAUDE.md`, and the always-zero priority in the runtime spec.
