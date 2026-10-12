@@ -6,25 +6,27 @@ export const metadata = {
 export const sections = [
   { title: 'v0.16.x', id: 'v0-16-x' },
   { title: 'v0.15.0', id: 'v0-15-0' },
-  { title: 'nexus-cli v0.28.5 - v0.28.10', id: 'nexus-cli-v0-28-5-v0-28-10' },
+  { title: 'v0.14.x', id: 'v0-14-x' },
+  { title: 'nexus-cli v0.28.5 - v0.28.11', id: 'nexus-cli-v0-28-5-v0-28-11' },
+  { title: 'nexus-cli v0.16.7 - v0.28.4', id: 'nexus-cli-v0-16-7-v0-28-4' },
   { title: 'nexus-mcp v0.10.14 - v0.10.16', id: 'nexus-mcp-v0-10-14-v0-10-16' },
   { title: 'nexus-core v1.1.0 - v1.2.1', id: 'nexus-core-v1-1-0-v1-2-1' },
   { title: 'nexus-cli v0.10.0 - v0.16.6', id: 'nexus-cli-v0-10-0-v0-16-6' },
-  { title: 'v0.13.x', id: 'v0-13-x' },
-  { title: 'v0.12.0', id: 'v0-12-0' },
-  { title: 'v0.11.x', id: 'v0-11-x' },
-  { title: 'v0.10.3', id: 'v0-10-3' },
-  { title: 'v0.10.1', id: 'v0-10-1' },
-  { title: 'v0.10.0', id: 'v0-10-0' },
-  { title: 'v0.9.x', id: 'v0-9-x' },
-  { title: 'v0.8.x', id: 'v0-8-x' },
-  { title: 'v0.7.x', id: 'v0-7-x' },
-  { title: 'v0.6.x', id: 'v0-6-x' },
-  { title: 'v0.5.x', id: 'v0-5-x' },
-  { title: 'v0.4.x', id: 'v0-4-x' },
-  { title: 'v0.3.x', id: 'v0-3-x' },
-  { title: 'v0.2.x', id: 'v0-2-x' },
-  { title: 'v0.1.0', id: 'v0-1-0' },
+  { title: 'v0.13.x', id: 'v0-13-x-september-2026' },
+  { title: 'v0.12.0', id: 'v0-12-0-august-2026' },
+  { title: 'v0.11.x', id: 'v0-11-x-july-to-august-2026' },
+  { title: 'v0.10.3', id: 'v0-10-3-july-2026' },
+  { title: 'v0.10.1', id: 'v0-10-1-july-2026' },
+  { title: 'v0.10.0', id: 'v0-10-0-june-2026' },
+  { title: 'v0.9.x', id: 'v0-9-x-june-2026' },
+  { title: 'v0.8.x', id: 'v0-8-x-june-2026' },
+  { title: 'v0.7.x', id: 'v0-7-x-june-2026' },
+  { title: 'v0.6.x', id: 'v0-6-x-april-may-2026' },
+  { title: 'v0.5.x', id: 'v0-5-x-april-2026' },
+  { title: 'v0.4.x', id: 'v0-4-x-april-2026' },
+  { title: 'v0.3.x', id: 'v0-3-x-april-2026' },
+  { title: 'v0.2.x', id: 'v0-2-x-april-2026' },
+  { title: 'v0.1.0', id: 'v0-1-0-april-2026' },
 ]
 
 # Changelog
@@ -72,16 +74,66 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
-## nexus-cli v0.28.5 — v0.28.10
+## v0.14.x
+
+**Claude Code as a first-class runtime.** Requires nexus-cli 0.28.0 or later (0.28.4 recommended).
+
+### v0.14.1 — September 26, 2026
+
+- **Executioner switch keeps agent files consistent:** switching a project between OpenCode and Claude Code assigns or removes the OpenCode plugin files on every path (project form, `nexus env set executioner=...`). Re-running a switch repairs drift; a second run changes nothing.
+- `nexus env set executioner=...` reports the planned file changes as `agent_files: { assign, unassign }`, also with `--dry-run`.
+- Claude Code projects never receive OpenCode plugin files, and saving the project form keeps pins and overrides of plugin file assignments.
+
+### v0.14.0 — September 25, 2026
+
+- **One executioner per project:** a project runs with OpenCode (default) or Claude Code; the "generate configs for both tools" option is removed. The export tells `nexus run` what to start (`run_target`).
+- **Claude Code Experience (ADR-0117):** a project section for Claude Code projects selects a profile (essential, engineering, review, test-ops), a statusline, a terminal workspace and plugins, with a preview of every generated file. Nexus renders `.claude/rules/`, the statusline, the Zellij layout `.nexus/claude/nexus-claude.kdl` and a managed block in `CLAUDE.md`. See [Claude Code Workspace](/claude-code/workspace).
+- **Claude Code hooks:** the session guard, headroom intercept, compaction, routing guard and cost control hooks ship as Claude Code hooks, or through the `nexus-core` plugin when it is enabled. See [Claude Code Plugins](/claude-code/plugins#nexus-core).
+- **Claude Max execution mode (ADR-0106, experimental):** behind a per-user feature flag. Nexus stores no Claude credential; Claude Code keeps the login, and cost views show no per-token money figures for this mode.
+- **Project settings for the CLI (ADR-0118):** `nexus env get|set` reads and writes a curated set of project settings (executioner, execution mode, `claude.*`, `git.*`) with a dry run, revision check, audit entry and regenerated agent files. See [CLI](/cli).
+- **AI attribution control:** Co-Authored-By trailers are off by default and enforced through Claude Code's own setting.
+- **GitHub CLI profiles (ADR-0116):** a default `gh` profile per user, overridable per project; `nexus run` uses it without touching your current `gh` login.
+- **Team page:** pick a role once, add several users from a searchable list, change roles inline; the last project admin cannot be demoted.
+- **Agent file exports:** generated files (`AGENTS.md`, `CLAUDE.md`, Claude Code files) cannot be pushed back; at most one file per target path is delivered; `AGENTS.md` and `CLAUDE.md` no longer repeat all directives.
+- **Security:** secret scanning in CI with the full gitleaks rule set; node compose routes restricted to platform admins and validated endpoints; project copy needs manage rights on the source; dashboard reads follow project membership during impersonation; document moves need write rights in both projects; error responses no longer leak database text; `git_config` validated server side.
+- **Performance:** local session verification in the middleware, smaller client bundles, faster agent file export and new database indexes.
+
+---
+
+## nexus-cli v0.28.5 — v0.28.11
 
 **CLI side of NEXUS-APP 0.15.0 and 0.16.0.** See the [CLI reference](/cli#claude-code-projects).
 
+- **v0.28.11:** `nexus pull` removes workspace files (`devbox.json`, `scripts/devbox/**`) the workspace no longer contains when they are unchanged locally; modified ones are kept and shown by `nexus status`; `nexus pull --dry-run` previews workspace changes; plugin variables also written to `.nexus/plugin.env` for devbox `env_from`.
 - **v0.28.10:** readable `nexus status` layout with aligned sections and git identity status; `CLAUDE.md` bootstrap names the always-loaded directives file; clearer `nexus shadow status`; gitleaks config fixed and covered by a CI self-test.
 - **v0.28.9:** compact `.nexus/directives.md` (`- MUST:` / `- SHOULD:` lines); `nexus shadow` as a client of `policy.shadow`; server exclude list applied on every pull as a managed block in `.git/info/exclude`; `invocation: user` rendered as `disable-model-invocation: true`.
 - **v0.28.8:** managed Claude Code plugins are installed at project scope on `nexus pull --force` and `nexus run`; `enabledPlugins` merged per entry; `[managed]` in `nexus status`; `NEXUS_SKIP_PLUGIN_SYNC=1` to skip.
 - **v0.28.7:** personal Zellij config written on pull and init and passed to Zellij with `--config`; `nexus doctor claude` shows the config source.
 - **v0.28.6:** `NEXUS_PROJECT_ID` written into `.mcp.json`; export warnings shown for Claude Code projects; AgentHUD check in `nexus doctor claude`; compact model names in `nexus status --agents`.
 - **v0.28.5:** personal workspace layout on pull; `nexus status --agents [--watch] [--json] [--all]`; `nexus doctor claude [--fix]`; `nexus env set` shows assigned and unassigned agent files.
+
+---
+
+## nexus-cli v0.16.7 — v0.28.4
+
+**Claude Code support in the CLI.** These releases add the Claude Code projection, the CCX files and the command set the [CLI reference](/cli) documents.
+
+- **v0.28.4:** `nexus pull` removes what Nexus wrote for the runtime a project no longer uses (your own files and settings are kept); git hook self-heal; a guard against overwriting local workspace files; managed `permissions.deny` and hook matchers are applied correctly; `nexus push` no longer uploads untracked scripts.
+- **v0.28.3:** `nexus run --plain` and `--workspace <none|zellij>`, plus a local `[run] workspace` preference; a `Workspace` row in the pre-launch check.
+- **v0.28.2:** the session summary shows only the current session's headroom numbers.
+- **v0.28.1:** `AGENTS.md`, `CLAUDE.md` and `directives.md` are treated as generated files: a local edit is reported as drifted with a `nexus reset` hint and cannot be pushed.
+- **v0.28.0:** one command per function group: `nexus status`, `nexus diff [path]`, `nexus push [path]`, `nexus reset [path]`, `nexus env get|keys|set` and `nexus stash`. Every managed file is classified as content (yours to push) or projection (generated; change the setting instead). `nexus sync` and `nexus claude status|diff` become deprecated aliases.
+- **v0.27.0:** `nexus run` follows the backend's run target (Claude Code workspace, Claude Code or OpenCode); one runtime per project; `nexus claude launch` deprecated; plain `nexus pull` no longer prompts for unchanged files; `nexus upgrade` verifies the install script checksum.
+- **v0.26.0:** per-file reconciliation of Claude Code Experience files in `nexus pull`, with `--force` / `--force-unmanaged` and conflict handling for the `CLAUDE.md` managed block.
+- **v0.25.0, v0.25.1:** lock file for Claude Code Experience files; settings keys and hook scripts Nexus no longer manages are removed.
+- **v0.24.0:** `.claude/settings.json` merge from the export; managed block in the root `CLAUDE.md`; path traversal hardening for agent file writes.
+- **v0.22.0, v0.23.0:** per-project GitHub CLI profiles for `nexus run`.
+- **v0.21.0 to v0.21.4:** `nexus run --account <name>` for several Claude Max subscriptions (`default` for `~/.claude`); no Co-Authored-By trailer from Claude Code; skill descriptions kept in `SKILL.md`; a baseline of read-only Nexus MCP tools pre-approved in `.claude/settings.json`.
+- **v0.20.0 to v0.20.2:** `nexus run` and `nexus preflight` respect the project's executioner; an inherited `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` that would override a Claude Max login stops the launch; `--force` keeps the pre-launch checks.
+- **v0.19.0:** distribution of the Claude Code hook adapters.
+- **v0.18.0, v0.18.1:** `nexus mcp-local`, a local MCP server for tools Claude Code has no equivalent for, including a cost summary.
+- **v0.17.0 to v0.17.2:** native Claude Code renderer (`.claude/agents/`, skills, routing guard inputs).
+- **v0.16.7, v0.16.9:** `nexus login` / `nexus logout` no longer carry a token scope across projects; the Claude Code MCP config is written to `.mcp.json` at the project root; project commands name the backend and the project.
 
 ---
 
