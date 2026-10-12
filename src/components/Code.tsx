@@ -142,7 +142,9 @@ function CodePanel({
   label?: string
   code?: string
 }) {
-  let child = Children.only(children)
+  // Server-rendered MDX can pass a single child wrapped in an array, which
+  // Children.only rejects.
+  let child = Children.toArray(children)[0]
 
   if (isValidElement(child)) {
     const props = child.props as { tag?: string; label?: string; code?: string }
