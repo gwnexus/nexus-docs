@@ -1,0 +1,120 @@
+export const metadata = {
+  title: 'Language Settings',
+  description: 'Documentation language and agent answer language on three levels: platform defaults, project and personal, with live inheritance.',
+}
+
+export const sections = [
+  { title: 'Two languages', id: 'two-languages' },
+  { title: 'Three levels', id: 'three-levels' },
+  { title: 'Platform defaults', id: 'platform-defaults' },
+  { title: 'Project languages', id: 'project-languages' },
+  { title: 'Personal languages', id: 'personal-languages' },
+  { title: 'How the language is resolved', id: 'how-the-language-is-resolved' },
+  { title: 'Rules agents get', id: 'rules-agents-get' },
+  { title: 'Setting languages from the CLI', id: 'setting-languages-from-the-cli' },
+  { title: 'Upgrading to 0.17.0', id: 'upgrading-to-0-17-0' },
+]
+
+# Language Settings
+
+Which language agents write documentation in, and which language they answer you in. {{ className: 'lead' }}
+
+Since v0.17.0, languages are set on three levels that inherit live: platform defaults, the project and your personal settings. A project that does not set its own language follows the platform default on the next `nexus pull`.
+
+## Two languages
+
+| Language | Covers | Who it applies to |
+| --- | --- | --- |
+| **Documentation** | Code comments, READMEs, repository docs and Nexus artifacts (ADRs, documents, sessions, tasks, dispatches) | Everyone working in the project; a shared repository is written in one language. |
+| **Agent answers** | The language agents use when they talk to you | The project sets it for everyone; each member can replace it for themselves. |
+
+Six languages are offered, each shown with its flag: **English**, **German**, **French**, **Spanish**, **Italian** and **Portuguese**.
+
+## Three levels
+
+| Level | Where | Documentation | Agent answers |
+| --- | --- | --- | --- |
+| **Platform** | Platform settings > Languages (platform owner only) | Default for every project without its own value | Default for every project without its own value |
+| **Project** | Project form > Basics > Languages, and the directives panel | Applies to the project | Applies to every member of the project |
+| **Personal** | My Settings > Languages | Pre-selects the value when you create a project | Replaces the project's answer language for you only |
+
+Every dropdown also offers **No rule**: the level then renders no rule for that language and stops the inheritance.
+
+## Platform defaults
+
+The platform owner sets both defaults under **Platform settings > Languages**. Projects without their own value follow them live: a change reaches agents on the next `nexus pull`, no project has to be edited.
+
+The defaults on the hosted platform are **English** for documentation and **German** for agent answers.
+
+## Project languages
+
+The project form has a **Languages** group in **Basics** with two dropdowns:
+
+- **Documentation**: "Code comments, READMEs, repository docs and Nexus artifacts."
+- **Agent answers**: "Members can choose their own in My Settings."
+
+Each offers **Inherit**, the six languages and **No rule**. The Inherit entry names what it resolves to, for example "Inherit: English (platform default)".
+
+The group is not shown in quick mode; quick projects inherit both languages. The directives panel on the project page shows the same choices per setting, including the answer language. See [Project Settings](/project-settings#policy-flags).
+
+## Personal languages
+
+Under **My Settings > Languages**:
+
+- **Documentation language:** pre-selected when you create a project. A shared repository always follows the project or platform setting, so this never changes an existing project.
+- **Answer language:** the language agents answer you in, in every project. It replaces the project's answer language for you only. "Follow the project" removes your own setting.
+
+Your answer language is written to a personal rule file, `.claude/rules/16-nexus-personal.md`, which `nexus pull` keeps out of git. The shared directives stay the same for everyone in the project. The personal rule file is available for Claude Code projects.
+
+## How the language is resolved
+
+| Language | Order |
+| --- | --- |
+| Documentation | project, then platform default |
+| Agent answers | your personal setting, then project, then platform default |
+
+**No rule** on any level ends the lookup: no rule is rendered.
+
+Example with the platform defaults English (documentation) and German (answers):
+
+| Project | Your setting | Documentation rule | Agents answer you in |
+| --- | --- | --- | --- |
+| Inherit / Inherit | none | English | German |
+| German / Inherit | none | German | German |
+| Inherit / English | none | English | English |
+| Inherit / Inherit | Answer language: French | English | French (only for you) |
+| No rule / No rule | none | no rule | no rule (agents follow the conversation) |
+
+## Rules agents get
+
+Each resolved language renders one MUST rule in the [directives](/directives):
+
+| Setting | Rule |
+| --- | --- |
+| Documentation (`artifacts_language`) | Write Nexus knowledge artifacts (ADRs, documents, sessions, tasks, dispatches) in *language*. |
+| Documentation (`docs_language`) | Write code comments, README files and repository docs in *language*. |
+| Agent answers (`response_language`) | Answer the user in *language*; keep code, identifiers, commands and quoted output as they are. |
+| Personal answer language | Answer this user in *language*; this replaces the project's answer language. Keep code, identifiers, commands and quoted output as they are. |
+
+The documentation dropdown in the project form sets both documentation keys. The artifacts rule no longer contains "whatever language you use with the user", which contradicted an answer language.
+
+## Setting languages from the CLI
+
+The three keys work like the other `policy.*` settings:
+
+```bash
+nexus env set policy.response_language=de
+nexus env set policy.docs_language=en
+nexus env set policy.artifacts_language=none   # no rule
+nexus env set policy.response_language=unset  # inherit the platform default
+```
+
+`none` means no rule; an unset value (`unset` or `null`) inherits the platform default. Run `nexus pull` afterwards and restart the agent sessions.
+
+## Upgrading to 0.17.0
+
+- Projects that had no documentation language now get the English documentation rule from the platform default on their next pull.
+- Projects that had English set explicitly for artifacts now inherit the default instead.
+- Agents answer in German by default on the hosted platform.
+
+To opt out, set **No rule** or another language on the project, or choose your own answer language in My Settings.

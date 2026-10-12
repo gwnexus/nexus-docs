@@ -270,6 +270,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'Skills',         href: '/skills' },
       { title: 'Directives',     href: '/directives' },
       { title: 'Project Settings', href: '/project-settings' },
+      { title: 'Languages',      href: '/languages' },
       { title: 'Workspaces',     href: '/workspaces' },
       { title: 'Actors',         href: '/actors' },
     ],

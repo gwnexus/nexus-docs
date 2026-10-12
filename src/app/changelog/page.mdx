@@ -4,13 +4,14 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.17.0', id: 'v0-17-0' },
   { title: 'v0.16.x', id: 'v0-16-x' },
   { title: 'v0.15.0', id: 'v0-15-0' },
   { title: 'v0.14.x', id: 'v0-14-x' },
-  { title: 'nexus-cli v0.28.5 - v0.28.11', id: 'nexus-cli-v0-28-5-v0-28-11' },
+  { title: 'nexus-cli v0.28.5 - v0.28.14', id: 'nexus-cli-v0-28-5-v0-28-14' },
   { title: 'nexus-cli v0.16.7 - v0.28.4', id: 'nexus-cli-v0-16-7-v0-28-4' },
-  { title: 'nexus-mcp v0.10.14 - v0.10.16', id: 'nexus-mcp-v0-10-14-v0-10-16' },
-  { title: 'nexus-core v1.1.0 - v1.2.1', id: 'nexus-core-v1-1-0-v1-2-1' },
+  { title: 'nexus-mcp v0.10.14 - v0.10.17', id: 'nexus-mcp-v0-10-14-v0-10-17' },
+  { title: 'nexus-core v1.1.0 - v1.3.0', id: 'nexus-core-v1-1-0-v1-3-0' },
   { title: 'nexus-cli v0.10.0 - v0.16.6', id: 'nexus-cli-v0-10-0-v0-16-6' },
   { title: 'v0.13.x', id: 'v0-13-x-september-2026' },
   { title: 'v0.12.0', id: 'v0-12-0-august-2026' },
@@ -35,9 +36,33 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
+## v0.17.0
+
+**Language settings, a clearer skill picker and sessions per release line.** Requires nexus-cli 0.28.11 or later (0.28.14 recommended). After upgrading: `nexus upgrade`, `nexus pull --force`, restart agent sessions.
+
+- **Language settings:** documentation language (code comments, READMEs, repository docs and Nexus artifacts) and agent answer language on three levels with live inheritance: platform defaults (Platform settings > Languages), project (project form and directives panel, `nexus env set policy.response_language`) and personal (My Settings > Languages; your answer language replaces the project's for you only). Six languages. See [Language Settings](/languages).
+- **Skills in the Claude Code "/" picker:** descriptions start with "Nexus: "; the CodeRabbit skill is now `/nexus-coderabbit-triage` and runs only when invoked; the routing rule names `/review` and `/code-review` as the commands not to use instead. The global skill catalog is readable for every signed-in user. See [Skills](/skills#skills-in-the-claude-code-picker).
+- **Sessions per release line:** `release_line` on sessions (dashboard filter and editor, `session_create` / `session_list`), `/nexus-init` resumes the session of the current `staging/release-X.Y.Z` branch, and the session guard nudges on a mismatch. See [Sessions](/sessions#release-lines).
+- **Devbox workspaces:** refined blueprints (npm commands, no `NODE_ENV`, no tmux, pinned gitleaks, netlify-cli), a compact shell summary with a Commands block, plugin variables from `.nexus/plugin.env`, and **Review & sync** in the upstream notice. See [Workspaces](/workspaces#devbox-shell-v0-17-0).
+- **Hooks:** Claude Code hooks run from paths with spaces and through symlinks (nexus-core 1.3.0).
+- **Project form:** accessible primary actor pickers (keyboard, screen readers); saving keeps actor role overrides. The project wizard lists the Nexus plugins (compaction-plus, cost-control, session-guard, routing-guard) for Claude Code projects too.
+- **Error pages:** a shared error screen with "Try again" and a reference to quote; every server error carries that reference. A static maintenance page is available for outages.
+- **Reliability and security:** project settings are written in one transaction; provider credentials survive the deletion of their creator (personal keys are revoked); price and model sync functions are scheduler-only; gateway projects stay on the gateway when a slot profile is missing; "Derive & apply" asks before it writes. See [Security and Hardening](/security#server-only-database-functions).
+- **Upgrade note:** projects without their own documentation language now get the English documentation rule, and agents answer in German, from the platform defaults. Set "No rule" or another language on the project, or choose your own answer language.
+
+---
+
 ## v0.16.x
 
 **Short rules, curated plugins and public-repo safety.** Requires nexus-cli 0.28.9 or later (0.28.10 recommended). After upgrading: `nexus upgrade`, `nexus pull --force`, restart agent sessions.
+
+### v0.16.3 — October 12, 2026
+
+- **Security hotfix:** the skill API applies the same visibility as the skill registry pages; project skills are only readable for project members.
+
+### v0.16.2 — October 12, 2026
+
+- **Security hotfix:** server-only database functions can no longer be called with the public API key. See [Security and Hardening](/security#server-only-database-functions).
 
 ### v0.16.1 — October 11, 2026
 
@@ -100,10 +125,13 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
-## nexus-cli v0.28.5 — v0.28.11
+## nexus-cli v0.28.5 — v0.28.14
 
-**CLI side of NEXUS-APP 0.15.0 and 0.16.0.** See the [CLI reference](/cli#claude-code-projects).
+**CLI side of NEXUS-APP 0.15.0 to 0.17.0.** See the [CLI reference](/cli#claude-code-projects).
 
+- **v0.28.14:** `nexus pull` removes the files of skills that are no longer exported (unchanged files only); `SKILL.md` `name` is the skill folder id.
+- **v0.28.13:** interactive `nexus env set` without arguments; `nexus link` filters as you type; `nexus status --json`; `nexus push` no longer brings dropped workspace files back.
+- **v0.28.12:** devbox shell state in `nexus status`; `nexus env set KEY=VALUE`; arrow-key project picker for `nexus link`.
 - **v0.28.11:** `nexus pull` removes workspace files (`devbox.json`, `scripts/devbox/**`) the workspace no longer contains when they are unchanged locally; modified ones are kept and shown by `nexus status`; `nexus pull --dry-run` previews workspace changes; plugin variables also written to `.nexus/plugin.env` for devbox `env_from`.
 - **v0.28.10:** readable `nexus status` layout with aligned sections and git identity status; `CLAUDE.md` bootstrap names the always-loaded directives file; clearer `nexus shadow status`; gitleaks config fixed and covered by a CI self-test.
 - **v0.28.9:** compact `.nexus/directives.md` (`- MUST:` / `- SHOULD:` lines); `nexus shadow` as a client of `policy.shadow`; server exclude list applied on every pull as a managed block in `.git/info/exclude`; `invocation: user` rendered as `disable-model-invocation: true`.
@@ -137,20 +165,23 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
-## nexus-mcp v0.10.14 — v0.10.16
+## nexus-mcp v0.10.14 — v0.10.17
 
-See [nexus-mcp](/mcp-server#changes-in-v0-10-14-to-v0-10-16) for details.
+See [nexus-mcp](/mcp-server#changes-in-v0-10-17) for details.
 
+- **v0.10.17:** `release_line` for `session_create` and `session_list`; the repository's secret scan runs with the full rule set again.
 - **v0.10.16:** short directive fields (`rule`, `rationale`, `level`, `category`, `sort_order`) and catalog references (`template_slug`, `template_id`) for `pd_create` / `pd_update`, with `title`, `body`, `priority` as deprecated aliases; `sk_create` requires a description; `invocation` for `sk_create` / `sk_update`; `serverInfo` reports the real version; SDK floor `^1.31.0` and 0 audit findings.
 - **v0.10.15:** `category` (`coderabbit_fix`) for tasks; `coderabbit_review` classification for documents.
 - **v0.10.14:** `NEXUS_PROJECT_ID` fallback applies when the client omits `project_id`.
 
 ---
 
-## nexus-core v1.1.0 — v1.2.1
+## nexus-core v1.1.0 — v1.3.0
 
 The Nexus plugin for Claude Code. See [Claude Code Plugins](/claude-code/plugins#nexus-core).
 
+- **v1.3.0:** the session guard nudges on a release line mismatch at session start (`NEXUS_SESSION_GUARD_RELEASE_NUDGE=off` disables it); ships the 1.2.2 fixes.
+- **v1.2.2:** hooks run from paths with spaces, Windows paths and through symlinks; the agent observer no longer loses state updates on parallel tool calls.
 - **v1.2.1:** hook logs in `.nexus/` rotate at 5 MB (one old generation kept).
 - **v1.2.0:** workflow skills removed; hooks and the engine agents `architect`, `reviewer`, `security-reviewer`, `documentation-reviewer` kept.
 - **v1.1.1:** hooks resolve the project root instead of the current directory and no longer create stray `.nexus/` folders.

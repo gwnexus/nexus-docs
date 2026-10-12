@@ -8,6 +8,8 @@ export const sections = [
   { title: 'Fail-closed guards', id: 'fail-closed-guards' },
   { title: 'Tenant isolation (SEC-007)', id: 'tenant-isolation-sec-007' },
   { title: 'Role checks', id: 'role-checks' },
+  { title: 'Server-only database functions', id: 'server-only-database-functions' },
+  { title: 'Error responses', id: 'error-responses' },
   { title: 'Node calls and DNS rebinding', id: 'node-calls-and-dns-rebinding' },
   { title: 'Secret scanning', id: 'secret-scanning' },
   { title: 'Safe export encoding', id: 'safe-export-encoding' },
@@ -56,8 +58,23 @@ Database tables must not be readable across tenants through the public data API,
 | Skills via MCP | v0.16.0 | Core skills: platform admins only. Project skills: project admin or editor. Assigning and unassigning: project admin or editor (before: any member, including viewers). |
 | Directives via MCP | v0.16.0 | Create, update and toggle: project admin or editor. Delete: project admin. Update, delete and toggle write audit entries. |
 | Workspace forks | v0.16.1 | Viewing forks needs project membership; creating, editing, activating, syncing, exporting or deleting them needs a project admin or editor role. Platform admins keep access. Before, any signed-in user could reach these routes. |
+| Skill API | v0.16.3 | `GET /api/skills` and `GET /api/skills/<id>` apply the same visibility as the skill registry pages: global skills for every signed-in user, project skills for project members only. Before, any signed-in user could read project skills of projects they were not a member of. |
+| Project actors | v0.17.0 | Saving a project replaces its actor assignments in one transaction, keeps role overrides and rejects actors of another tenant. |
 
 See [Workspaces](/workspaces#access) and [Skills](/skills#skill-scope).
+
+## Server-only database functions
+
+Some database functions bypass row level security because only the server and scheduled jobs call them.
+
+- **v0.16.2:** fourteen such functions could still be called with the public API key, for example to replace a project's workspace fork or skill assignments, or to read embeddings. Clients can no longer call them; the server and the scheduler keep running them.
+- **v0.17.0:** the price and model sync functions are also scheduler-only.
+
+## Error responses
+
+Since v0.17.0, every server error (5xx) of the API goes through one handler: the client gets a safe message and a **reference**, which is also in the server log and the error tracker. Quote the reference when you report a problem. Error screens in the app show a friendly text, "Try again" and the reference to quote; raw error details appear only outside production.
+
+Provider credentials no longer depend on the user who created them: deleting a user keeps organization and Nexus-managed keys, revokes that user's personal keys, and project bindings to a revoked key fail closed.
 
 ## Node calls and DNS rebinding
 

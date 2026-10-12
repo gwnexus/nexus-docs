@@ -10,6 +10,7 @@ export const sections = [
   { title: 'Descriptions', id: 'descriptions' },
   { title: 'Run only on request', id: 'run-only-on-request' },
   { title: 'Skill resources', id: 'skill-resources' },
+  { title: 'Skills in the Claude Code picker', id: 'skills-in-the-claude-code-picker' },
   { title: 'Skill scope', id: 'skill-scope' },
   { title: 'MCP tools', id: 'mcp-tools' },
 ]
@@ -60,13 +61,14 @@ Skills are versioned, searchable, and exposed to agents as slash commands (e.g. 
 | Learnings | `/nexus-learnings` | Capture surprises, unexpected findings, and gotchas as research notes |
 | Dispatch Sweep | `/nexus-dispatch-sweep` | Process open Dispatches: prioritized sweep, acknowledge, act by type, reply, resolve and close |
 | Dispatch Create | `/nexus-dispatch-create` | Create a structured Dispatch for agent coordination |
+| CodeRabbit Triage | `/nexus-coderabbit-triage` | Triage the CodeRabbit bot's pull request threads into fixes and replies; not a code review, runs only on request |
 | Show Plugins | `/nexus-show-plugins` | Display loaded Nexus plugins and connection status |
 
 ### Catalog cleanup (v0.16.0)
 
 - Archived skills were removed from the catalog: `nx-sec-check`, `nx-perf-check`, `nx-sprint-plan`, `nx-test-runner`, `nx-research-digest` and `nx-init-nexus`.
 - `nx-vl-sweep` was merged into `nx-dispatch-sweep` (`/nexus-dispatch-sweep`); its project assignments moved over.
-- `nx-cr-review` (CodeRabbit findings) is a short skill with four resource files.
+- `nx-cr-review` (CodeRabbit findings) is a short skill with four resource files; v0.17.0 renames it to `nx-coderabbit-triage`, see [Skills in the Claude Code picker](#skills-in-the-claude-code-picker).
 - `nx-grill-me` has a real description and runs only on request.
 
 Which skill owns which workflow, and which plugins or built-in commands must not replace it, is written into each project's [capability routing rule](/claude-code/plugins#capability-routing).
@@ -88,7 +90,20 @@ For Claude Code, `nexus pull` (nexus-cli 0.28.9 or later) renders `invocation: u
 
 ## Skill resources
 
-Multi-file skills ship resource files (references, policies, examples) next to the skill body. `sk_export` returns them, and `nexus pull` writes them into the skill's folder (`.claude/skills/<skill>/` and the agentic root). Before v0.16.0, resource files of skills such as `nx-cr-review` or `nx-grill-me` never reached the workspace.
+Multi-file skills ship resource files (references, policies, examples) next to the skill body. `sk_export` returns them, and `nexus pull` writes them into the skill's folder (`.claude/skills/<skill>/` and the agentic root). Before v0.16.0, resource files of skills such as the CodeRabbit triage skill or `nx-grill-me` never reached the workspace.
+
+## Skills in the Claude Code picker
+
+Since v0.17.0, Nexus skills are easy to tell apart in the Claude Code **"/"** command picker:
+
+- **"Nexus: " prefix:** exported skill descriptions start with `Nexus: `. The stored description stays plain; the prefix is added on export.
+- **CodeRabbit triage:** the CodeRabbit skill is renamed from `nx-cr-review` to `nx-coderabbit-triage` (command `/nexus-coderabbit-triage`). Its description says it is not a code review, and it runs only when invoked. Typing "review" in the picker no longer lists it next to `/review`, `/code-review` and `/nexus-code-review`.
+- **Routing rule:** the [capability routing rule](/claude-code/plugins#capability-routing) names `/review` and `/code-review` as the commands not to use instead, for code review and for CodeRabbit findings.
+
+With nexus-cli 0.28.14 or later:
+
+- `nexus pull` writes the new skill and removes the files of skills that are no longer exported, such as the old `nexus-cr-review` folder, when they are unchanged locally (`REMOVE`). Locally edited files are kept and reported (`KEEP`). `nexus pull --dry-run` previews the removals.
+- The `name` in the `SKILL.md` frontmatter is the skill's folder id (for example `nexus-code-review`), as Claude Code expects lowercase names with hyphens; the description carries the meaning.
 
 ## Skill scope
 
@@ -96,6 +111,9 @@ Multi-file skills ship resource files (references, policies, examples) next to t
 - **Project-scoped skills** belong to a single project and are managed by project admins and editors. They do not appear in other projects unless explicitly promoted to core.
 
 ### Permissions (v0.16.0)
+
+Since v0.17.0, every signed-in user can read the global skill catalog: the registry and the skill pages list the core skills. Editing and deleting them stays with platform admins. Project skills are only readable for members of their project (shipped as hotfix v0.16.3).
+
 
 | Tool | Core skill | Project skill |
 | --- | --- | --- |

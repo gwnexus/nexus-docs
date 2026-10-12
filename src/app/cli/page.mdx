@@ -80,9 +80,9 @@ nexus pull               # Sync skills and agent files from the platform
 | `nexus login` | Authenticate with the Nexus platform |
 | `nexus logout` | Remove stored credentials |
 | `nexus status` | Show auth, project, and workspace status (server-verified since v0.16.0) |
-| `nexus link [--project-id <id>]` | Bind a project to the current workspace |
+| `nexus link [--project-id <id>]` | Bind a project to the current workspace; without an id, pick the project with the arrow keys and filter as you type (0.28.12, 0.28.13) |
 | `nexus unlink` | Remove project binding from the workspace |
-| `nexus pull [--project-id <id>]` | Pull skills and config from the Nexus platform |
+| `nexus pull [--project-id <id>] [--dry-run]` | Pull skills and config from the Nexus platform; `--dry-run` previews workspace changes and removals (0.28.11, 0.28.14) |
 | `nexus push [--adopt-local]` | Publish local workspace state back to the platform (fork-based) |
 | `nexus stash save\|pop\|list` | Save, restore, or list local workspace snapshots before a `pull` or `push` |
 | `nexus project link\|rotate\|unlink\|status` | Manage the project-scoped Nexus Model Gateway inference token (`nxs_proj_*`) |
@@ -95,8 +95,9 @@ nexus pull               # Sync skills and agent files from the platform
 | `nexus config path [--local\|--global]` | Show the config file path |
 | `nexus upgrade` | Upgrade CLI to latest release version (checksum-verified since v0.13.5) |
 | `nexus run [--tool <t>]` | Run pre-launch checks, inject plugin env vars, and launch the project's AI tool (OpenCode, Claude Code, or the Claude Code workspace) |
-| `nexus env get\|set\|keys` | Read and change project settings, including `policy.*` and `claude.workspace_preset`; `set` shows the agent files a change assigns or unassigns |
+| `nexus env get\|set\|keys` | Read and change project settings, including `policy.*` and `claude.workspace_preset`; `set` shows the agent files a change assigns or unassigns, accepts `KEY=VALUE` (0.28.12) and picks key and value interactively without arguments (0.28.13) |
 | `nexus status --agents [--watch]` | Agent observer view of Claude Code sessions (v0.28.5) |
+| `nexus status --json` | JSON status output, short form of `nexus --output json status` (0.28.13) |
 | `nexus doctor claude [--fix]` | Check the tools the Claude Code workspace needs (v0.28.5) |
 | `nexus shadow ai\|nexus\|off\|status` | Set or show the project's shadow level (server-backed since v0.28.9) |
 
@@ -388,6 +389,15 @@ All sections (General, Claude Code runtime, Git Identity Verification) share one
 - Skill resource files are written next to `SKILL.md` in `.claude/skills/<skill>/` and the agentic root.
 - `invocation: user` renders `disable-model-invocation: true` into the `SKILL.md` frontmatter. See [Skills](/skills#run-only-on-request).
 
+### Skills, workspace files and devbox (0.28.11 to 0.28.14)
+
+- **Removed skills (0.28.14):** `nexus pull` removes the files of skills that are no longer exported (renamed or unassigned) when they are unchanged locally (`REMOVE`); edited files are kept (`KEEP`). Only the selected runtime's folders are pruned. `nexus status` lists such files as `ORPHANED` or `DROPPED`.
+- **Skill names (0.28.14):** the `SKILL.md` frontmatter `name` is the skill folder id (for example `nexus-code-review`). See [Skills](/skills#skills-in-the-claude-code-picker).
+- **Dropped workspace files (0.28.11):** workspace files the fork no longer contains are removed when unchanged and kept when modified. See [Workspaces](/workspaces#cli-integration).
+- **`.nexus/plugin.env` (0.28.11):** plugin variables as a dotenv file, loaded by the devbox `init_hook`. See [Workspaces](/workspaces#devbox-shell-v0-17-0).
+- **Devbox shell state (0.28.12):** the `Workspace:` line of `nexus status` ends with `[devbox shell: active]`, `[devbox shell: active for <root>]` or `[devbox shell: inactive, start with devbox shell]`; JSON field `devbox_shell`.
+- **`nexus push` (0.28.13):** skips `DROPPED` workspace files unless you name the path.
+
 ### Shadow and git exclude (0.28.9, 0.28.10)
 
 - `af_export.git_exclude` is applied on every pull as a managed block in `.git/info/exclude` (`# >>> nexus managed exclude (server)`). Your own lines are never touched; tracked files are never untracked automatically (pull prints a `git rm -r --cached <path>` hint).
@@ -396,7 +406,7 @@ All sections (General, Claude Code runtime, Git Identity Verification) share one
 
 ## Upgrading
 
-For NEXUS-APP 0.16.x, use nexus-cli **0.28.10 or later**:
+For NEXUS-APP 0.17.0, use nexus-cli **0.28.11 or later** (0.28.14 recommended, it removes the renamed CodeRabbit skill folder). For 0.16.x, 0.28.10 or later:
 
 ```bash
 nexus upgrade

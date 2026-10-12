@@ -8,6 +8,7 @@ export const sections = [
   { title: 'Assigning a workspace to a project', id: 'assigning-a-workspace-to-a-project' },
   { title: 'Access', id: 'access' },
   { title: 'Baselines and flavors', id: 'baselines-and-flavors' },
+  { title: 'Devbox shell (v0.17.0)', id: 'devbox-shell-v0-17-0' },
   { title: 'CLI integration', id: 'cli-integration' },
   { title: 'devbox.json reference', id: 'devbox-json-reference' },
   { title: 'Upstream change detection', id: 'upstream-change-detection' },
@@ -72,6 +73,17 @@ Baselines provide the foundation packages. Flavors add curated tool sets on top.
 | Baseline | `go-1.23`, `node-22`, `python-3.12` | Core language runtime |
 | Flavor | `nexus-dev`, `web-frontend`, `data-science` | Curated package bundle |
 
+## Devbox shell (v0.17.0)
+
+v0.17.0 refines the Nexus flavors and blueprints. Changed blueprints get a new version, so their forks show "upstream changed"; use **Review & sync** and then `nexus pull` to take the changes.
+
+- **No `NODE_ENV`:** no flavor or blueprint exports `NODE_ENV` any more. With `NODE_ENV=development`, `next build` failed while prerendering. If your own shell profile sets it, unset it before building.
+- **npm commands:** the npm-based Nexus flavors run `dev`, `build`, `lint`, `test` and `typecheck` through `npm run --if-present` and include `netlify-cli`.
+- **No tmux:** the Nexus flavors drop tmux and tmuxp, and the `tmux-2w` / `tmux-3w` commands are gone; Zellij is the agent workspace (see [Claude Code Workspace](/claude-code/workspace)).
+- **gitleaks** is pinned to 8.30.1, the same version CI uses.
+- **Compact summary:** `devbox shell` prints one summary line plus warnings and failures only; set `DBX_VERBOSE=1` to see every check. Optional tools and an unset `ANTHROPIC_API_KEY` (expected with a Claude subscription) are shown as info. A **Commands** block lists every `devbox.json` script with its command.
+- **Plugin variables from one source:** every composed `devbox.json` starts its `init_hook` by loading `.nexus/plugin.env`, which `nexus pull` writes from the project's plugin settings (nexus-cli 0.28.11 or later). The flavors no longer copy `HEADROOM_*` values. A missing file is skipped, so projects without plugin variables and older CLIs keep working. A `plugin-env` row in the summary reports the file.
+
 ## CLI integration
 
 The Nexus CLI pulls workspace forks and materializes them as local Devbox configuration files:
@@ -79,7 +91,8 @@ The Nexus CLI pulls workspace forks and materializes them as local Devbox config
 | Command | Description |
 | --- | --- |
 | `nexus pull --scope workspace` | Download the active workspace fork and write `devbox.json` + init scripts |
-| `nexus status` | Shows workspace fork status including upstream change detection |
+| `nexus status` | Shows workspace fork status including upstream change detection, and the devbox shell state (`[devbox shell: active]`, `inactive`, or active for another project) |
+| `nexus pull --dry-run` | Preview workspace changes (create, update, kept files, removals) without writing anything; nexus-cli 0.28.11 or later |
 
 ### Files written by nexus pull
 
@@ -91,6 +104,7 @@ The Nexus CLI pulls workspace forks and materializes them as local Devbox config
 | `CLAUDE.md` | Claude-specific agent context and cross-reference | No |
 | `skills/*.md` | Cached skill files for offline reference and IDE autocompletion | No |
 | `.nexus/env` | Plugin configuration vars (`HEADROOM_*`, etc.) — non-sensitive, fully overwritten on every pull | No |
+| `.nexus/plugin.env` | The same plugin vars as a dotenv file (`KEY=value`) for the devbox `init_hook`; removed when the project has no plugin variables (0.28.11) | No |
 | `opencode.json` | MCP server config, plugin assignments, and Headroom MCP block | Project-dependent |
 
 `.nexus/env` is the platform-managed source for all OpenCode plugin environment
@@ -142,6 +156,17 @@ The `devbox.json` file is the heart of every Nexus workspace. It defines a repro
 - Use `env` for project-specific config; use `.env` files for secrets
 - Use Nexus Meta Variables (`C_DBX_*`) to inject project-level config at fork level
 
+### Files the workspace no longer contains
+
+Since nexus-cli 0.28.11, `nexus pull` cleans up workspace files (`devbox.json`, `scripts/devbox/**`) that an earlier pull wrote but the fork no longer contains:
+
+| Local state | `nexus pull` | `nexus status` |
+| --- | --- | --- |
+| Unchanged | Deletes the file (`REMOVE`), and empty parent folders | `ORPHANED`: the next pull removes it |
+| Modified | Keeps it (`KEEP ... modified, no longer in the workspace`) | `DROPPED`: delete it, or `nexus push <path>` to add it back |
+
+Files that pull never wrote are not touched. Since 0.28.13, `nexus push` skips `DROPPED` files instead of bringing them back into the new fork, unless you name the path.
+
 ### Validation
 
 The Nexus workspace editor validates `devbox.json` in real-time: JSON syntax errors are caught immediately, and devbox-specific rules (valid top-level keys, package format, platform names, shell structure) are checked before saving.
@@ -149,3 +174,5 @@ The Nexus workspace editor validates `devbox.json` in real-time: JSON syntax err
 ## Upstream change detection
 
 When a blueprint is updated after a fork has been created, a database trigger sets `upstream_changed = true` on all forks of that blueprint. This flag is visible in both the UI and the CLI, letting project teams decide when to pull the latest changes.
+
+Since v0.17.0, the "upstream blueprint changed" notice on the project's workspace page names the fork and both versions, explains the 3-way merge and offers **Review & sync** (opens the merge preview) next to **Ignore & decouple**. The sync dialog reminds you to run `nexus pull` afterwards. Forks created before snapshots existed now merge against the blueprint version they are based on, so a sync updates their files instead of only advancing the version.

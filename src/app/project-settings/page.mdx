@@ -22,14 +22,15 @@ Since v0.16.0, common standards are no longer written as project directives. A p
 
 | Setting | Key | Values | Level | Rule agents get |
 | --- | --- | --- | --- | --- |
-| Artifact language | `policy.artifacts_language` | `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt` | MUST | Write Nexus knowledge artifacts (ADRs, documents, sessions, tasks, dispatches) in *language*, whatever language you use with the user. |
+| Artifact language | `policy.artifacts_language` | `en`, `de`, `fr`, `es`, `it`, `pt`, `none` | MUST | Write Nexus knowledge artifacts (ADRs, documents, sessions, tasks, dispatches) in *language*. |
 | Docs language | `policy.docs_language` | same as above | MUST | Write code comments, README files and repository docs in *language*. |
+| Answer language | `policy.response_language` | same as above | MUST | Answer the user in *language*; keep code, identifiers, commands and quoted output as they are. |
 | Conventional Commits | `policy.conventional_commits` | `true` / `false` | MUST | Write commit messages as Conventional Commits: type(scope): subject under 72 characters, no emojis. |
 | No em-dashes | `policy.no_em_dashes` | `true` / `false` | MUST | Do not use em-dashes in any output; use commas, colons, semicolons or parentheses instead. |
 | Personal address | `policy.personal_address` | `true` / `false` | SHOULD | Address the user by the nickname (or first name) from the agent file where it adds warmth or clarity. |
 | Shadow level | `policy.shadow` | `off`, `ai`, `nexus` | MUST (`nexus` only) | See [Shadow levels](#shadow-levels). |
 
-New projects start with the artifact language set to English; everything else is opt-in. Unset values, `false` and `shadow: off` are not stored.
+Since v0.17.0, an unset language key inherits the platform default and `none` renders no rule; see [Language Settings](/languages). Everything else is opt-in. Unset values, `false` and `shadow: off` are not stored.
 
 **AI attribution** is not a `policy.*` key: it keeps using the project's Git configuration (Co-Authored-By trailers are off by default). When attribution is off, the project gets the rule "Do not add AI attribution (Co-Authored-By lines, generated-with notes) to commits or pull requests." Claude Code projects also get the matching attribution setting.
 

@@ -8,6 +8,7 @@ export const sections = [
   { title: 'Session lifecycle', id: 'session-lifecycle' },
   { title: 'Entry types', id: 'entry-types' },
   { title: 'Session metadata', id: 'session-metadata' },
+  { title: 'Release lines', id: 'release-lines' },
   { title: 'Compaction survival', id: 'compaction-survival' },
   { title: 'MCP tools', id: 'mcp-tools' },
 ]
@@ -72,6 +73,25 @@ Every `session_append` and `session_create` call should include metadata for tra
 
 This ensures full traceability of which agent, model, and toolstack produced each session entry. Entries without metadata show as N/A in the dashboard.
 
+## Release lines
+
+Since v0.17.0, a session can belong to a **release line**, for projects that keep one Nexus session per release (for example `0.17.0` while work happens on `staging/release-0.17.0`).
+
+- **`release_line`** (format `X.Y.Z`) is stored on the session. `session_create` sets it from an explicit `release_line`, or derives it from a title that starts with `staging/release-X.Y.Z`. Existing sessions were filled in from their titles.
+- **Dashboard:** the project's session list filters by release line; project admins and editors set or clear it on the session page.
+- **MCP:** with nexus-mcp 0.10.17, `session_create` passes `release_line` through and `session_list` filters open sessions by it. Both responses include the field. Older hubs ignore the parameter.
+- **`/nexus-init`:** on a `staging/release-X.Y.Z` branch, the skill resumes the open session of that release line. An open session of another line belongs to that line; close it with `/nexus-session-close` first. New sessions are titled `staging/release-X.Y.Z: <focus>` and get the matching release line.
+
+### Release line nudge
+
+With nexus-core 1.3.0, the Claude Code session guard checks the release line when a session starts (startup, resume, clear). On a `staging/release-X.Y.Z` branch it looks up the project's open Nexus sessions; when none is titled for that line, it adds one line of context asking the agent to close the old session with a summary and start a matching one (`/nexus-session-close`, `/nexus-init`).
+
+- It never closes or creates sessions itself.
+- It stays silent on other branches and when credentials, the project id or the lookup are not available (3 second timeout).
+- Disable it with `NEXUS_SESSION_GUARD_RELEASE_NUDGE=off`.
+
+The same check runs in OpenCode, once when the plugin loads.
+
 ## Compaction survival
 
 Sessions survive OpenCode context window compaction via the `nexus-compaction-plus` plugin. Before compaction, the plugin injects session and project IDs into the compaction prompt. After compaction, it records the event in the session timeline.
@@ -82,7 +102,7 @@ To maximize resilience against interruptions, agents should append entries **dur
 
 | Tool | Description |
 | --- | --- |
-| `session_create` | Create a new work session |
-| `session_list` | List open sessions for a project |
+| `session_create` | Create a new work session; optional `release_line` (`X.Y.Z`) |
+| `session_list` | List open sessions for a project; optional `release_line` filter |
 | `session_append` | Append an entry to the active session |
 | `session_close` | Close the session with summary and next entry point |

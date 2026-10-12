@@ -96,13 +96,13 @@ claude plugin install <plugin>@<marketplace> --scope project --json
 
 ## nexus-core
 
-`nexus-core` is the Nexus plugin for Claude Code, published in the `gatewarden-nexus` marketplace. Nexus pins the version it installs; v0.16.0 moves the pin to **nexus-core 1.2.1**.
+`nexus-core` is the Nexus plugin for Claude Code, published in the `gatewarden-nexus` marketplace. Nexus pins the version it installs; v0.16.0 moves the pin to **nexus-core 1.2.1**, v0.17.0 to **nexus-core 1.3.0**.
 
 Since 1.2.0, nexus-core ships **hooks and engine agents only**:
 
 | Part | Contents |
 | --- | --- |
-| Hooks | `session-guard`, `headroom-intercept`, `compaction-plus`, `routing-guard`, `cost-control`, `agent-observer` |
+| Hooks | `session-guard` (including the [release line nudge](/sessions#release-lines)), `headroom-intercept`, `compaction-plus`, `routing-guard`, `cost-control`, `agent-observer` |
 | Engine agents | `architect`, `reviewer`, `security-reviewer`, `documentation-reviewer` (they carry the review checklists inline) |
 
 The workflow skills of earlier versions (`adr-review`, `architecture-review`, `code-review`, `documentation-review`, `implementation-plan`, `test-ops`) were removed: the project's `/nexus-*` skills own those workflows.
@@ -113,6 +113,8 @@ The workflow skills of earlier versions (`adr-review`, `architecture-review`, `c
 | 1.1.1 | Hooks resolve the project root (`CLAUDE_PROJECT_DIR`, then the git top level) instead of the session's current directory, so they no longer create stray `.nexus/` folders in subdirectories. |
 | 1.2.0 | Workflow skills removed; hooks and agents kept. |
 | 1.2.1 | Hook logs in `.nexus/` (`session-guard.log`, `compaction-plus.log`, `cost-control.log`, `routing-guard.log`) rotate to `<name>.1` at 5 MB; one old generation is kept. |
+| 1.2.2 | Hooks run from paths with spaces or other encoded characters, from Windows paths and through symlinks; before, every hook exited without doing anything there. The agent observer waits up to a second for its state lock, so parallel tool calls no longer overwrite each other's subagent links. |
+| 1.3.0 | Session guard nudges on a release line mismatch at session start; see [Release lines](/sessions#release-lines). Ships the 1.2.2 fixes. |
 
 The hook adapters `nexus pull` writes to `.claude/hooks/` are built from the same nexus-core release. Run `nexus pull --force` to get the new version.
 
@@ -124,7 +126,7 @@ The rule is built from the project's assigned skills and enabled plugins. For ea
 
 - the **Nexus skill** that owns it
 - the **engine agents** that may run inside that skill (engine plugins and nexus-core agents); results go to Nexus
-- the **plugins and Claude Code built-ins** that must not replace it (for example `/code-review` and `/security-review`)
+- the **plugins and Claude Code built-ins** that must not replace it (for example `/code-review`, `/review` and `/security-review`)
 
 Guardrail plugins are listed as running automatically without replacing the owning skill; complement plugins are listed as free to use.
 
@@ -142,9 +144,10 @@ Other tools may only complement it.
 |---|---|---|
 | Session start and close | `/nexus-init`, `/nexus-session-close` |  |
 | Dispatches | `/nexus-dispatch-sweep`, `/nexus-dispatch-create` |  |
-| Code review | `/nexus-code-review` | May run nexus-core reviewer agent inside it; results go to Nexus. Not instead: `/code-review` (built-in). |
+| Code review | `/nexus-code-review` | May run nexus-core reviewer agent, nexus-core documentation-reviewer agent inside it; results go to Nexus. Not instead: `/code-review` (built-in), `/review` (built-in). |
+| CodeRabbit findings | `/nexus-coderabbit-triage` | Not instead: `/review` (built-in), `/code-review` (built-in). |
 | Security audit | `/nexus-sec-scan` | May run nexus-core security-reviewer agent inside it; results go to Nexus. Not instead: `/security-review` (built-in). |
 | Commits and pull requests | `/nexus-pr-draft` |  |
 ```
 
-Capabilities without an assigned skill are left out. If the assigned skills cannot be read, the export carries the warning `capability_routing_incomplete` instead of silently dropping the rule.
+Since v0.17.0, code review and CodeRabbit findings both name `/review` and `/code-review` as the commands not to use instead; the CodeRabbit triage skill is not a code review. Capabilities without an assigned skill are left out. If the assigned skills cannot be read, the export carries the warning `capability_routing_incomplete` instead of silently dropping the rule.

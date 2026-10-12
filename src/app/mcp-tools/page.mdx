@@ -33,6 +33,15 @@ Since nexus-mcp v0.10.16. See [Directives](/directives#mcp-tools) for details.
 | `sk_update` | optional `invocation`; a blank `description` is rejected |
 | `sk_export`, `sk_get` | Return `invocation`; `sk_export` also returns skill resource files |
 
+## Session fields
+
+Since nexus-mcp v0.10.17 (NEXUS-APP 0.17.0). See [Sessions](/sessions#release-lines).
+
+| Tool | Field |
+| --- | --- |
+| `session_create` | optional `release_line` (`X.Y.Z`); derived from a `staging/release-X.Y.Z` title when omitted |
+| `session_list` | optional `release_line` filter (exact match); responses include `release_line` |
+
 ## Task and document fields
 
 | Tool | Field |

@@ -12,6 +12,7 @@ export const sections = [
   { title: 'Configuration', id: 'configuration' },
   { title: 'Schema version envelope', id: 'schema-version-envelope' },
   { title: 'Skill lifecycle', id: 'skill-lifecycle' },
+  { title: 'Changes in v0.10.17', id: 'changes-in-v0-10-17' },
   { title: 'Changes in v0.10.14 to v0.10.16', id: 'changes-in-v0-10-14-to-v0-10-16' },
   { title: 'Auto-ingested scan reports', id: 'auto-ingested-scan-reports' },
   { title: 'Known issues', id: 'known-issues' },
@@ -209,6 +210,11 @@ Skills are managed centrally in the Nexus platform and delivered to agents at ru
 - **Project-scoped skills** belong to a single project and are managed by project admins and editors. They do not appear in other projects unless explicitly promoted to core.
 
 See [Skills](/skills) for descriptions, run-only-on-request skills and permissions.
+
+## Changes in v0.10.17
+
+- `session_create` and `session_list` accept an optional `release_line` (format `X.Y.Z`, for example `0.17.0`). `session_create` passes it through; without it, NEXUS-APP 0.17.0 derives it from a `staging/release-X.Y.Z` title. `session_list` filters open sessions by exact match. Both responses include `release_line`. Older hubs ignore the parameter. See [Sessions](/sessions#release-lines).
+- The secret scan of the package's own repository runs with the full gitleaks rule set again and is checked in CI.
 
 ## Changes in v0.10.14 to v0.10.16
 
