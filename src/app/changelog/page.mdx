@@ -4,10 +4,14 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.18.0', id: 'v0-18-0' },
   { title: 'v0.17.0', id: 'v0-17-0' },
+  { title: 'v0.17.1 - v0.17.3', id: 'v0-17-1-v0-17-3' },
   { title: 'v0.16.x', id: 'v0-16-x' },
   { title: 'v0.15.0', id: 'v0-15-0' },
   { title: 'v0.14.x', id: 'v0-14-x' },
+  { title: 'nexus-cli v0.28.15 - v0.31.1', id: 'nexus-cli-v0-28-15-v0-31-1' },
+  { title: 'nexus-core v1.3.1 - v1.3.2, nexus-mcp v0.10.18', id: 'nexus-core-v1-3-1-v1-3-2-nexus-mcp-v0-10-18' },
   { title: 'nexus-cli v0.28.5 - v0.28.14', id: 'nexus-cli-v0-28-5-v0-28-14' },
   { title: 'nexus-cli v0.16.7 - v0.28.4', id: 'nexus-cli-v0-16-7-v0-28-4' },
   { title: 'nexus-mcp v0.10.14 - v0.10.17', id: 'nexus-mcp-v0-10-14-v0-10-17' },
@@ -36,6 +40,46 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
+## v0.18.0
+
+**Several GitHub accounts, workspace shadow and consent for executable content.** In preparation on the staging line; not released yet. Requires nexus-cli 0.31.1 or later. After upgrading: `nexus upgrade`, `nexus pull` (answer the consent prompt), restart agent sessions.
+
+### Added
+
+- **Several GitHub accounts, separated per project path (ADR-0126):** an account list in My Settings > GitHub CLI with a project table; the project pin wins, then your bound account, then your default. nexus-cli writes `.nexus/gh.env`, sets `core.sshCommand`, the credential helper and `gh repo set-default`, and signs in with `nexus git login`. See [Source Control and GitHub Accounts](/source-control#several-github-accounts).
+- **Workspace shadow** (`policy.shadow_workspace`): keeps `devbox.json`, `devbox.lock`, `.devbox/` and the scripts path out of git for the whole project; `nexus shadow on|off --target workspace`. See [Project Settings](/project-settings#workspace-shadow).
+- **Per-key workspace fork sync:** keys are merged one by one; keys changed on both sides keep the fork value and are reported as conflicts. A bulk sync script for operators. See [Workspaces](/workspaces#per-key-fork-sync).
+- **Skills:** can be disabled (left out of every export), exported as a zip from the Skills page, and their changes and exports are audited. See [Skills](/skills#disabling-a-skill).
+
+### Changed
+
+- **Directives page:** own tile under Project Memory and own page with the sections Rules, What agents get and Project settings; the sources are now called Required, Setting, Catalog and Project. See [Directives](/directives#project-page).
+- **Source Control** replaces the Repositories tile: repositories, commit identity and signing, GitHub account and AI attribution in one page; the project edit wizard no longer edits them. See [Source Control](/source-control#source-control-page).
+- **AI Gateway held back until 0.20.0:** grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway).
+- **Setup guide** in the app follows nexus-cli 0.29: `nexus link` picker, project-local `nexus login`, `nexus run` flags, `nexus status`, `preflight` and `doctor claude`.
+- **Workspace page** explains blueprint, fork and your machine, and "Learn more" opens [Workspaces](/workspaces).
+- **Personal Claude Code files stay out of git:** `nexus pull` also writes `.claude/settings.local.json` and `CLAUDE.local.md` to `.git/info/exclude`.
+- **Claude Code hooks from nexus-core 1.3.2:** token-only credentials pair with the pinned API URL; the release-line reminder also runs on forked sessions. Take them with `nexus pull`.
+- **Lists:** Skills, Agent Files, Workspaces and Sessions use the shared search, filter panel and tab bar; empty project widgets show an "Empty" state; commands to run appear in their own bar with a copy button. Body search in the Skills and Agent Files registries runs on the server.
+- **Staging lines:** pruning keeps old branches unless asked to delete them.
+
+### Security
+
+- **Consent for executable content:** exports list every runnable item (`executables`); nexus-cli 0.31.0 asks once per new or changed item. See [Consent for executable content](/cli#consent-for-executable-content).
+- **Shadow-safe workspace:** shadow `ai` / `nexus` keeps the devbox workspace out of git and delivers a `dbx_init.sh` and `devbox.json` without AI tooling (and, for `nexus`, without Nexus wording).
+- **Export size cap** of 8 MiB (`413`); repo-relative paths only; skill names limited to `[A-Za-z0-9._-]`; role checks for agent file writes over MCP; membership check for the project skill export with an API token; document downloads are never rendered inline; invalid Git settings are dropped before they reach the CLI; audit events cannot be forged. See [Security and Hardening](/security#export-and-path-rules-v0-18-0).
+- **Privacy:** Sentry performance monitoring and Session Replay are separate opt-in services in the privacy settings; without consent no trace is sampled and no replay is recorded. Error reporting stays on. Events of the EU instance go to the EU ingest host.
+
+### Fixed
+
+- **Zellij session names** for long project slugs: at most 24 characters with a hash (for example `rcd-nextcloud-ansib-3438`), so `nexus run` no longer fails on the macOS socket path limit. See [Claude Code Workspace](/claude-code/workspace#sessions-named-after-the-project).
+- **Devbox ops scripts** (`check-local.sh`, `validate.sh`, `sec-scan.sh`) exit 1 on problems again.
+- **Legacy OS override placeholders** of forks created before 0.17.0 are no longer delivered.
+- **Fork script viewer** shows the shadow-safe scripts that `nexus pull` delivers.
+- **Code editor** highlights YAML and Markdown; the project form RTK hint shows `nexus pull` and `rtk trust` again.
+
+---
+
 ## v0.17.0
 
 **Language settings, a clearer skill picker and sessions per release line.** Requires nexus-cli 0.28.11 or later (0.28.14 recommended). After upgrading: `nexus upgrade`, `nexus pull --force`, restart agent sessions.
@@ -49,6 +93,22 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 - **Error pages:** a shared error screen with "Try again" and a reference to quote; every server error carries that reference. A static maintenance page is available for outages.
 - **Reliability and security:** project settings are written in one transaction; provider credentials survive the deletion of their creator (personal keys are revoked); price and model sync functions are scheduler-only; gateway projects stay on the gateway when a slot profile is missing; "Derive & apply" asks before it writes. See [Security and Hardening](/security#server-only-database-functions).
 - **Upgrade note:** projects without their own documentation language now get the English documentation rule, and agents answer in German, from the platform defaults. Set "No rule" or another language on the project, or choose your own answer language.
+
+---
+
+## v0.17.1 - v0.17.3
+
+### v0.17.3 (October 21, 2026)
+
+- **Execution mode of Claude CLI projects:** projects switched to Claude CLI kept the OpenCode-only Direct Provider mode, so cost views treated a Claude subscription as metered usage. A migration moves them to Claude Max when all agents use Claude CLI and the owner holds the Claude Max flag; the project wizard hides Direct Provider and Nexus Gateway for those users. No `nexus pull` needed.
+
+### v0.17.2 (October 15, 2026)
+
+- **Workspace shadow mode:** a fork in shadow mode now really keeps `devbox.json`, `devbox.lock`, `.devbox/` and the scripts path out of git, and keeps getting the upstream notice and **Review & sync**. "Ignore & decouple" is removed. Run `nexus pull`; already tracked files need `git rm -r --cached` once.
+
+### v0.17.1 (October 15, 2026)
+
+- **Devbox scripts follow the generator again:** `dbx_init.sh`, `lib/common.sh` and `ops/*` are generated on every pull, so the 0.17.0 devbox refinement reaches existing projects; the old tmux scripts are no longer delivered. Run `nexus pull --force` in every project.
 
 ---
 
@@ -122,6 +182,30 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 - **Agent file exports:** generated files (`AGENTS.md`, `CLAUDE.md`, Claude Code files) cannot be pushed back; at most one file per target path is delivered; `AGENTS.md` and `CLAUDE.md` no longer repeat all directives.
 - **Security:** secret scanning in CI with the full gitleaks rule set; node compose routes restricted to platform admins and validated endpoints; project copy needs manage rights on the source; dashboard reads follow project membership during impersonation; document moves need write rights in both projects; error responses no longer leak database text; `git_config` validated server side.
 - **Performance:** local session verification in the middleware, smaller client bundles, faster agent file export and new database indexes.
+
+---
+
+## nexus-cli v0.28.15 - v0.31.1
+
+**CLI side of NEXUS-APP 0.17.x and 0.18.0.** See the [CLI reference](/cli).
+
+- **v0.31.1:** the consent check agrees with the backend's `executables` list (MCP server env names, command settings, devbox files in `--dry-run`); every executable kind is checked for undeclared items.
+- **v0.31.0:** consent for executable content in `nexus pull` and `nexus init`, `--trust` for CI, fingerprints stored in `~/.config/nexus/consent/`; API responses over 8 MiB refused. See [Consent for executable content](/cli#consent-for-executable-content).
+- **v0.30.0:** a GitHub account per project path: `nexus git login`, `.nexus/gh.env`, `core.sshCommand`, credential helper, `gh repo set-default`, commit identity from the account, `nexus git apply --canonical-remotes` and one `GitHub:` status line. `nexus run` refuses to nest into another Zellij session, checks the Zellij socket path and shows the Zellij log on a failed start. See [Source Control](/source-control#several-github-accounts).
+- **v0.29.3:** `nexus shadow on --untrack` and one hint for committed files that stay visible.
+- **v0.29.2:** server paths validated before every write; hook commands without shell syntax; prerequisite checks without a shell; token-bearing config files owner-only; mandatory install checksums; rustls update.
+- **v0.29.1:** workspace shadow follows `policy.shadow_workspace`; disabled skills named as such.
+- **v0.29.0:** shadow targets (`--target agentic|workspace|nexus`, `--all`, `--dry-run`); `nexus shadow off` no longer stages files; generated devbox scripts are projections (`DRIFTED`, never pushed); `nexus push --dry-run` agrees with `nexus status`.
+- **v0.28.16:** shadow guard: `nexus shadow check` and a `commit-msg` hook.
+- **v0.28.15:** shell-safe `.nexus/plugin.env` (security fix); run `nexus pull` to rewrite it.
+
+---
+
+## nexus-core v1.3.1 - v1.3.2, nexus-mcp v0.10.18
+
+- **nexus-core v1.3.2:** a config source with only a token pairs with the `api_url` pinned in `.nexus/config.toml`; the session guard's release-line reminder also runs on forked sessions. Shipped with NEXUS-APP 0.18.0.
+- **nexus-core v1.3.1:** cost control and compaction found no Nexus credentials in project-linked workspaces; the credential lookup now checks the project-local config first.
+- **nexus-mcp v0.10.18:** published with npm trusted publishing and a provenance attestation.
 
 ---
 
@@ -244,6 +328,8 @@ The Nexus plugin for Claude Code. See [Claude Code Plugins](/claude-code/plugins
 ## v0.13.x — September 2026
 
 **AI Gateway: BYOK, Model Catalog Rebuild, Routing Lab & Gateway Operations**
+
+Held back since v0.18.0; the AI Gateway comes to users with v0.20.0.
 
 ### v0.13.1 — BYOK: Provider Credentials & Project Billing Bindings (ADR-0096)
 

@@ -6,6 +6,7 @@ export const metadata = {
 export const sections = [
   { title: 'What directives are', id: 'what-directives-are' },
   { title: 'Sources', id: 'sources' },
+  { title: 'Project page', id: 'project-page' },
   { title: 'Rule and description', id: 'rule-and-description' },
   { title: 'Levels', id: 'levels' },
   { title: 'Categories', id: 'categories' },
@@ -36,17 +37,26 @@ What does **not** belong in directives:
 
 ## Sources
 
-The effective directive list of a project is built from four sources:
+The effective directive list of a project is built from four sources. Since NEXUS-APP 0.18.0 they carry the same names in the catalog, the legend, the project page and these docs:
 
-| Source | Shown on the project page as | Can a project turn it off? |
+| Source | Was called (before 0.18.0) | Can a project turn it off? |
 | --- | --- | --- |
-| **Platform rules** | Platform rules | No. They apply to every project. |
-| **Project settings** | Project settings | Yes, by switching the setting off. Each setting renders its rule when switched on (project page or `nexus env set policy.<key>`). |
-| **Default rules** (catalog) | Nexus rules | Yes. New projects start with them. |
-| **Optional rules** (catalog) | Nexus rules | Added by the project when it needs them. |
-| **Project rules** | Project rules | Yes. Facts that hold for one project only, written on that project. |
+| **Required** | Platform rules | No. They apply to every project. |
+| **Setting** | Project settings | Yes, by switching the setting off. Each setting renders its rule when switched on (project page or `nexus env set policy.<key>`). |
+| **Catalog** | Nexus rules | Yes. Default catalog rules are on for new projects; optional catalog rules are added by the project when it needs them. |
+| **Project** | Project rules | Yes. Facts that hold for one project only, written on that project. |
 
-On a project page, default and optional catalog rules are listed together as **Nexus rules**.
+## Project page
+
+Project directives have their own tile under **Project Memory**. The tile counts the active rules and splits them by source (Required, Setting, Catalog, Project), so the parts add up to the total. Its page has three sections:
+
+| Section | Content |
+| --- | --- |
+| **Rules** | One table of every rule with level, category, source and state. Source tabs with counts, search, and inactive rules on request. Catalog and project rules switch in place; setting rules link to the setting that renders them. **Add from catalog** and **Write project rule** sit below the table. |
+| **What agents get** | The rendered rules file, as agents receive it (see [What agents get](#what-agents-get)). |
+| **Project settings** | The [project settings](/project-settings), including languages, shadow level and workspace shadow. |
+
+`?section=rules|preview|settings` and `?source=` keep the view in the URL; older links with `?section=overview`, `catalog` or `project` open the matching source tab. Permissions are unchanged.
 
 ## Rule and description
 
@@ -132,7 +142,7 @@ The directives panel and the platform catalog open an icon legend from the right
 
 | Seal | Meaning |
 | --- | --- |
-| Red **M** | Platform rule: MUST, set by the platform for every project; it cannot be changed or turned off on a project. |
+| Red **M** | Required rule: MUST, set by the platform for every project; it cannot be changed or turned off on a project. |
 | Amber **M** | MUST: no exceptions, also when it is inconvenient. |
 | Gray **S** | SHOULD: the default; the agent follows it unless the user says otherwise. |
 
@@ -142,11 +152,11 @@ The same seal component is used for the classification levels elsewhere in Nexus
 
 | Icon | Source |
 | --- | --- |
-| Lock | Platform rules: apply to every project and cannot be turned off. |
-| Sliders | Project settings: rendered when a project switches the setting on. |
-| Book | Default rules: catalog rules new projects start with; a project can turn them off. |
-| Plus circle | Optional rules: catalog rules a project adds when it needs them. |
-| Folder | Project rules: facts that hold for one project only. |
+| Lock | Required: apply to every project and cannot be turned off. |
+| Sliders | Setting: rendered when a project switches the setting on. |
+| Book | Catalog, default: catalog rules new projects start with; a project can turn them off. |
+| Plus circle | Catalog, optional: catalog rules a project adds when it needs them. |
+| Folder | Project: facts that hold for one project only. |
 
 ### Labels
 
@@ -163,7 +173,7 @@ The same seal component is used for the classification levels elsewhere in Nexus
 | --- | --- |
 | Edit | Change the rule text, description, level, category or order (platform admins in the catalog). |
 | Delete | In the catalog: removes an optional rule from all projects. On a project page: removes a catalog or project rule from that project only. |
-| Locked | Platform rules on a project page; they cannot be edited there. |
+| Locked | Required rules on a project page; they cannot be edited there. |
 
 ## Platform catalog
 
@@ -171,7 +181,7 @@ Platform admins manage the catalog under **Platform > Directives**. Rule texts a
 
 - **Usage:** each catalog rule shows how many projects get it.
 - **Versioning:** editing a rule text bumps its version (`v2`, `v3`, ...). Projects receive the new text on their next `nexus pull`; nothing has to be changed per project.
-- **Kinds:** mandatory (platform rules), flag (rendered by a project setting), default and optional.
+- **Kinds:** mandatory (Required), flag (rendered by a project setting), default and optional.
 
 ## What agents get
 

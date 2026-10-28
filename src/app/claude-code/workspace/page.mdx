@@ -124,7 +124,19 @@ Under the observer switch you can choose **AgentHUD**, a third-party observer, i
 
 ## Sessions named after the project
 
-Rendered layouts set the Zellij session name to the project slug (lowercase, `a-z`, `0-9` and `-`, at most 32 characters) and attach to an existing session. A second `nexus run` in the same project **joins the running workspace** instead of failing. A custom layout that sets its own `session_name` keeps it.
+Rendered layouts set the Zellij session name to the project slug (lowercase, `a-z`, `0-9` and `-`) and attach to an existing session. A second `nexus run` in the same project **joins the running workspace** instead of failing. A custom layout that sets its own `session_name` keeps it.
+
+Since NEXUS-APP 0.18.0 the name has at most 24 characters: a longer slug is cut and gets a short hash of the full slug, for example `rcd-nextcloud-ansib-3438`, so two projects never share a session. Workspaces get the new name on the next `nexus pull`.
+
+### Socket path too long
+
+macOS limits a Unix socket path to 103 bytes (Linux: 107), and Zellij's socket directory under `$TMPDIR` already takes most of it. Before 0.18.0, a long session name made `nexus run` end with exit code 1 before the workspace opened. nexus-cli 0.30.0 checks the real path before launch (row `Zellij socket`) and fails with its length, the limit and the workaround:
+
+```bash
+ZELLIJ_SOCKET_DIR=/tmp/zj nexus run
+```
+
+When Zellij still exits within five seconds, `nexus run` prints the last lines of the Zellij log and its path. Started from a pane of another Zellij session, `nexus run` refuses with that session's name instead of adding the layout as new tabs there.
 
 ## Managing presets
 

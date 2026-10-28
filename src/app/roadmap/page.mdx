@@ -29,9 +29,15 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ---
 
-### v0.17.0 — Planned (Q1 2027)
+### v0.20.0: AI Gateway for users
 
-**Self-hosted stack, multi-tenant and Nexus Spark (BYOH)**
+**The AI Gateway leaves the hold-back**
+
+- BYOK provider credentials, the Registry / Discover model catalog, Routing Lab and gateway operations, available to users again. Until then the gateway is grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway)
+
+---
+
+### Self-hosted stack, multi-tenant and Nexus Spark (BYOH): planned (Q1 2027)
 
 - Nexus Spark (BYOH): deeper provisioning and lifecycle wiring for user-owned DGX Spark and private GPU nodes in the AI Gateway routing surface
 - Cost Control: sharper per-project and per-session cost attribution, refined budget enforcement, clearer reconciliation on top of the BYOK provider credentials
@@ -44,7 +50,35 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ---
 
+### v0.18.0: in preparation (staging)
+
+**Several GitHub accounts, workspace shadow and consent for executable content**
+
+- Several GitHub accounts, separated per project path (ADR-0126), with `nexus git login`. See [Source Control](/source-control#several-github-accounts)
+- Source Control page for repositories, commit identity, GitHub account and AI attribution
+- Workspace shadow (`policy.shadow_workspace`) and a shadow-safe devbox workspace for public repositories
+- Consent for executable content in `nexus pull`, an 8 MiB export cap and stricter path and name rules
+- Per-key workspace fork sync with conflict reporting
+- Skills can be disabled and exported as a zip; directives get their own page
+- Tool versions: nexus-cli 0.31.1, nexus-core 1.3.2
+
+---
+
 ## Released
+
+### v0.17.0 (October 2026)
+
+**Language settings, shadow guard and release lines**
+
+- Language settings with live inheritance: platform defaults, project and personal languages for documentation and agent answers. See [Language Settings](/languages)
+- Nexus skills stand out in the Claude Code picker; the CodeRabbit skill runs only on request
+- One Nexus session per release line, with a session-guard nudge. See [Sessions](/sessions#release-lines)
+- Shadow guard for public repositories: `nexus shadow check` and a commit-msg hook (nexus-cli 0.28.16)
+- Devbox workspaces refined: plugin variables from `.nexus/plugin.env` with shell-safe loading (nexus-cli 0.28.15), Review & sync, leaner blueprints
+- Error pages with a reference to quote
+- v0.17.1 to v0.17.3: devbox scripts follow the generator, workspace shadow mode fixed, execution mode of Claude CLI projects corrected
+
+---
 
 ### v0.16.0 — October 2026
 
@@ -90,6 +124,8 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 ### v0.13.0 — September 2026
 
 **AI Gateway: BYOK, Model Catalog Rebuild, Routing Lab & Gateway Operations**
+
+Held back since v0.18.0; available to users again with v0.20.0.
 
 - BYOK: Provider Credentials & Project Billing Bindings (ADR-0096) -- bring your own OpenRouter, Anthropic, or OpenCode Zen key, encrypted at rest and verified against the provider's key-info endpoint; explicit, audited billing binding per project (0.13.1)
 - Model Catalog Rebuild (ADR-0097, ADR-0100): Registry/Discover split, nightly `pg_cron` sync from OpenRouter and models.dev, OpenCode Zen as a first-class aggregator, catalog drift log (0.13.2)

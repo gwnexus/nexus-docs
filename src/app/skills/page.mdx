@@ -11,6 +11,8 @@ export const sections = [
   { title: 'Run only on request', id: 'run-only-on-request' },
   { title: 'Skill resources', id: 'skill-resources' },
   { title: 'Skills in the Claude Code picker', id: 'skills-in-the-claude-code-picker' },
+  { title: 'Disabling a skill', id: 'disabling-a-skill' },
+  { title: 'Exporting skills', id: 'exporting-skills' },
   { title: 'Skill scope', id: 'skill-scope' },
   { title: 'MCP tools', id: 'mcp-tools' },
 ]
@@ -105,6 +107,27 @@ With nexus-cli 0.28.14 or later:
 - `nexus pull` writes the new skill and removes the files of skills that are no longer exported, such as the old `nexus-cr-review` folder, when they are unchanged locally (`REMOVE`). Locally edited files are kept and reported (`KEEP`). `nexus pull --dry-run` previews the removals.
 - The `name` in the `SKILL.md` frontmatter is the skill's folder id (for example `nexus-code-review`), as Claude Code expects lowercase names with hyphens; the description carries the meaning.
 
+## Disabling a skill
+
+Since NEXUS-APP 0.18.0, a skill can be switched off in its edit mode (`enabled`, default on). A disabled skill keeps its versions and project assignments but is left out of every export: `sk_export`, the project skills export, the capability routing rule and the generated agent files. `sk_list` and `sk_get` return `enabled`; the registry and the skill page show a **Disabled** badge.
+
+With nexus-cli 0.29.1 or later, `nexus pull` removes the unchanged files of a disabled skill (`disabled in Nexus`), like those of an unassigned skill, and `nexus skills list` marks it `disabled`. Switch it on again and pull to get it back.
+
+The Skills page uses the shared list controls: search, a **Filters** panel (tags, scope, state enabled or disabled, "With slash command", "Multiple files" for skills with resource files), a view toggle and status tabs (All, Active, Draft, Archived) with counts that follow search and filters. Body text is searched on the server.
+
+## Exporting skills
+
+The **Export** menu on the Skills page downloads a zip (`GET /api/skills/export?scope=active|all`):
+
+- `active`: skills with status active or accepted that are enabled; `all`: every skill you can see.
+- Layout: `core/<skill_id>/` and `projects/<project>/<skill_id>/`, each with `SKILL.md` (the same frontmatter as the CLI export) and its resource files, plus `skills.json` (manifest) and `README.md` (overview and review hints) at the root.
+
+Every signed-in user can export the skills they can see. Skill changes and exports are audited: an edit writes `skill.updated` (or `skill.enabled` / `skill.disabled`) with each changed field, and a switch on a project skill also lands in the project's open sessions; exports record `skills.exported` with scope, count and projects.
+
+### Names
+
+Skill ids, custom command slugs and resource file names may only use `[A-Za-z0-9._-]` (NEXUS-APP 0.18.0, nexus-cli 0.29.2). Exports skip older skills that break the rule and log a warning; rename them to deliver them again.
+
 ## Skill scope
 
 - **Core skills** (`project_id = NULL`) are tenant-wide and available to all projects. Only platform owners and admins can create or modify them.
@@ -125,11 +148,11 @@ Since v0.17.0, every signed-in user can read the global skill catalog: the regis
 
 | Tool | Description |
 | --- | --- |
-| `sk_list` | List skills for the current tenant |
-| `sk_get` | Get full skill content by identifier |
+| `sk_list` | List skills for the current tenant (with `enabled`) |
+| `sk_get` | Get full skill content by identifier (with `enabled`) |
 | `sk_create` | Create a new skill in draft status (`description` required, optional `invocation`) |
 | `sk_update` | Update skill content (increments version; optional `invocation`) |
 | `sk_activate` | Change skill status (draft, active, archived) |
 | `sk_assign` | Assign a skill to a project |
 | `sk_unassign` | Remove a skill assignment from a project |
-| `sk_export` | Export all skill assignments for a project, including `invocation` and resource files |
+| `sk_export` | Export all enabled skill assignments for a project, including `invocation`, resource files and the `executables` list for the [consent check](/cli#consent-for-executable-content) |

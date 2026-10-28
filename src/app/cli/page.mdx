@@ -17,6 +17,7 @@ export const sections = [
   { title: 'Preflight and status checks', id: 'preflight-and-status-checks' },
   { title: 'Claude Code projects', id: 'claude-code-projects' },
   { title: 'Directives, skills and shadow', id: 'directives-skills-and-shadow' },
+  { title: 'Consent for executable content', id: 'consent-for-executable-content' },
   { title: 'Upgrading', id: 'upgrading' },
   { title: 'Import workflow', id: 'import-workflow' },
   { title: 'Workspace cache', id: 'workspace-cache' },
@@ -82,7 +83,7 @@ nexus pull               # Sync skills and agent files from the platform
 | `nexus status` | Show auth, project, and workspace status (server-verified since v0.16.0) |
 | `nexus link [--project-id <id>]` | Bind a project to the current workspace; without an id, pick the project with the arrow keys and filter as you type (0.28.12, 0.28.13) |
 | `nexus unlink` | Remove project binding from the workspace |
-| `nexus pull [--project-id <id>] [--dry-run]` | Pull skills and config from the Nexus platform; `--dry-run` previews workspace changes and removals (0.28.11, 0.28.14) |
+| `nexus pull [--project-id <id>] [--dry-run] [--trust]` | Pull skills and config from the Nexus platform; `--dry-run` previews workspace changes, removals and the executable items it would ask about (0.28.11, 0.28.14, 0.31.0); `--trust` accepts new or changed executable content without asking (0.31.0, see [Consent for executable content](#consent-for-executable-content)) |
 | `nexus push [--adopt-local]` | Publish local workspace state back to the platform (fork-based) |
 | `nexus stash save\|pop\|list` | Save, restore, or list local workspace snapshots before a `pull` or `push` |
 | `nexus project link\|rotate\|unlink\|status` | Manage the project-scoped Nexus Model Gateway inference token (`nxs_proj_*`) |
@@ -99,7 +100,10 @@ nexus pull               # Sync skills and agent files from the platform
 | `nexus status --agents [--watch]` | Agent observer view of Claude Code sessions (v0.28.5) |
 | `nexus status --json` | JSON status output, short form of `nexus --output json status` (0.28.13) |
 | `nexus doctor claude [--fix]` | Check the tools the Claude Code workspace needs (v0.28.5) |
-| `nexus shadow ai\|nexus\|off\|status` | Set or show the project's shadow level (server-backed since v0.28.9) |
+| `nexus shadow on\|off [--target agentic\|workspace\|nexus] [--untrack] [--dry-run]` | Hide or show agentic files, the devbox workspace and Nexus internals in git; all targets without `--target` (0.29.0, 0.29.3). See [Project Settings](/project-settings#nexus-shadow) |
+| `nexus shadow status\|check` | Show the effective shadow state; scan tracked files and commit messages with the shadow rules (0.28.16) |
+| `nexus git verify\|apply [--canonical-remotes]` | Compare or apply the project's git identity and GitHub account (`gh.env`, `core.sshCommand`, default repository) to the local repository (0.30.0) |
+| `nexus git login [--account <login>\|--profile <name>] [--with-token]` | Log the project's GitHub account into its own `gh` profile (0.30.0). See [Source Control](/source-control#several-github-accounts) |
 
 ### Global flags
 
@@ -398,13 +402,76 @@ All sections (General, Claude Code runtime, Git Identity Verification) share one
 - **Devbox shell state (0.28.12):** the `Workspace:` line of `nexus status` ends with `[devbox shell: active]`, `[devbox shell: active for <root>]` or `[devbox shell: inactive, start with devbox shell]`; JSON field `devbox_shell`.
 - **`nexus push` (0.28.13):** skips `DROPPED` workspace files unless you name the path.
 
-### Shadow and git exclude (0.28.9, 0.28.10)
+### Shadow and git exclude (0.28.9 to 0.29.3)
 
 - `af_export.git_exclude` is applied on every pull as a managed block in `.git/info/exclude` (`# >>> nexus managed exclude (server)`). Your own lines are never touched; tracked files are never untracked automatically (pull prints a `git rm -r --cached <path>` hint).
-- `nexus shadow on|ai|nexus|off` sets the project's `policy.shadow` (`on` = `ai`) and applies the exclude list at once; `nexus shadow status` shows the server level and block.
+- **Targets (0.29.0):** `nexus shadow on|off --target agentic|workspace|nexus` (`ai` and `agentic-files` are aliases; repeat or separate with commas), `--all`, `--dry-run`. Without `--target`, `on` hides all three targets. `nexus` includes `agentic`. `off` no longer stages files; it prints a `git add <path>` hint instead.
+- **Workspace target (0.29.1):** sets the project setting `policy.shadow_workspace` on backends that offer it, so the devbox paths leave git for everyone on the project. See [Workspace shadow](/project-settings#workspace-shadow).
+- **`--untrack` (0.29.3):** also takes files with commit history out of the git index (`git rm -r --cached`; the files stay on disk). Without it, `on` prints one hint with the tracked file count per pattern.
+- **Shadow guard (0.28.16):** `nexus shadow check [--commits N] [--json]` scans tracked files and recent commit messages with the project's shadow rules (read-only, exit 1 on findings); `nexus pull` installs a `commit-msg` hook that checks each message offline.
+- **Deprecated (0.29.0):** `nexus shadow ai`, `nexus shadow nexus` and `nexus workspace shadow on|off|status` still work, with a note naming the new command.
 - See [Project Settings](/project-settings#shadow-levels).
 
+### Skills and workspace (0.28.15 to 0.29.2)
+
+- **Shell-safe `.nexus/plugin.env` (0.28.15):** values are written as single-quoted shell words, so sourcing the file never runs commands. Run `nexus pull` to rewrite it.
+- **Disabled skills (0.29.1):** `nexus skills list` marks skills switched off in Nexus as `disabled`; `nexus pull` removes their unchanged files with the note `disabled in Nexus`.
+- **Generated devbox scripts (0.29.0):** `dbx_init.sh`, `dbx_post_init.sh`, `lib/common.sh` and `ops/*.sh` are generated for every workspace and never pushed. A local edit is reported as `DRIFTED`; use `scripts/devbox/init/os_<os>/override.sh` or your own script instead, or `nexus reset <path>` to restore it.
+- **`nexus push --dry-run` (0.29.0)** compares with the same fork export as `nexus status`, so both report the workspace clean right after a pull.
+
+## Consent for executable content
+
+Since nexus-cli 0.31.0, `nexus pull` and `nexus init` ask before they install anything that can run on your machine. The backend lists these items in each export (`executables`, NEXUS-APP 0.18.0); the CLI fingerprints what it would write and compares.
+
+Items that need consent:
+
+| Kind | Examples |
+| --- | --- |
+| `claude_hook`, `claude_status_line`, `claude_setting` | Hook scripts and their registrations, the status line, settings Claude Code runs as commands (`hooks`, `apiKeyHelper`, `awsAuthRefresh`, `awsCredentialExport`, `otelHeadersHelper`) |
+| `claude_plugin`, `claude_marketplace` | Enabled Claude Code plugins and plugin marketplaces |
+| `mcp_server` | MCP servers in `.mcp.json` or `opencode.json` |
+| `zellij_layout`, `opencode_plugin` | Zellij layouts, OpenCode plugins |
+| `agent_script` | Agent files in runnable locations or with a shebang |
+| `devbox_config`, `devbox_script` | `devbox.json` and devbox scripts |
+| `skill_script` | Skill scripts and skill bodies with inline shell |
+
+### The prompt
+
+When a pull finds new or changed items, it lists them and asks once:
+
+```text
+? 2 executable item(s) from the server need your consent:
+   new      claude_hook session-guard  ->  .claude/hooks/nexus-session-guard.mjs
+   changed  devbox_script dbx_init.sh  ->  scripts/devbox/dbx_init.sh
+? Install them?
+> Review each
+  Accept all
+  Skip all
+```
+
+- **Review each** shows every item with the command it runs and a diff against the local file (env values only as a short hash), then asks per item. The default answer is no.
+- **Accept all** installs every listed item.
+- **Skip all** (or Esc) installs none of them.
+
+A refused item keeps its local version, or is left out when there is none; the rest of the pull continues. The next pull asks again. Accept an item when the change is expected, for example after a plugin or workspace change in Nexus or a NEXUS-APP upgrade; review it when you do not know why it changed.
+
+### What is remembered
+
+- Accepted fingerprints are stored outside the repository, per workspace in `~/.config/nexus/consent/` (owner-only), so a commit cannot pre-approve anything.
+- Items already on disk exactly as they would be written count as accepted, so the first pull after upgrading only asks about real changes.
+- If the backend's hash differs from the CLI's fingerprint, or the CLI finds an executable item the backend did not declare, the pull says so and asks again.
+
+### CI and scripts
+
+- `--trust` accepts new or changed items without asking. It is not implied by `--yes` or `--force`.
+- Without a terminal and without `--trust`, new or changed items are skipped and listed with the hint to run `nexus pull` in a terminal or `nexus pull --trust`.
+- `nexus pull --dry-run` lists the items a pull would ask about, hash differences and undeclared items, and ends with how many items were checked and how many the backend declared (0.31.1).
+
+Exports larger than 8 MiB are refused by the backend (`413`) and by the CLI, and reported as a too-large export.
+
 ## Upgrading
+
+For NEXUS-APP 0.18.0, use nexus-cli **0.31.1 or later**: it applies the GitHub account per project path (0.30.0), the workspace shadow setting (0.29.1) and the consent check for executable content (0.31.0), and matches the stricter path and skill name rules (0.29.2). Expect one consent prompt on the first pull after upgrading if anything changed.
 
 For NEXUS-APP 0.17.0, use nexus-cli **0.28.11 or later** (0.28.14 recommended, it removes the renamed CodeRabbit skill folder). For 0.16.x, 0.28.10 or later:
 
@@ -529,6 +596,8 @@ A set of CLI-specific security fixes shipped alongside the v0.13.5 platform hard
 - **Reduced PAT token exposure** in preflight and status output (tokens are masked rather than printed in full)
 - **`nexus shadow` git index safety fix** (v0.13.1): a guard now prevents `nexus shadow` from silently staging the deletion of files that have existing commit history
 - **Gitleaks config fixed** (v0.28.10): the repository's gitleaks pre-commit config now extends the built-in ruleset (before, the custom config replaced it and every scan passed); a CI self-test guards it. A full history scan found no real secrets.
+- **Server paths validated before every write** (v0.29.2): every path from the backend must be relative, stay inside the workspace, not point into `.git/` and not leave the workspace through a symlink; actor slugs and hook event names may only use `[A-Za-z0-9._-]`. Prerequisite checks no longer run through a shell; `.mcp.json` and `opencode.json` are owner-only (`0600`); `install.sh` and `nexus upgrade` require the checksum.
+- **Consent for executable content** (v0.31.0): see [above](#consent-for-executable-content).
 - **Clean error output** (v0.16.3): raw Rust stack backtraces no longer leak into CLI output on auth or API errors, regardless of the `RUST_BACKTRACE` environment variable
 
 ## Cost control tools
