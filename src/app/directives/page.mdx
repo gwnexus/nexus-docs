@@ -43,16 +43,16 @@ The effective directive list of a project is built from four sources. Since NEXU
 | --- | --- | --- |
 | **Required** | Platform rules | No. They apply to every project. |
 | **Setting** | Project settings | Yes, by switching the setting off. Each setting renders its rule when switched on (project page or `nexus env set policy.<key>`). |
-| **Catalog** | Nexus rules | Yes. Default catalog rules are on for new projects; optional catalog rules are added by the project when it needs them. |
+| **Core catalog** | Nexus rules | Yes. Default catalog rules are on for new projects; optional catalog rules are added by the project when it needs them. |
 | **Project** | Project rules | Yes. Facts that hold for one project only, written on that project. |
 
 ## Project page
 
-Project directives have their own tile under **Project Memory**. The tile counts the active rules and splits them by source (Required, Setting, Catalog, Project), so the parts add up to the total. Its page has three sections:
+Project directives have their own tile under **Project Memory**. The tile counts the active rules and splits them by source (Required, Setting, Core catalog, Project), so the parts add up to the total. Its page has three sections:
 
 | Section | Content |
 | --- | --- |
-| **Rules** | One table of every rule with level, category, source and state. Source tabs with counts, search, and inactive rules on request. Catalog and project rules switch in place; setting rules link to the setting that renders them. **Add from catalog** and **Write project rule** sit below the table. |
+| **Rules** | One table of every rule with level, category, source and state. Source tabs with counts, search, and inactive rules on request. Core catalog and project rules switch in place; setting rules link to the setting that renders them. **Add from catalog** and **Write project rule** sit below the table. |
 | **What agents get** | The rendered rules file, as agents receive it (see [What agents get](#what-agents-get)). |
 | **Project settings** | The [project settings](/project-settings), including languages, shadow level and workspace shadow. |
 

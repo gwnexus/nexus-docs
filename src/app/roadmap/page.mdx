@@ -37,20 +37,23 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ---
 
-### Self-hosted stack, multi-tenant and Nexus Spark (BYOH): planned (Q1 2027)
+### v0.19.0: self-hosted stack, multi-tenant and Nexus Spark (BYOH), planned (Q1 2027)
 
 - Nexus Spark (BYOH): deeper provisioning and lifecycle wiring for user-owned DGX Spark and private GPU nodes in the AI Gateway routing surface
 - Cost Control: sharper per-project and per-session cost attribution, refined budget enforcement, clearer reconciliation on top of the BYOK provider credentials
 - Organization-scoped URL routing: `/o/[orgSlug]/` prefix for all authenticated routes (ADR-0081)
 - Multi-tenant support: tenant resolution via middleware and row-level security session variables
-- Helm charts for the full Nexus stack on user-owned Kubernetes clusters, plus a one-command single-node deployment
+- Helm chart for the full Nexus stack (webapp, MCP server, Supabase services, Caddy) on user-owned Kubernetes, with RKE2 as the reference distribution, plus a one-command single-node deployment
+- PostgreSQL through the CloudNativePG operator (pgvector, scheduled backups, point-in-time recovery, failover) for self-hosted installs
 - Community / Pro self-hosted deployment with no license enforcement and no phone-home, with a configuration wizard for database, storage, auth and domain
 - Stripe billing with metered usage tracking and invoice generation; self-service tenant onboarding
 - nexus-cli organization context (`NEXUS_ORG`, organization binding in `config.toml`)
 
 ---
 
-### v0.18.0: in preparation (staging)
+## Released
+
+### v0.18.0 (October 2026)
 
 **Several GitHub accounts, workspace shadow and consent for executable content**
 
@@ -60,11 +63,10 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 - Consent for executable content in `nexus pull`, an 8 MiB export cap and stricter path and name rules
 - Per-key workspace fork sync with conflict reporting
 - Skills can be disabled and exported as a zip; directives get their own page
-- Tool versions: nexus-cli 0.31.1, nexus-core 1.3.2
+- Tool versions: nexus-cli 0.31.1 or later (0.31.2 masks tokens), nexus-core 1.3.2
+- v0.18.1 to v0.18.3: OpenAI embeddings and AWS Textract are opt-in per server; no content goes to either provider by default. See [Knowledge Base](/knowledge-base#embeddings-on-the-server) and [Document Extraction](/textract#server-switch)
 
 ---
-
-## Released
 
 ### v0.17.0 (October 2026)
 

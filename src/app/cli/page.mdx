@@ -471,7 +471,7 @@ Exports larger than 8 MiB are refused by the backend (`413`) and by the CLI, and
 
 ## Upgrading
 
-For NEXUS-APP 0.18.0, use nexus-cli **0.31.1 or later**: it applies the GitHub account per project path (0.30.0), the workspace shadow setting (0.29.1) and the consent check for executable content (0.31.0), and matches the stricter path and skill name rules (0.29.2). Expect one consent prompt on the first pull after upgrading if anything changed.
+For NEXUS-APP 0.18.x, use nexus-cli **0.31.1 or later** (0.31.2 recommended, it masks tokens): it applies the GitHub account per project path (0.30.0), the workspace shadow setting (0.29.1) and the consent check for executable content (0.31.0), and matches the stricter path and skill name rules (0.29.2). Expect one consent prompt on the first pull after upgrading if anything changed.
 
 For NEXUS-APP 0.17.0, use nexus-cli **0.28.11 or later** (0.28.14 recommended, it removes the renamed CodeRabbit skill folder). For 0.16.x, 0.28.10 or later:
 
@@ -598,6 +598,7 @@ A set of CLI-specific security fixes shipped alongside the v0.13.5 platform hard
 - **Gitleaks config fixed** (v0.28.10): the repository's gitleaks pre-commit config now extends the built-in ruleset (before, the custom config replaced it and every scan passed); a CI self-test guards it. A full history scan found no real secrets.
 - **Server paths validated before every write** (v0.29.2): every path from the backend must be relative, stay inside the workspace, not point into `.git/` and not leave the workspace through a symlink; actor slugs and hook event names may only use `[A-Za-z0-9._-]`. Prerequisite checks no longer run through a shell; `.mcp.json` and `opencode.json` are owner-only (`0600`); `install.sh` and `nexus upgrade` require the checksum.
 - **Consent for executable content** (v0.31.0): see [above](#consent-for-executable-content).
+- **Tokens masked** (v0.31.2): `nexus login` reads the token without echo on a terminal (each character shows as `*`; Backspace and Ctrl-U work; piped input is unchanged). `nexus status`, `nexus preflight` and `nexus run` show tokens in one masked form, the public prefix plus the last four characters (`nxs_pat_****9f3c`). The env table of `nexus run` masks values whose name contains `TOKEN`, `SECRET`, `PASSWORD`, `KEY`, `AUTH` or `CREDENTIAL`.
 - **Clean error output** (v0.16.3): raw Rust stack backtraces no longer leak into CLI output on auth or API errors, regardless of the `RUST_BACKTRACE` environment variable
 
 ## Cost control tools

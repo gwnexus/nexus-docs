@@ -4,13 +4,14 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.18.1 - v0.18.3', id: 'v0-18-1-v0-18-3' },
   { title: 'v0.18.0', id: 'v0-18-0' },
   { title: 'v0.17.0', id: 'v0-17-0' },
   { title: 'v0.17.1 - v0.17.3', id: 'v0-17-1-v0-17-3' },
   { title: 'v0.16.x', id: 'v0-16-x' },
   { title: 'v0.15.0', id: 'v0-15-0' },
   { title: 'v0.14.x', id: 'v0-14-x' },
-  { title: 'nexus-cli v0.28.15 - v0.31.1', id: 'nexus-cli-v0-28-15-v0-31-1' },
+  { title: 'nexus-cli v0.28.15 - v0.31.2', id: 'nexus-cli-v0-28-15-v0-31-2' },
   { title: 'nexus-core v1.3.1 - v1.3.2, nexus-mcp v0.10.18', id: 'nexus-core-v1-3-1-v1-3-2-nexus-mcp-v0-10-18' },
   { title: 'nexus-cli v0.28.5 - v0.28.14', id: 'nexus-cli-v0-28-5-v0-28-14' },
   { title: 'nexus-cli v0.16.7 - v0.28.4', id: 'nexus-cli-v0-16-7-v0-28-4' },
@@ -40,9 +41,29 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
+## v0.18.1 - v0.18.3
+
+**No content goes to OpenAI or AWS Textract unless the operator enables it.** Released 2026-10-31. No migration, no nexus-cli update.
+
+### Security
+
+- **v0.18.3, AWS Textract is opt-in:** without `TEXTRACT_ENABLED=true` next to the Textract credentials, no uploaded document is sent to Textract; extraction jobs are skipped with "AWS Textract is disabled on this server". Enable it only after an AWS Organizations AI services opt-out policy covers the account. See [Document Extraction](/textract#server-switch).
+- **v0.18.2, OpenAI embeddings are opt-in:** a `NEXUS_SEC_OPENAI_API_KEY` alone no longer sends anything to OpenAI; the server also needs `EMBEDDING_OPENAI_ENABLED=true`. While off, nothing is embedded, `kb_search` `hybrid` returns keyword results with a `warning`, `semantic` answers 400, the dashboard search falls back to keyword matches and `make embed-backfill` refuses to run. See [Embeddings on the server](/knowledge-base#embeddings-on-the-server).
+- **v0.18.1, confidentiality-aware query embedding (ADR-0047):** MCP search queries of projects that block external APIs use the local embedding model when one is configured, never OpenAI; without one, `semantic` answers 400 and `hybrid` returns keyword results only.
+
+### Changed
+
+- **v0.18.3, privacy policy:** section 9 covers text recognition (Textract switched off), the new section 9a states that search runs in the Nexus database and sends no content or query to an external AI or embedding provider, and retention lists previously extracted text.
+
+### Fixed
+
+- **v0.18.1, MCP knowledge search:** when the query embedding failed, `kb_search` in `semantic` or `hybrid` mode answered an empty HTTP 500 ("Unexpected end of JSON input"). `semantic` now answers a JSON 503 with a reference, `hybrid` returns keyword results with a `warning`.
+
+---
+
 ## v0.18.0
 
-**Several GitHub accounts, workspace shadow and consent for executable content.** In preparation on the staging line; not released yet. Requires nexus-cli 0.31.1 or later. After upgrading: `nexus upgrade`, `nexus pull` (answer the consent prompt), restart agent sessions.
+**Several GitHub accounts, workspace shadow and consent for executable content.** Released 2026-10-30. Self-hosting moves to 0.19.0; the AI Gateway is held back until 0.20.0. Requires nexus-cli 0.31.1 or later. After upgrading: `nexus upgrade`, `nexus pull` (answer the consent prompt), restart agent sessions.
 
 ### Added
 
@@ -53,7 +74,7 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ### Changed
 
-- **Directives page:** own tile under Project Memory and own page with the sections Rules, What agents get and Project settings; the sources are now called Required, Setting, Catalog and Project. See [Directives](/directives#project-page).
+- **Directives page:** own tile under Project Memory and own page with the sections Rules, What agents get and Project settings; the sources are now called Required, Setting, Core catalog and Project. See [Directives](/directives#project-page).
 - **Source Control** replaces the Repositories tile: repositories, commit identity and signing, GitHub account and AI attribution in one page; the project edit wizard no longer edits them. See [Source Control](/source-control#source-control-page).
 - **AI Gateway held back until 0.20.0:** grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway).
 - **Setup guide** in the app follows nexus-cli 0.29: `nexus link` picker, project-local `nexus login`, `nexus run` flags, `nexus status`, `preflight` and `doctor claude`.
@@ -67,7 +88,7 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 - **Consent for executable content:** exports list every runnable item (`executables`); nexus-cli 0.31.0 asks once per new or changed item. See [Consent for executable content](/cli#consent-for-executable-content).
 - **Shadow-safe workspace:** shadow `ai` / `nexus` keeps the devbox workspace out of git and delivers a `dbx_init.sh` and `devbox.json` without AI tooling (and, for `nexus`, without Nexus wording).
-- **Export size cap** of 8 MiB (`413`); repo-relative paths only; skill names limited to `[A-Za-z0-9._-]`; role checks for agent file writes over MCP; membership check for the project skill export with an API token; document downloads are never rendered inline; invalid Git settings are dropped before they reach the CLI; audit events cannot be forged. See [Security and Hardening](/security#export-and-path-rules-v0-18-0).
+- **Export size cap** of 8 MiB (`413`); repo-relative paths only; skill names limited to `[A-Za-z0-9._-]`; role checks for agent file writes over MCP; membership check for the project skill export with an API token; document downloads are never rendered inline; invalid Git settings are dropped before they reach the CLI; audit events cannot be forged (non-admins record only dashboard event types, only for projects they are a member of); policy reads in `af_status` and the fork export fail closed; the fork sync script reads credentials only from the selected env file. See [Security and Hardening](/security#export-and-path-rules-v0-18-0).
 - **Privacy:** Sentry performance monitoring and Session Replay are separate opt-in services in the privacy settings; without consent no trace is sampled and no replay is recorded. Error reporting stays on. Events of the EU instance go to the EU ingest host.
 
 ### Fixed
@@ -76,6 +97,9 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 - **Devbox ops scripts** (`check-local.sh`, `validate.sh`, `sec-scan.sh`) exit 1 on problems again.
 - **Legacy OS override placeholders** of forks created before 0.17.0 are no longer delivered.
 - **Fork script viewer** shows the shadow-safe scripts that `nexus pull` delivers.
+- **`nexus push`** keeps the pushed `C_DBX_META_*` values and, in shadowed repositories, the AI and Nexus entries of `devbox.json` that the export hides; `nexus status` no longer reports a conflict right after a push.
+- **MCP `project_update`** saves the project description and readme again (it failed with "Unexpected end of JSON input").
+- **Session Replay** starts only on a rendered dashboard page, never on a public page or after a redirect to the login.
 - **Code editor** highlights YAML and Markdown; the project form RTK hint shows `nexus pull` and `rtk trust` again.
 
 ---
@@ -185,10 +209,11 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
-## nexus-cli v0.28.15 - v0.31.1
+## nexus-cli v0.28.15 - v0.31.2
 
 **CLI side of NEXUS-APP 0.17.x and 0.18.0.** See the [CLI reference](/cli).
 
+- **v0.31.2:** tokens are no longer shown in clear text: `nexus login` reads them without echo, and `nexus status`, `nexus preflight` and `nexus run` show one masked form (`nxs_pat_****9f3c`); the env table of `nexus run` masks secrets. See [Security hardening](/cli#security-hardening).
 - **v0.31.1:** the consent check agrees with the backend's `executables` list (MCP server env names, command settings, devbox files in `--dry-run`); every executable kind is checked for undeclared items.
 - **v0.31.0:** consent for executable content in `nexus pull` and `nexus init`, `--trust` for CI, fingerprints stored in `~/.config/nexus/consent/`; API responses over 8 MiB refused. See [Consent for executable content](/cli#consent-for-executable-content).
 - **v0.30.0:** a GitHub account per project path: `nexus git login`, `.nexus/gh.env`, `core.sshCommand`, credential helper, `gh repo set-default`, commit identity from the account, `nexus git apply --canonical-remotes` and one `GitHub:` status line. `nexus run` refuses to nest into another Zellij session, checks the Zellij socket path and shows the Zellij log on a failed start. See [Source Control](/source-control#several-github-accounts).

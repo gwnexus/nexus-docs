@@ -80,7 +80,7 @@ The server organizes its 62 tools into four layers:
 
 | Tool | Description |
 | --- | --- |
-| `kb_search` | Full-text, semantic, or hybrid search across project entities |
+| `kb_search` | Keyword search across project entities; semantic or hybrid when the server has [embeddings enabled](/knowledge-base#embeddings-on-the-server) |
 | `kb_memory` | Structured project memory snapshot (ADRs, tasks, sessions, dispatches) |
 | `kb_get` | Retrieve a specific entity by type and ID |
 | `kb_related` | Find entities related to a given entity |
@@ -171,7 +171,6 @@ After `nexus init`, your agent config contains an entry like:
 | --- | --- | --- |
 | `NEXUS_API_URL` | Yes | Nexus API base URL (e.g. `https://nexus.gatewarden.eu`) |
 | `NEXUS_PRIVATE_TOKEN` | Yes | `nxs_pat_*` API token for identity resolution |
-| `NEXUS_SEC_OPENAI_API_KEY` | No | OpenAI API key for semantic and hybrid `kb_search` embeddings |
 | `NEXUS_MODEL` | No | Model identifier injected into session metadata (e.g. `claude-sonnet-4.6`) |
 | `NEXUS_TOOLSTACK` | No | Toolstack identifier for session metadata (e.g. `opencode`, `claude-code`) |
 

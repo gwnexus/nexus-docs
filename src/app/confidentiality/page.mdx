@@ -40,7 +40,7 @@ Every gated action is evaluated by a server-side policy engine before it runs. T
 
 ## Severity levels
 
-Confidentiality severity is a per-project attribute. Gating decisions are keyed to the severity band. Medium-severity projects (C.2 and C.3) are the primary target of extraction gating: document text extraction via Textract is gated for these projects rather than blocked outright, so a user with authority can override with an audit record.
+Confidentiality severity is a per-project attribute. Gating decisions are keyed to the severity band. Medium-severity projects (C.2 and C.3) are the primary target of extraction gating: document text extraction via Textract is gated for these projects rather than blocked outright, so a user with authority can override with an audit record. This applies only on servers that have Textract [switched on](/textract#server-switch); since v0.18.3 it is off by default.
 
 <Note>
   Higher-severity classifications continue to fully block external processing at the AI-routing layer. Action gating adds a graduated response for medium-severity projects.

@@ -1,10 +1,11 @@
 export const metadata = {
   title: 'Document Extraction (Textract)',
-  description: 'Alpha AWS Textract pipeline for asynchronous document text extraction, gated by confidentiality and feature flags.',
+  description: 'Alpha AWS Textract pipeline for asynchronous document text extraction: off by default, opt-in per server, gated by confidentiality and feature flags.',
 }
 
 export const sections = [
   { title: 'Overview', id: 'overview' },
+  { title: 'Server switch', id: 'server-switch' },
   { title: 'Access requirements', id: 'access-requirements' },
   { title: 'Extraction status', id: 'extraction-status' },
   { title: 'Confidentiality gating', id: 'confidentiality-gating' },
@@ -15,10 +16,10 @@ export const sections = [
 Asynchronous document text extraction powered by AWS Textract. {{ className: 'lead' }}
 
 <Note>
-  Textract extraction is an alpha capability. It is gated behind the `textract_extraction` feature flag and the confidentiality action-gating framework, so it is not available by default.
+  Textract extraction is an alpha capability and **off by default since v0.18.3**: no uploaded document goes to AWS Textract unless the operator enables it on the server. When enabled, it is still gated behind the `textract_extraction` feature flag and the confidentiality action-gating framework.
 </Note>
 
-Introduced in v0.12.0, the Textract pipeline extracts text from uploaded documents asynchronously. Access is controlled at two layers: a per-user feature flag and the project confidentiality policy.
+Introduced in v0.12.0, the Textract pipeline extracts text from uploaded documents asynchronously. Access is controlled at three layers: the server switch, a per-user feature flag and the project confidentiality policy.
 
 ## Overview
 
@@ -26,9 +27,19 @@ Introduced in v0.12.0, the Textract pipeline extracts text from uploaded documen
 - Per-document status badges reflect the current extraction state
 - Extracted text feeds the existing document and search subsystems
 
+## Server switch
+
+Textract runs only when the operator sets `TEXTRACT_ENABLED=true` next to the Textract credentials. Credentials alone no longer enable it. While the switch is off, extraction jobs are skipped with "AWS Textract is disabled on this server" and the Textract client refuses to start.
+
+When enabled, every uploaded document that passes the checks below (images, PDFs and text files) is sent to AWS Textract, and the extracted text is stored with the document. If the server also has [embeddings enabled](/knowledge-base#embeddings-on-the-server), that text is embedded like other document content.
+
+<Note>
+  Enable Textract only after an AWS Organizations AI services opt-out policy covers the Textract account. Without it, AWS may store the content and use it to improve its services. The hosted service keeps Textract switched off; its privacy policy (section 9) says so.
+</Note>
+
 ## Access requirements
 
-A user can trigger extraction only when both conditions hold.
+A user can trigger extraction only when the server switch is on and both conditions hold.
 
 1. The user holds the `textract_extraction` [feature flag](/feature-flags).
 2. The project confidentiality policy permits extraction for the target project (see below).
