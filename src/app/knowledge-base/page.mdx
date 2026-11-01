@@ -7,6 +7,7 @@ export const sections = [
   { title: 'What goes in the knowledge base?', id: 'what-goes-in-the-knowledge-base' },
   { title: 'Entity types', id: 'entity-types' },
   { title: 'Searching', id: 'searching' },
+  { title: 'Embeddings on the server', id: 'embeddings-on-the-server' },
   { title: 'Document ingestion', id: 'document-ingestion' },
   { title: 'Classification', id: 'classification' },
   { title: 'MCP tools', id: 'mcp-tools' },
@@ -16,7 +17,7 @@ export const sections = [
 
 The persistent, searchable knowledge store for your project. {{ className: 'lead' }}
 
-The knowledge base holds all durable project knowledge — sessions, decisions, tasks, research notes, and ingested documents. It supports keyword, semantic, and hybrid search across all entity types.
+The knowledge base holds all durable project knowledge: sessions, decisions, tasks, research notes, and ingested documents. It supports keyword search across all entity types, plus semantic and hybrid search when the server has embeddings enabled.
 
 ## What goes in the knowledge base?
 
@@ -50,6 +51,14 @@ The knowledge base is the single source of truth for a project's accumulated kno
 
 Use `kb_search` with three search modes:
 
+| Mode | Availability |
+| --- | --- |
+| `keyword` | Always. |
+| `hybrid` | Keyword plus semantic results when the server has embeddings enabled; otherwise keyword results with a `warning` field. |
+| `semantic` | Only when the server has embeddings enabled; otherwise the call answers 400. |
+
+Since v0.18.2 embeddings are off unless the operator enables them (see [Embeddings on the server](#embeddings-on-the-server)). The dashboard search falls back to keyword matches in the same way.
+
 ### Keyword search
 
 Fast, exact matching using full-text search:
@@ -65,7 +74,7 @@ Fast, exact matching using full-text search:
 
 ### Semantic search
 
-Uses OpenAI embeddings (requires `NEXUS_SEC_OPENAI_API_KEY`) for meaning-based retrieval:
+Meaning-based retrieval over embeddings. Needs embeddings enabled on the server:
 
 ```json
 {
@@ -78,7 +87,7 @@ Uses OpenAI embeddings (requires `NEXUS_SEC_OPENAI_API_KEY`) for meaning-based r
 
 ### Hybrid search
 
-Combines keyword and semantic search for the best of both worlds:
+Combines keyword and semantic search. Without embeddings it returns the keyword results and a `warning`:
 
 ```json
 {
@@ -101,6 +110,23 @@ Use `kb_related` to navigate the knowledge graph — find entities related to a 
   "entity_id": "..."
 }
 ```
+
+## Embeddings on the server
+
+Semantic and hybrid search need embeddings. Since v0.18.2 Nexus sends **no content to OpenAI by default**: a server embeds with OpenAI only when the operator sets both variables:
+
+| Variable | Meaning |
+| --- | --- |
+| `EMBEDDING_OPENAI_ENABLED` | `true` switches OpenAI embeddings on. Any other value, or no value, keeps them off. |
+| `NEXUS_SEC_OPENAI_API_KEY` | The OpenAI API key. A key alone no longer enables embeddings. |
+
+While the switch is off, nothing is embedded, `hybrid` returns keyword results with a `warning`, `semantic` answers 400, and the embedding backfill (`make embed-backfill`) refuses to run.
+
+When the switch is on, Nexus sends the text of these items to OpenAI as they are written: session entries, ADRs, documents (including text extracted from uploads), ingest items and scan reports. Semantic and hybrid search queries are sent as well.
+
+Projects whose [confidentiality level](/confidentiality) blocks external APIs never send content or queries to OpenAI (ADR-0047). They use the local embedding model when the server has one configured; without one, their content is not embedded, `semantic` answers 400 and `hybrid` returns keyword results only.
+
+If the embedding provider fails during a search, `semantic` answers a JSON 503 with a reference and `hybrid` returns the keyword results with a `warning` (v0.18.1).
 
 ## Document ingestion
 
@@ -135,7 +161,7 @@ Ingested documents can be classified to improve search relevance and organizatio
 
 | Tool | Description |
 | --- | --- |
-| `kb_search` | Full-text, semantic, or hybrid search |
+| `kb_search` | Keyword search; semantic or hybrid when the server has embeddings enabled |
 | `kb_memory` | Structured project memory snapshot |
 | `kb_get` | Retrieve a specific entity by type and ID |
 | `kb_related` | Find related entities in the knowledge graph |

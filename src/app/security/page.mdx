@@ -13,6 +13,7 @@ export const sections = [
   { title: 'Node calls and DNS rebinding', id: 'node-calls-and-dns-rebinding' },
   { title: 'Secret scanning', id: 'secret-scanning' },
   { title: 'Safe export encoding', id: 'safe-export-encoding' },
+  { title: 'Export and path rules (v0.18.0)', id: 'export-and-path-rules-v0-18-0' },
   { title: 'Related controls', id: 'related-controls' },
 ]
 
@@ -60,6 +61,9 @@ Database tables must not be readable across tenants through the public data API,
 | Workspace forks | v0.16.1 | Viewing forks needs project membership; creating, editing, activating, syncing, exporting or deleting them needs a project admin or editor role. Platform admins keep access. Before, any signed-in user could reach these routes. |
 | Skill API | v0.16.3 | `GET /api/skills` and `GET /api/skills/<id>` apply the same visibility as the skill registry pages: global skills for every signed-in user, project skills for project members only. Before, any signed-in user could read project skills of projects they were not a member of. |
 | Project actors | v0.17.0 | Saving a project replaces its actor assignments in one transaction, keeps role overrides and rejects actors of another tenant. |
+| Agent files via MCP | v0.18.0 | `af_create`, `af_update` and `af_activate` needed only a valid token. Core agent files now need a platform admin, project agent files a project admin or editor, as on the dashboard routes. |
+| Project skill export | v0.18.0 | `GET /api/projects/<id>/skills/export` checks project membership for API token callers too. |
+| Audit events | v0.18.0 | Non-admins may only record dashboard event types, and the severity is validated, so audit entries cannot be forged. |
 
 See [Workspaces](/workspaces#access) and [Skills](/skills#skill-scope).
 
@@ -95,6 +99,18 @@ This keeps credentials, tokens, and private keys out of the repository at the ea
 - **CEF output escaping** — the SIEM CEF export escapes field values on the server so that event data cannot inject or break out of CEF fields in downstream parsers.
 
 See [Audit Log and SIEM](/audit-siem) for the export endpoints and formats.
+
+## Export and path rules (v0.18.0)
+
+What Nexus sends to developer machines is checked on both sides:
+
+- **Executable content needs consent.** `af_export`, `ws_export` and `sk_export` list every runnable item they install (`executables`: kind, id, target path, command, SHA-256; env values never sent). nexus-cli 0.31.0 or later asks before installing a new or changed item. See [Consent for executable content](/cli#consent-for-executable-content).
+- **Size cap.** These exports answer `413` above 8 MiB of uncompressed JSON; the CLI refuses larger responses too.
+- **Repo-relative paths only.** Agent file target paths, the workspace scripts path, script file names and the agentic root reject `..`, absolute or home paths, backslashes, control characters and anything inside `.git`. nexus-cli 0.29.2 checks the same before every write.
+- **Safe names.** Skill ids, command slugs and skill resource file names may only use `[A-Za-z0-9._-]`; exports skip older rows that break the rule.
+- **Git settings fail closed.** Invalid fields in a project's Git configuration (for example a written-through `gh` profile) are dropped before they reach the CLI.
+- **Downloads never render inline.** Document downloads are always attachments with `Content-Security-Policy: sandbox` and `nosniff`, so uploaded HTML or SVG cannot run script on the app origin.
+- **Shadowed repositories** keep the devbox workspace out of git and receive a workspace without AI tooling. See [Workspace shadow](/project-settings#workspace-shadow).
 
 ## Related controls
 

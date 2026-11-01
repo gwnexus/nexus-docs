@@ -1,0 +1,145 @@
+export const metadata = {
+  title: 'Source Control and GitHub Accounts',
+  description: 'The Source Control page of a project (repositories, commit identity, signing, AI attribution) and several GitHub accounts separated per project path.',
+}
+
+export const sections = [
+  { title: 'Source Control page', id: 'source-control-page' },
+  { title: 'Several GitHub accounts', id: 'several-github-accounts' },
+  { title: 'Which account applies', id: 'which-account-applies' },
+  { title: 'How the CLI applies it', id: 'how-the-cli-applies-it' },
+  { title: 'Walkthrough: a dedicated customer account', id: 'walkthrough-a-dedicated-customer-account' },
+  { title: 'Troubleshooting', id: 'troubleshooting' },
+  { title: 'Settings keys', id: 'settings-keys' },
+]
+
+# Source Control and GitHub Accounts
+
+What a project sets for Git, and how several GitHub accounts stay separated per project path. {{ className: 'lead' }}
+
+Since NEXUS-APP 0.18.0 with **nexus-cli 0.30.0 or later** (0.31.1 recommended). Tokens and SSH keys never go to Nexus: it stores only account names, profile names and key file names.
+
+## Source Control page
+
+The project page tile **Source Control** replaces the former Repositories tile. It shows what the project sets for Git: project commit identity, signed commits, the pinned `gh` login and whether AI attribution is allowed. Its page has a section selector; `?section=` keeps the section in the URL:
+
+| Group | Section | Content |
+| --- | --- | --- |
+| Source Code | Repositories | The project's repositories (the former Repositories page; `/repositories` redirects here). |
+| Git | Commit identity & signing | Project `user.name` / `user.email` and signed commits. |
+| Git | GitHub account | The pinned login for every member, the default repository and your own account in this project. |
+| Git | AI attribution | Whether AI attribution trailers are allowed in commits. |
+
+The Git sections share one draft and save the whole Git configuration with **Save Changes**. Members without the project manage permission see them read-only and can still pick their own account.
+
+The project edit wizard no longer edits Git settings or repositories: it shows a summary with **Edit in Source Control** and lists the repositories read-only. Saving the wizard cannot undo changes made on the Source Control page. Creating a project still shows the full Git panel.
+
+## Several GitHub accounts {{ id: 'several-github-accounts' }}
+
+A typical case: your personal account is the global `gh` login, and a dedicated account works for a customer organization whose repositories the personal account cannot see. Nexus lets each project path use the right account without changing the global login (ADR-0126, extends the GitHub CLI profiles of ADR-0116).
+
+Under **My Settings > GitHub CLI** you keep a list of accounts. Each account has:
+
+<Properties>
+  <Property name="login and host" type="string">
+    The GitHub login and host (`github.com` or a GitHub Enterprise Server host).
+  </Property>
+  <Property name="gh profile" type="string">
+    The local `gh` profile that holds the login, separate from your global `gh` config.
+  </Property>
+  <Property name="sign-in source" type="auto | keyring | prompt | env:VAR">
+    Where the CLI finds the login. `prompt` means "Log in with `nexus git login`"; such accounts are never seeded from the keyring or an environment variable.
+  </Property>
+  <Property name="SSH key" type="file name, optional">
+    A key file name in `~/.ssh`, used for git transport in that project.
+  </Property>
+  <Property name="commit name and email" type="string, optional">
+    Applied as `user.name` / `user.email` where the account applies, unless the project sets its own commit identity.
+  </Property>
+</Properties>
+
+One account is your **default**. Below the list, a project table shows one row per project with an account picker that saves immediately; search, tabs (All, Own account, Default, Pinned), filters and multi-select let you assign or reset several projects at once. Projects with a pinned login are shown locked. Project admins can also pick their own account on the project's Source Control page.
+
+Existing GitHub CLI profile settings keep working as the default account.
+
+## Which account applies
+
+In a project, the first match wins:
+
+1. **Project pin:** Source Control > GitHub account > Pinned login, for every member (for example a bot account). If you have no account for the pinned login, the CLI does not fall back to another login; sign in with `nexus git login`.
+2. **Your account bound to the project** (project table or the project's GitHub account section).
+3. **Your default account.**
+4. **None:** `gh` is left untouched.
+
+Optionally the project sets a **Default repository** (`owner/name`) for `gh repo set-default`. You need it when the remotes use an SSH host alias, because `gh` cannot derive the repository from such a remote.
+
+## How the CLI applies it
+
+`nexus pull`, `nexus git apply` and `nexus git login` apply the account to the project path:
+
+| What | Effect |
+| --- | --- |
+| `.nexus/gh.env` | `GH_CONFIG_DIR` (absolute) and, for GitHub Enterprise Server, `GH_HOST`. No token. Written only when the profile is logged in as the expected account; removed when the project has no account or the login is wrong; kept when the login cannot be verified (offline). The path goes into `.git/info/exclude`. |
+| `nexus run` and devbox | `nexus run` loads `gh.env`. Devbox blueprints get a second init hook that loads it and drops `GH_TOKEN` / `GITHUB_TOKEN` in that shell, so Makefiles and scripts use the project's account. |
+| SSH transport | With an SSH key on the account, the local git config gets `core.sshCommand = ssh -i ~/.ssh/<key> -o IdentitiesOnly=yes`. A missing key file is reported. |
+| HTTPS transport | Remotes to the account's host get a credential helper that runs `gh auth git-credential` with the profile. |
+| Default repository | `gh repo set-default` points at the configured repository or at `origin`. |
+| Commit identity | `user.name` / `user.email` from the account, field by field, when the project sets none. |
+
+Values the CLI did not write itself (a different `core.sshCommand`, `user.name` or `user.email`) are replaced only after you confirm, or with `--yes`. Outside the project path the global `gh` login is unchanged.
+
+For shells outside devbox, add one line to the project's `.envrc` if you use direnv:
+
+```bash
+dotenv_if_exists .nexus/gh.env
+```
+
+`nexus status`, `nexus pull`, `nexus run` and `nexus git verify` print one `GitHub:` line: login, host, profile, where the account comes from (project pin, project binding or user default), SSH key, `gh.env` state and commit email.
+
+## Walkthrough: a dedicated customer account
+
+The example uses the personal account `octocat` and the customer account `octo-customer` for the repository `octo-org/hello-world`.
+
+1. **Create a fine-grained token** in `octo-customer`: resource owner = the customer organization (`octo-org`), repository access = only the repositories needed, permissions Contents read, Metadata read and Pull requests read (write if you comment on or open pull requests). The organization owner may have to approve the token.
+2. **Add the account** under My Settings > GitHub CLI: login `octo-customer`, sign-in source "Log in with nexus git login", optional SSH key file name. Bind it to the project in the project table.
+3. **Pull and sign in** in the project path:
+
+   ```bash
+   nexus pull
+   nexus git login --account octo-customer --with-token < token.txt
+   ```
+
+   Without `--with-token`, `nexus git login` opens the browser login. The login must be the expected account: a token of another account is refused before anything is written, and a browser login as another account is logged out again. The token is passed to `gh` over stdin only; on a terminal `--with-token` asks with a hidden prompt.
+4. **Check:**
+
+   ```bash
+   devbox shell        # the gh check shows: gh  octo-customer (project profile)
+   gh auth status
+   gh pr list
+   nexus git verify
+   ```
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `Could not resolve to a Repository` | The wrong account is active (run `nexus git verify`), or the remote uses an SSH host alias and the project has no default repository. Set the default repository on the Source Control page, or rewrite the remotes. |
+| `project profile not logged in` | The account's `gh` profile has no login yet. Run `nexus git login --account <login>`. |
+| Prompt about an existing `core.sshCommand` | The local git config has a value the CLI did not write. Confirm to replace it, or keep it and remove the SSH key from the account. |
+| Remotes on an SSH host alias (`git@github-customer:...`) | `nexus git apply --canonical-remotes` rewrites them to `git@<host>:owner/repo.git`. It needs an SSH key on the account and asks per remote unless `--yes`. |
+| Wrong account in a plain shell | The shell has `GH_TOKEN` or `GITHUB_TOKEN` set or did not load `gh.env`. Use `devbox shell`, `nexus run` or the direnv line above. |
+
+## Settings keys
+
+The project side can also be set with [`nexus env`](/cli#commands):
+
+| Key | Meaning |
+| --- | --- |
+| `git.gh.user` | Pinned login for every member. |
+| `git.gh.host` | Host of the pinned login. |
+| `git.gh.profile` | `gh` profile of the pinned login. |
+| `git.gh.repo` | Default repository (`owner/name`) for `gh repo set-default`. |
+
+```bash
+nexus env set git.gh.repo=octo-org/hello-world
+```
