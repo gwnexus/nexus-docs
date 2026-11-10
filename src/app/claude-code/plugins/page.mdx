@@ -96,13 +96,13 @@ claude plugin install <plugin>@<marketplace> --scope project --json
 
 ## nexus-core
 
-`nexus-core` is the Nexus plugin for Claude Code, published in the `gatewarden-nexus` marketplace. Nexus pins the version it installs; v0.16.0 moves the pin to **nexus-core 1.2.1**, v0.17.0 to **nexus-core 1.3.0**.
+`nexus-core` is the Nexus plugin for Claude Code, published in the `gatewarden-nexus` marketplace. Nexus pins the version it installs; v0.16.0 moves the pin to **nexus-core 1.2.1**, v0.17.0 to **nexus-core 1.3.0**, v0.18.0 to **1.3.2** and v0.19.0 to **nexus-core 1.5.0** (managed marketplace pin `nexus-core--v1.5.0`).
 
 Since 1.2.0, nexus-core ships **hooks and engine agents only**:
 
 | Part | Contents |
 | --- | --- |
-| Hooks | `session-guard` (including the [release line nudge](/sessions#release-lines)), `headroom-intercept`, `compaction-plus`, `routing-guard`, `cost-control`, `agent-observer` |
+| Hooks | `session-guard` (including the [release line nudge](/sessions#release-lines)), `headroom-intercept`, `compaction-plus`, `routing-guard`, `cost-control`, `agent-observer`, `nexus-dispatch-inbox` (1.5.0) |
 | Engine agents | `architect`, `reviewer`, `security-reviewer`, `documentation-reviewer` (they carry the review checklists inline) |
 
 The workflow skills of earlier versions (`adr-review`, `architecture-review`, `code-review`, `documentation-review`, `implementation-plan`, `test-ops`) were removed: the project's `/nexus-*` skills own those workflows.
@@ -115,8 +115,21 @@ The workflow skills of earlier versions (`adr-review`, `architecture-review`, `c
 | 1.2.1 | Hook logs in `.nexus/` (`session-guard.log`, `compaction-plus.log`, `cost-control.log`, `routing-guard.log`) rotate to `<name>.1` at 5 MB; one old generation is kept. |
 | 1.2.2 | Hooks run from paths with spaces or other encoded characters, from Windows paths and through symlinks; before, every hook exited without doing anything there. The agent observer waits up to a second for its state lock, so parallel tool calls no longer overwrite each other's subagent links. |
 | 1.3.0 | Session guard nudges on a release line mismatch at session start; see [Release lines](/sessions#release-lines). Ships the 1.2.2 fixes. |
+| 1.3.1, 1.3.2 | Credential lookup checks the project-local config first; a token-only source pairs with the `api_url` pinned in `.nexus/config.toml`; the release-line reminder also runs on forked sessions. |
+| 1.3.3 | An `NEXUS_API_URL` set only in the environment pins the API host for every credential source; the release-line check looks up the session by `release_line`. |
+| 1.4.0 | Routing guard reads actor lanes: it warns (without blocking) about a session subagent with a non-Claude model, a gateway-lane actor defined as a session subagent and an actor the hub could not resolve, and logs the actors per lane at session start. Actors are matched by profile slug. |
+| 1.4.1 | Thin delegates of gateway-lane actors are no longer reported; relative routing-guard path overrides resolve against the project root. The agent observer no longer shows an idle main agent as `waiting`. |
+| 1.5.0 | New **`nexus-dispatch-inbox`** hook on `SessionStart` (startup, resume, clear, compact) and `SessionEnd`: registers the running session so the [Dispatch manager](/dispatch/manager#delivery-into-sessions) can post notices into it, and replays notices queued while no session ran. `NEXUS_DISPATCH_INBOX=off` turns it off. |
+| 1.5.1 | Replayed Dispatch notices are fenced as untrusted data (one line each, at most 300 characters). Only `https://` API URLs are used; plain `http://` only for loopback hosts. |
+| 1.5.2 | A repository-controlled `api_url` no longer receives a token from another source. A token from one source is paired with a URL from another only when the URL comes from `NEXUS_API_URL`, matches the `api_url` of the global `~/.config/nexus/config.toml`, or is listed in `NEXUS_TRUSTED_API_URLS` (comma-separated). See the note below. |
 
-The hook adapters `nexus pull` writes to `.claude/hooks/` are built from the same nexus-core release. Run `nexus pull --force` to get the new version.
+<Note>
+  **nexus-core 1.5.2 and pinned API URLs.** A project that pins `api_url` in `.nexus/config.toml` and keeps its token only in the environment, a token-only `.mcp.json` or the global credentials resolves to no credentials until you do one of these: set `NEXUS_TRUSTED_API_URLS` to that URL, use the same host as the global config's `api_url`, or run `nexus link` / `nexus pull`, which writes the project-local `credentials.toml`.
+</Note>
+
+The hook adapters `nexus pull` writes to `.claude/hooks/` are built from the same nexus-core release; hook-based projects (Claude Code Experience with `plugins.nexus_core` off) get `.claude/hooks/nexus-dispatch-inbox.mjs` since v0.19.0. Run `nexus pull --force` to get the new version.
+
+Since nexus-cli 0.39.6, `nexus run` and `nexus pull --force` also update a project-scope plugin that Nexus manages when the registered marketplace offers a newer version. While the shared marketplace registration still points at another ref than the project declares, the plugin shows as `PENDING`; Claude Code switches the registration at the next session start, and the next `nexus run` updates the plugin. User- and local-scope plugins and the marketplace registration are never changed.
 
 ## Capability routing
 

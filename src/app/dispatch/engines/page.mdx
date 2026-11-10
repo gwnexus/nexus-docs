@@ -1,0 +1,100 @@
+export const metadata = {
+  title: 'Dispatch Engines',
+  description: 'Automatic and Indirect Dispatch delivery: what each engine does, how to choose, the policy.dispatch_automation setting and the switches that must be on.',
+}
+
+export const sections = [
+  { title: 'The two engines', id: 'the-two-engines' },
+  { title: 'How to choose', id: 'how-to-choose' },
+  { title: 'Switches', id: 'switches' },
+  { title: 'policy.dispatch_automation', id: 'policy-dispatch-automation' },
+  { title: 'Setting up the Automatic engine', id: 'setting-up-the-automatic-engine' },
+  { title: 'Names', id: 'names' },
+]
+
+# Dispatch Engines
+
+How new Dispatches reach the agent of the receiving project. {{ className: 'lead' }}
+
+Since v0.19.0, every project picks one of two engines: in the [project wizard](/project-wizard) ("Dispatch letters") or later on its [Dispatch Control](/dispatch/control) page.
+
+## The two engines
+
+| | **Automatic** | **Indirect** |
+| --- | --- | --- |
+| New Dispatch | The Dispatch manager on the developer machine posts a short notice into the running Claude Code session. | Waits until an agent sweeps, or someone answers in the dashboard. |
+| Who acts | The agent in the session, with `/nexus-dispatch-sweep`. | The agent at its next session start (or when asked), with `/nexus-dispatch-sweep`. |
+| Latency | About 30 seconds while a session runs. | Until the next sweep. |
+| Needs on the machine | nexus-cli 0.39.6 or later, a registered [Dispatch manager](/dispatch/manager), nexus-core 1.5.0 or later in the project. | Nothing extra. |
+| Runtimes | Claude Code. OpenCode delivery is planned for v0.20.0. | Every runtime. |
+| Default | For new projects (wizard and Quick Setup). | For existing projects; projects without the setting keep working this way. |
+
+The Automatic engine only **delivers notices**. In v0.19 the Dispatch manager runs in **notify** mode: it never replies, resolves or closes a Dispatch. Modes in which it may act on its own come later and will be opt-in per project.
+
+## How to choose
+
+- **Automatic** suits projects where a Claude Code session runs while you work and linked projects send you work: notices arrive in the session you already have open.
+- **Indirect** suits projects on OpenCode (until v0.20.0), projects worked on rarely, and projects without linked projects.
+
+You can switch at any time on the Dispatch Control page; nothing is lost. Dispatches that arrive while no session runs are queued and replayed at the next session start (see [Catch-up](/dispatch/manager#catch-up-at-session-start)).
+
+## Switches
+
+Automatic delivery runs only while all of these are on:
+
+| Switch | Where | Default |
+| --- | --- | --- |
+| Platform switch | Platform settings > **Dispatch Automation** (platform owner only) | Off |
+| Project engine | Dispatch Control > Settings, or `policy.dispatch_automation` | Unset (Indirect) |
+| Project pause | Dispatch Control > Settings (Pause / Resume) | Not paused |
+| Manager | Your Dispatch manager is registered, bound to the project and not paused or revoked | Not registered |
+
+While the platform switch or the project engine is off, a manager only reads. Pausing a project keeps its engine setting for the resume.
+
+## policy.dispatch_automation
+
+The project engine is stored as `policy.dispatch_automation`:
+
+| Value | Meaning |
+| --- | --- |
+| unset or `off` | Indirect engine. No manager acts on this project. |
+| `notify` | Automatic engine. Managers deliver notices; they never write to a Dispatch. |
+
+The setting caps the mode of every manager bound to the project. `attended` and `autonomous` are reserved for later releases and are not available in v0.19.
+
+Set it on the Dispatch Control page, in the project wizard, or from the CLI:
+
+```bash
+nexus settings get policy.dispatch_automation
+nexus settings set policy.dispatch_automation=notify
+```
+
+`nexus settings` is an alias of `nexus env` (nexus-cli 0.31.4). After a change, run `nexus pull`: it brings the [automatic directive](/directives#automatic-directive-for-linked-projects) for projects with links, and `nexus run` opens the dispatches pane whenever the value is not `off`.
+
+## Setting up the Automatic engine
+
+1. **Platform owner:** switch on Platform settings > Dispatch Automation.
+2. **Project manager:** choose **Automatic** on the project's Dispatch Control page (Settings tab).
+3. **Every developer, once per machine:**
+
+   ```bash
+   nexus upgrade                     # 0.39.6 or later
+   nexus dispatch runner probe       # does the installed Claude Code take notices?
+   nexus dispatch runner register    # binds the linked project
+   ```
+
+4. **In the project:** `nexus pull` (nexus-core 1.5.0 with the `nexus-dispatch-inbox` hook), then `nexus run`. The dispatches pane starts the manager.
+5. **Check:** on the project's Dispatch page, use **Simulate a Dispatch** and watch the manager pick it up (see [Dispatch Control](/dispatch/control#simulating-a-dispatch)).
+
+## Names
+
+The engines were renamed during the 0.19 release line. Stored values did not change.
+
+| Public name | Earlier name | Stored as |
+| --- | --- | --- |
+| Automatic | Dispatch v3 | `policy.dispatch_automation` set (for example `notify`) |
+| Indirect | Classic | `policy.dispatch_automation` unset |
+
+<Note>
+  The Dispatch engine "Classic" has nothing to do with the **Classic agent mode** of a project (single agent instead of actors, see [Actors](/actors#classic-vs-actor-based-mode)). The Dispatch engine is now called Indirect; the agent mode keeps its name.
+</Note>

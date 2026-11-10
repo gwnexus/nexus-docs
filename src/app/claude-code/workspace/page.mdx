@@ -26,6 +26,7 @@ Since v0.15.0, the Zellij workspace around Claude Code is built from **workspace
 A project selects its AI tool (the executioner) in the project form: OpenCode or Claude Code. For Claude Code projects with the Claude Code Experience enabled, `nexus run` starts a Zellij workspace instead of a bare terminal:
 
 - exactly one **Claude Code** pane; ending Claude Code ends the workspace and prints the session summary
+- since v0.19.0 a compact **dispatches** pane below it, which shows the project's Dispatches and runs the [Dispatch manager](/dispatch/manager)
 - a **sidebar** with token usage, the [agent observer](#agent-observer) and, in the default preset, a terminal
 - extra tabs such as **GIT** (lazygit), **TEST** and **LOGS**
 
@@ -35,11 +36,15 @@ Use `nexus run --plain` to start Claude Code without the workspace, or `--worksp
 
 ## Presets
 
-| Preset | Claude Code pane | Sidebar | Tabs |
+| Preset | Agent column | Sidebar | Tabs |
 | --- | --- | --- | --- |
-| **Standard + Terminal** (system default) | 75% | Usage on top, agent observer, terminal at the bottom (a shell in the devbox session) | GIT, TEST, LOGS |
-| **Focus** | 75% | Agent observer and usage | none; Git off by default |
-| **Review** | 55% | Agent observer and usage | GIT, TEST, LOGS |
+| **Standard + Terminal** (system default, version 2) | 75%: Claude Code and the dispatches pane | Usage on top, agent observer, terminal at the bottom (a shell in the devbox session) | GIT, TEST, LOGS |
+| **Focus** (version 3) | 75%: Claude Code and the dispatches pane | Agent observer and usage | none; Git off by default |
+| **Review** (version 3) | 55%: Claude Code and the dispatches pane | Agent observer and usage | GIT, TEST, LOGS |
+
+**Dispatches pane (v0.19.0):** in the CLAUDE tab, Claude Code and a compact `dispatches` pane share the left column, named `agent`; the pane runs `nexus dispatch status --watch --compact` at 13% of the height (nexus-cli 0.37.0 or later) and, with a registered Dispatch manager, runs the manager too. The sidebar is unchanged, and a stored Claude Code size keeps setting the column width. Without the dispatches pane, Claude Code keeps the full column. Presets a platform admin had changed were kept by the upgrade. Your own and team presets switch the pane on in My Settings > Workspace Profiles (**Dispatches**), which puts it in the agent column, or in the sidebar for layouts without one.
+
+`nexus run` adds the pane when the project's `policy.dispatch_automation` is not `off`, also to layouts without it; `nexus run --no-dispatch-pane` leaves it out. See [Dispatch Manager](/dispatch/manager#the-dispatches-pane).
 
 lazygit lives only in the separate GIT tab. When a layout contains the usage panel, `requires` lists `node` and the exported `devbox.json` gets a Node.js package if none is present.
 
@@ -66,10 +71,12 @@ nexus env set claude.workspace_preset=focus
 Under **My Settings > Workspace Profiles**, every user can:
 
 - pick a preset
-- switch panels and tabs on or off: **Agent observer**, **Usage**, **Git (lazygit)**, **Tests tab**, **Logs tab** (switching Git on for a preset without a GIT tab adds one)
+- switch panels and tabs on or off: **Agent observer**, **Usage**, **Dispatches**, **Git (lazygit)**, **Tests tab**, **Logs tab** (switching Git on for a preset without a GIT tab adds one)
 - change pane sizes
 - paste a **custom Zellij layout** (advanced)
 - see the rendered preview, the effective model and the generated KDL with line numbers
+
+When you follow the default, the preset list highlights the preset that actually applies (marked "in use"), and the profile card names it and notes that a project's own team preset wins (v0.19.0).
 
 Only deviations from the preset are stored. **Reset** removes the personal settings and returns to the preset.
 

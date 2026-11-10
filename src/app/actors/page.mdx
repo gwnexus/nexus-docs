@@ -71,7 +71,13 @@ Projects have an `agent_mode` setting that determines the agent configuration ap
 | **Classic** | Single runtime agent with manual configuration (Agent ID, Display Name, CLI Flavor, Skills, Plugins). The traditional mode. |
 | **Actor-Based** | Virtual team with specialized actors. Actors contribute their recommended skills and plugins automatically. |
 
-The mode is selected in the **Project Wizard** (Step 4: Agent Setup) via radio cards. Switching from Classic to Actor-Based pre-selects the default actor automatically.
+The mode is selected in the [Project Wizard](/project-wizard#steps) (Step 3: Agent Setup, section Agent type) via radio cards. Switching from Classic to Actor-Based pre-selects the default actor automatically.
+
+<Note>
+  **Classic agent mode is not the Classic Dispatch engine.** The agent mode decides whether a project runs one agent or a team of actors. The Dispatch engine decides how Dispatches reach the agents; its former name "Classic" is now **Indirect**, next to **Automatic** (v0.19.0). Both choices sit in the same wizard step, and the step summary shows them together (for example `Classic · Automatic`). See [Dispatch engines](/dispatch/engines#names).
+</Note>
+
+In Claude Code projects, the project form marks the **primary actor** with a star that can be moved; only Claude session-lane actors can be primary, and the first selected session actor is proposed (v0.19.0). A session-lane primary actor starts every Claude Code session as the main-thread agent.
 
 In actor-based mode, the Agent Setup step shows a **tab layout**:
 

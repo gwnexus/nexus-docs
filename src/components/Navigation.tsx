@@ -265,15 +265,24 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: 'Sessions',       href: '/sessions' },
       { title: 'ADRs',           href: '/adrs' },
-      { title: 'Dispatch',       href: '/dispatch' },
       { title: 'Knowledge Base', href: '/knowledge-base' },
       { title: 'Skills',         href: '/skills' },
       { title: 'Directives',     href: '/directives' },
+      { title: 'Project Wizard', href: '/project-wizard' },
       { title: 'Project Settings', href: '/project-settings' },
       { title: 'Source Control', href: '/source-control' },
       { title: 'Languages',      href: '/languages' },
       { title: 'Workspaces',     href: '/workspaces' },
       { title: 'Actors',         href: '/actors' },
+    ],
+  },
+  {
+    title: 'Dispatch',
+    links: [
+      { title: 'Overview',           href: '/dispatch' },
+      { title: 'Engines',            href: '/dispatch/engines' },
+      { title: 'Dispatch Manager',   href: '/dispatch/manager' },
+      { title: 'Dispatch Control',   href: '/dispatch/control' },
     ],
   },
   {

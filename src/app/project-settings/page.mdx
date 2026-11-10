@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Project Settings',
-  description: 'Project policy flags for languages, Conventional Commits, em-dashes, personal address and AI attribution, plus the shadow levels that keep agent files out of git.',
+  description: 'Project policy flags for languages, Conventional Commits, em-dashes, personal address, AI attribution and Dispatch automation, plus the shadow levels that keep agent files out of git.',
 }
 
 export const sections = [
@@ -31,6 +31,9 @@ Since v0.16.0, common standards are no longer written as project directives. A p
 | Personal address | `policy.personal_address` | `true` / `false` | SHOULD | Address the user by the nickname (or first name) from the agent file where it adds warmth or clarity. |
 | Shadow level | `policy.shadow` | `off`, `ai`, `nexus` | MUST (`nexus` only) | See [Shadow levels](#shadow-levels). |
 | Workspace shadow | `policy.shadow_workspace` | `true`, `false`, unset | none | No rule; keeps the devbox workspace out of git. See [Workspace shadow](#workspace-shadow). |
+| Dispatch automation | `policy.dispatch_automation` | `off` (unset), `notify` | none | No rule of its own. Selects the Dispatch engine: unset is Indirect, `notify` is Automatic. With project links, `notify` also brings the [automatic directive](/directives#automatic-directive-for-linked-projects). See [Dispatch engines](/dispatch/engines#policy-dispatch-automation). |
+
+`policy.dispatch_automation` (v0.19.0) is usually set on the project's [Dispatch Control](/dispatch/control) page or in the project wizard. The values `attended` and `autonomous` are reserved for later releases. The project pause (Dispatch Control > Settings) is stored separately and keeps this value for the resume.
 
 Since v0.17.0, an unset language key inherits the platform default and `none` renders no rule; see [Language Settings](/languages). Everything else is opt-in. Unset values, `false` and `shadow: off` are not stored.
 

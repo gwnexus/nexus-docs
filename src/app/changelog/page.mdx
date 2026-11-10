@@ -4,6 +4,8 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.19.0', id: 'v0-19-0' },
+  { title: 'v0.18.4', id: 'v0-18-4' },
   { title: 'v0.18.1 - v0.18.3', id: 'v0-18-1-v0-18-3' },
   { title: 'v0.18.0', id: 'v0-18-0' },
   { title: 'v0.17.0', id: 'v0-17-0' },
@@ -11,6 +13,8 @@ export const sections = [
   { title: 'v0.16.x', id: 'v0-16-x' },
   { title: 'v0.15.0', id: 'v0-15-0' },
   { title: 'v0.14.x', id: 'v0-14-x' },
+  { title: 'nexus-cli v0.31.3 - v0.39.6', id: 'nexus-cli-v0-31-3-v0-39-6' },
+  { title: 'nexus-core v1.3.3 - v1.5.2', id: 'nexus-core-v1-3-3-v1-5-2' },
   { title: 'nexus-cli v0.28.15 - v0.31.2', id: 'nexus-cli-v0-28-15-v0-31-2' },
   { title: 'nexus-core v1.3.1 - v1.3.2, nexus-mcp v0.10.18', id: 'nexus-core-v1-3-1-v1-3-2-nexus-mcp-v0-10-18' },
   { title: 'nexus-cli v0.28.5 - v0.28.14', id: 'nexus-cli-v0-28-5-v0-28-14' },
@@ -41,6 +45,60 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
+## v0.19.0
+
+**Automatic Dispatch delivery.** Released 2026-11-10. Requires nexus-cli 0.39.6 or later. After upgrading: `nexus upgrade`, `nexus pull` in every project, restart agent sessions. Automatic delivery stays off until the platform switch and the project's engine are set; projects without it keep working on the Indirect engine. Only notify mode ships; OpenCode delivery follows in 0.20.0, self-hosting moves to 0.21.0.
+
+### Added
+
+- **Two Dispatch engines:** **Automatic** (default for new projects) announces new Dispatches in running Claude Code sessions; **Indirect** (formerly Classic) leaves them for the next sweep or a reply in the dashboard. Stored as `policy.dispatch_automation`. See [Dispatch engines](/dispatch/engines).
+- **Dispatch manager** (`nexus dispatch runner ...`, `nexus dispatch listen`, the dispatches pane): reads the hub event feed, sends heartbeats and posts short notices into running sessions; notify mode only, never writes to a Dispatch. Manager registry with its own tokens, pause, resume and revoke, and switches on platform, project and manager level. See [Dispatch Manager](/dispatch/manager).
+- **Dispatch Control** per project: engine and state, managers online, 7-day traffic, health checks, activity, 30-day metrics, project pause; **Platform settings > Dispatch Automation** (owner only, off by default); **My Settings > Dispatch Runners**. See [Dispatch Control](/dispatch/control).
+- **Dispatch simulation:** a marked test Dispatch (`[Simulation]`) in either direction with live delivery status per manager.
+- **Dashboard replies:** the Dispatch detail page has a reply form and acknowledge, assign, resolve, close and cancel, through the same handler as MCP. See [Replying in the dashboard](/dispatch#replying-in-the-dashboard).
+- **Dispatch records:** append-only event feed (metadata only), transition rules enforced by the database (409 `NXD01` to `NXD03`), server-derived message authorship (`author_user_id`, `author_runner_id`, `author_project_id`, `author_actor_id`, `author_agent_ref`); `dispatch_create` in one transaction; new transition `waiting_for_requester` to `resolved` for the requester. New MCP actions `dispatch_events`, `dispatch_counts` and `dispatch_metrics`; `dispatch_inbox` scopes and `project_scope: linked` on inbox and outbox. See [Nexus Dispatch](/dispatch).
+- **Automatic directive for linked projects** (`dispatch-automatic-linked`): on while the project uses the Automatic engine and has a project link. See [Directives](/directives#automatic-directive-for-linked-projects).
+- **Dispatch skills:** `nx-dispatch-sweep` versions 3 to 5 (notice entry point, claim before acting, session first, untrusted title) and `nx-dispatch-create` version 2. See [Skills](/skills#dispatch-skills-v0-19-0).
+- **Dispatches pane in every built-in workspace preset** (Standard + Terminal version 2, Focus and Review version 3), below Claude Code in the agent column; personal and team presets switch it on with "Dispatches". See [Claude Code Workspace](/claude-code/workspace#presets).
+- **nexus-core 1.5.0** with the `nexus-dispatch-inbox` hook; hook-based projects get `.claude/hooks/nexus-dispatch-inbox.mjs`. See [Claude Code Plugins](/claude-code/plugins#nexus-core).
+- **Project wizard:** six steps (Timeline and Documents merged into Scope), section navigation in every step, required agent ID, plugin rows with descriptions and the **Dispatch letters** switch (also in Quick Setup). See [Project Wizard](/project-wizard).
+- **Project classification API** for `nexus classification`: read the project, customer and effective level with gateway class and consequences; plan or apply a new project level (lowering the gateway class needs a reason; audit event; 409 on a concurrent change).
+- **Claude Code actors:** `actor_export` with `target: "claude"`; a session-lane primary actor starts every Claude Code session as the main-thread agent (`agent` in `.claude/settings.json`); routing-guard lane checks from nexus-core 1.4.1.
+- **Local model canary** profiles `nexus-coder-long`, `nexus-review-local` and `nexus-architect-local` on a private GPU node, local only, without fallback.
+- **Devbox project checks:** `dbx_init.sh` sources `<scripts_path>/init/checks.d/*.sh`; a check adds rows with `_record <key> <ok|warn|fail> <note>`. The files belong to the project and are kept on pull.
+- **Machine-local layer for shadowed projects** that commit their devbox files: `<scripts_path>/init/local.sh` (not committed, declared for the consent check) loads `.nexus/plugin.env` and `.nexus/gh.env`; needs nexus-cli 0.32.0.
+- **Project page:** an "On this page" pane below the tiles links to the sections further down. My Settings > Workspace Profiles highlights the preset that actually applies.
+
+### Fixed
+
+- **New projects lacked `/nexus-dispatch-sweep`:** the wizard listed only active and draft skills; it now lists accepted core skills, `nexus-dispatch-sweep` is mandatory, and existing projects with `nexus-init` got it assigned. See [Skills](/skills#mandatory-skills).
+- **Dispatch status changes** failed with "Insufficient permissions" after the new transition rules; status writes are now conditional (409 on a concurrent change), a rejected transition leaves no reply, and `dispatch_forward` / `dispatch_assign` refuse finished Dispatches.
+- **Gateway class** is the stricter of project and customer, and the effective classification compares by severity index, so no combination is looser than either side; a change that lowers the gateway class or the gate severity counts as a downgrade.
+- **Primary actor:** marked with a movable star; Claude Code projects accept only session-lane actors as primary (422 otherwise).
+- **IDE agent files** (`.cursorrules`, `copilot-instructions.md`) no longer require TypeScript in every project.
+- **Devbox:** the banner falls back to the project slug instead of the fork name; `devbox shell` init no longer stops silently when `gh` is not logged in; `ws_push` writes the pushed `C_DBX_META_*` values in the same transaction as the fork.
+- **nexus-core 1.3.3** hooks: an environment-only `NEXUS_API_URL` pins the API host; release sessions are looked up by `release_line`.
+- **Review fixes:** `actor_import` by a project editor no longer changes shared actors; client IP headers count only behind a trusted proxy (`TRUST_PROXY_HEADERS=true`) or outside production.
+
+### Security
+
+- **Registry read rule** for private skills, agent files and reviews (MCP `sk_list`, `sk_get`, `sk_assign`, `af_list`, `af_get` and the review routes): before, any signed-in user or token could read them.
+- **Dependencies:** next 16.4.5 (image optimizer RCE GHSA-2464-fhr4-w9xw), undici, zod, @sentry/nextjs, vitest; `npm audit` clean. Remote image hosts pinned to the own storage and CDN.
+- **Hardening:** constant-time comparison of shared secrets, a separate key for extraction webhooks, rate limits and audit records on the platform's client IP, MCP rate buckets on the whole token plus a per-IP cap, decision link checks, escaped document search filter, pinned `search_path` on the last SECURITY DEFINER functions.
+- **Dispatch notices** carry no body; the peer's title is marked as untrusted data (nexus-cli 0.39.6, `nx-dispatch-sweep` 5, nexus-core 1.5.1).
+
+---
+
+## v0.18.4
+
+**Shadowed projects keep their workspace tooling.** Released 2026-11-01. Run `nexus pull` in shadowed projects; no migration.
+
+- **Shadow filter only for committed devbox files:** with workspace shadow on (devbox files out of git), the pull brings the complete `devbox.json` and scripts again; the shadow-safe variant applies only when a shadowed project commits its devbox files. `ws_export` adds `meta.shadow_notice`, which nexus-cli 0.31.4 prints.
+- **Shadow-safe `devbox.json`** keeps zellij and the `C_DBX_META_*` values.
+- **Boolean settings from nexus-cli** up to 0.31.2, sent as `"true"` / `"false"`, are accepted (for example `nexus shadow off --target workspace`).
+
+---
+
 ## v0.18.1 - v0.18.3
 
 **No content goes to OpenAI or AWS Textract unless the operator enables it.** Released 2026-10-31. No migration, no nexus-cli update.
@@ -63,7 +121,7 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ## v0.18.0
 
-**Several GitHub accounts, workspace shadow and consent for executable content.** Released 2026-10-30. Self-hosting moves to 0.19.0; the AI Gateway is held back until 0.20.0. Requires nexus-cli 0.31.1 or later. After upgrading: `nexus upgrade`, `nexus pull` (answer the consent prompt), restart agent sessions.
+**Several GitHub accounts, workspace shadow and consent for executable content.** Released 2026-10-30. Self-hosting moves to a later release (now v0.21.0); the AI Gateway is held back until 0.20.0. Requires nexus-cli 0.31.1 or later. After upgrading: `nexus upgrade`, `nexus pull` (answer the consent prompt), restart agent sessions.
 
 ### Added
 
@@ -208,6 +266,28 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 - **Performance:** local session verification in the middleware, smaller client bundles, faster agent file export and new database indexes.
 
 ---
+
+## nexus-cli v0.31.3 - v0.39.6
+
+**CLI side of NEXUS-APP 0.18.4 and 0.19.0.** See the [CLI reference](/cli#version-notes-0-31-3-to-0-39-6) for every version.
+
+- **v0.39.0 to v0.39.6:** the Dispatch manager (`nexus dispatch runner register|status|pause|resume|revoke|probe`, `nexus dispatch listen`), run by the dispatches pane; `nexus run` opens the pane when dispatch automation is on (`--no-dispatch-pane`); the pane names the manager, shows `elsewhere`, its last error and simulation rows; notice format with the title last, marked as data (0.39.6); managed plugin updates in `nexus run` and `nexus pull --force` (0.39.6). See [Dispatch Manager](/dispatch/manager).
+- **v0.37.0 to v0.38.2:** `nexus dispatch status` (`--watch`, `--compact`, `--json`) and `nexus run --dispatch-pane`, colors and reliable refreshes.
+- **v0.34.0 to v0.36.1:** Claude Code local lane (`nexus actors run`, `nexus run --actor-panes`, subagents and thin delegates from the backend), `nexus classification`, `nexus actors export --target claude`, `nexus run --resume` for an exited Zellij session.
+- **v0.33.0:** clipboard check and fix for the Zellij workspace in `nexus doctor claude`.
+- **v0.32.0:** machine-local scripts for shadowed workspaces.
+- **v0.31.4:** boolean settings sent as booleans, `nexus pull --untrack-shadowed`, the shadow notice, `nexus settings`.
+- **v0.31.3:** `NEXUS_SEC_OPENAI_API_KEY` is no longer copied into `opencode.json` or `.mcp.json`, and existing entries are removed.
+
+## nexus-core v1.3.3 - v1.5.2
+
+See [Claude Code Plugins](/claude-code/plugins#nexus-core).
+
+- **v1.5.2:** a repository-controlled `api_url` no longer receives a token from another source; cross-source pairs need `NEXUS_API_URL`, the global config's `api_url` or `NEXUS_TRUSTED_API_URLS`.
+- **v1.5.1:** replayed Dispatch notices fenced as untrusted data; HTTPS required for the Nexus API (plain HTTP only for loopback).
+- **v1.5.0:** `nexus-dispatch-inbox` hook: session registration for the Dispatch manager and catch-up of missed notices. Pinned by NEXUS-APP 0.19.0.
+- **v1.4.0, v1.4.1:** routing guard reads actor lanes and accepts thin delegates; agent observer no longer shows idle main agents as `waiting`.
+- **v1.3.3:** an environment-only `NEXUS_API_URL` pins the API; release sessions are looked up by `release_line`.
 
 ## nexus-cli v0.28.15 - v0.31.2
 
@@ -624,7 +704,7 @@ The 0.11 line focused on cross-project knowledge access, public product pages, o
 
 **Feature: Nexus Dispatch**
 
-- **Vault Letters promoted to Nexus Dispatch** — Dispatches are the canonical product concept for Nexus-native routed agent work. Legacy `vl_*` MCP tools remain as compatibility aliases.
+- **Letters promoted to Nexus Dispatch:** Dispatches are the canonical product concept for Nexus-native routed agent work. Legacy `vl_*` MCP tools remain as compatibility aliases.
 - **9-status lifecycle with enforced transitions** — `open` → `acknowledged` → `in_progress` → `needs_review` → `resolved` → `closed`. Plus `waiting_for_requester`, `blocked`, and `cancelled`.
 - **8 Dispatch types** — `question`, `bug_report`, `implementation_request`, `review_request`, `decision_notice`, `blocker`, `status_update`, `handover`
 - **Routing fix** — `source_project_id` (sender) vs `target_project_id` (recipient) are now explicit and enforced
@@ -638,7 +718,7 @@ The 0.11 line focused on cross-project knowledge access, public product pages, o
 **Data Model**
 
 - **Migration 0116** — Three new tables: `dispatches`, `dispatch_messages`, `dispatch_participants` with full RLS, vector embedding column (`vector(1536)`), and HNSW index.
-- **Letter migration** — All existing Vault Letters migrated to the new `dispatches` schema. Legacy `letters` table kept for backward compatibility.
+- **Letter migration:** All existing letters migrated to the new `dispatches` schema. Legacy `letters` table kept for backward compatibility.
 
 **Tool versions:** nexus-mcp v0.9.0 · nexus-cli v0.8.0 · nexus-link v0.8.7
 
@@ -796,7 +876,7 @@ The 0.11 line focused on cross-project knowledge access, public product pages, o
 
 - **Envelope encryption** (ADR-0037) — classification-driven AES-256-GCM + HKDF-SHA256, pluggable key providers (Local, Vault, KMS, Azure, GCP)
 - **Git Identity Guard** — per-project `user.name`, `user.email`, `signingkey`, `commit.gpgsign` stored and applied via `nexus git verify|apply`
-- **Vault Letter tickets** — assignee, resolved-at timestamp, project-scoped labels with color, PDF export with confidentiality watermarks
+- **Letter tickets:** assignee, resolved-at timestamp, project-scoped labels with color, PDF export with confidentiality watermarks
 - **Unified CodeMirror editor** — all markdown editing now uses CodeMirror 6 (oneDark, line numbers, syntax highlighting)
 
 ---

@@ -16,7 +16,7 @@ Get Nexus running with your agent in under two minutes. {{ className: 'lead' }}
 
 ## Step 1: Create a project
 
-Sign in at [nexus.gatewarden.eu](https://nexus.gatewarden.eu/login) with GitHub. From the dashboard, click **New Project** and give it a name. You will receive a **project ID** and an **API token** — keep these handy.
+Sign in at [nexus.gatewarden.eu](https://nexus.gatewarden.eu/login) with GitHub. From the dashboard, click **New Project** and give it a name; Quick Setup takes three steps (see [Project Wizard](/project-wizard)). You will receive a **project ID** and an **API token**: keep these handy.
 
 ## Step 2: Install nexus-cli
 
@@ -83,6 +83,8 @@ Open your AI coding agent (OpenCode, Claude Code, or any MCP-compatible tool). T
 ```
 
 Your agent will load project context, check for open sessions, and begin tracking work.
+
+New projects use the Automatic Dispatch engine. To have new Dispatches announced in your Claude Code session, register the Dispatch manager once per machine with `nexus dispatch runner register`; see [Dispatch engines](/dispatch/engines#setting-up-the-automatic-engine).
 
 ## Next steps
 

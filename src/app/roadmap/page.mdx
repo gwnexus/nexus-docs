@@ -29,15 +29,7 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ---
 
-### v0.20.0: AI Gateway for users
-
-**The AI Gateway leaves the hold-back**
-
-- BYOK provider credentials, the Registry / Discover model catalog, Routing Lab and gateway operations, available to users again. Until then the gateway is grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway)
-
----
-
-### v0.19.0: self-hosted stack, multi-tenant and Nexus Spark (BYOH), planned (Q1 2027)
+### v0.21.0: self-hosted stack, multi-tenant and Nexus Spark (BYOH), planned (Q1 2027)
 
 - Nexus Spark (BYOH): deeper provisioning and lifecycle wiring for user-owned DGX Spark and private GPU nodes in the AI Gateway routing surface
 - Cost Control: sharper per-project and per-session cost attribution, refined budget enforcement, clearer reconciliation on top of the BYOK provider credentials
@@ -51,7 +43,30 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ---
 
+### v0.20.0: AI Model Gateway and Dispatch delivery for OpenCode, planned
+
+- AI Model Gateway for users: BYOK provider credentials, the Registry / Discover model catalog, Routing Lab and gateway operations, available to users again. Until then the gateway is grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway)
+- Dispatch delivery into OpenCode sessions: the [Dispatch manager](/dispatch/manager) brings notices to OpenCode as it does to Claude Code since v0.19.0
+
+---
+
 ## Released
+
+### v0.19.0 (November 2026)
+
+**Automatic Dispatch delivery**
+
+- Two Dispatch engines per project: **Automatic** (default for new projects) announces new Dispatches in running Claude Code sessions; **Indirect** leaves them for the next sweep or a reply in the dashboard. See [Dispatch engines](/dispatch/engines)
+- [Dispatch manager](/dispatch/manager) in nexus-cli 0.39: registered once per machine, it reads the hub event feed and posts short notices; notices never carry the body, and the sender's title is marked as data. Notify mode only
+- [Dispatch Control](/dispatch/control) per project: engine, managers online, traffic, health, activity and metrics, a project pause and a platform-wide switch; Dispatch simulation
+- Act without an agent: reply form and acknowledge, assign, resolve, close and cancel on the Dispatch detail page
+- Stricter Dispatch records: append-only event feed, transitions enforced by the database, server-derived message authorship
+- Dispatches pane in every built-in workspace preset; nexus-core 1.5.0 registers sessions for delivery; `/nexus-dispatch-sweep` handles notices and is mandatory
+- [Project wizard](/project-wizard) in 6 steps with the Dispatch letters switch
+- Also: project classification from the CLI, Claude Code main-thread agents and local lane, devbox project checks, a security round
+- Tool versions: nexus-cli 0.39.6, nexus-core 1.5.0 (1.5.2 recommended)
+
+---
 
 ### v0.18.0 (October 2026)
 
@@ -190,7 +205,7 @@ Held back since v0.18.0; available to users again with v0.20.0.
 
 **Nexus Dispatch, Documentation Site & Skill Refinement**
 
-- Vault Letters promoted to Nexus Dispatch: canonical product concept for Nexus-native routed agent work (ADR-0052)
+- Letters promoted to Nexus Dispatch: canonical product concept for Nexus-native routed agent work (ADR-0052)
 - Clean-break data model: `dispatches` + `dispatch_messages` + `dispatch_participants` tables
 - 8 Dispatch types: question, bug_report, implementation_request, review_request, decision_notice, blocker, status_update, handover
 - 9-status lifecycle with enforced transition rules

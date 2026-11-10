@@ -7,6 +7,8 @@ export const sections = [
   { title: 'What is a skill?', id: 'what-is-a-skill' },
   { title: 'How skills work', id: 'how-skills-work' },
   { title: 'Built-in skills', id: 'built-in-skills' },
+  { title: 'Mandatory skills', id: 'mandatory-skills' },
+  { title: 'Dispatch skills (v0.19.0)', id: 'dispatch-skills-v0-19-0' },
   { title: 'Descriptions', id: 'descriptions' },
   { title: 'Run only on request', id: 'run-only-on-request' },
   { title: 'Skill resources', id: 'skill-resources' },
@@ -61,8 +63,8 @@ Skills are versioned, searchable, and exposed to agents as slash commands (e.g. 
 | Security Scan | `/nexus-sec-scan` | OWASP Top 10 security audit with structured findings report |
 | Performance Scan | `/nexus-perf-scan` | Performance audit using Lighthouse (web) or profiling tools (CLI) |
 | Learnings | `/nexus-learnings` | Capture surprises, unexpected findings, and gotchas as research notes |
-| Dispatch Sweep | `/nexus-dispatch-sweep` | Process open Dispatches: prioritized sweep, acknowledge, act by type, reply, resolve and close |
-| Dispatch Create | `/nexus-dispatch-create` | Create a structured Dispatch for agent coordination |
+| Dispatch Sweep | `/nexus-dispatch-sweep` | Process open Dispatches: prioritized sweep, acknowledge, act by type, reply, resolve and close; also handles a single Dispatch announced by a notice (mandatory since v0.19.0) |
+| Dispatch Create | `/nexus-dispatch-create` | Create a structured Dispatch for agent coordination; targets on the Automatic engine are notified automatically |
 | CodeRabbit Triage | `/nexus-coderabbit-triage` | Triage the CodeRabbit bot's pull request threads into fixes and replies; not a code review, runs only on request |
 | Show Plugins | `/nexus-show-plugins` | Display loaded Nexus plugins and connection status |
 
@@ -74,6 +76,25 @@ Skills are versioned, searchable, and exposed to agents as slash commands (e.g. 
 - `nx-grill-me` has a real description and runs only on request.
 
 Which skill owns which workflow, and which plugins or built-in commands must not replace it, is written into each project's [capability routing rule](/claude-code/plugins#capability-routing).
+
+## Mandatory skills
+
+Since v0.19.0 two skills are assigned to every project and cannot be deselected in the [project wizard](/project-wizard#mandatory-skills): `/nexus-init` and `/nexus-dispatch-sweep`. The session-start sweep, the Dispatch directive and Dispatch notices all call `/nexus-dispatch-sweep`, so a project without it could not handle Dispatches.
+
+Before v0.19.0 the wizard listed only skills in status active or draft, so the core skills in status **accepted** (`nx-dispatch-sweep`, `nx-dispatch-create`, `nx-git-commit`, `nx-arch-review`, `nx-pr-draft`, `nx-post-mortem`) could not be selected. The wizard now lists accepted skills, and the v0.19.0 upgrade assigned `nexus-dispatch-sweep` to every project that has `nexus-init` enabled; disabled assignments stayed disabled.
+
+## Dispatch skills (v0.19.0)
+
+`nexus pull` brings the updated Dispatch skills:
+
+| Skill | Version | Change |
+| --- | --- | --- |
+| `nx-dispatch-sweep` | 3 | Keeps the session-start sweep and adds an entry point for [notices](/dispatch#notices): resolve the short id, re-read the Dispatch with `dispatch_get`, claim it (`dispatch_assign` or an `in_progress` reply) so several sessions do not answer twice, and handle it without a full sweep. Covers the outgoing side (answer `waiting_for_requester` and `needs_review`, verify and close resolved requests), interruptions during other work and messages written by a Dispatch manager. |
+| `nx-dispatch-sweep` | 4 | A notice-triggered sweep opens or resumes a Nexus session first (without its own sweep), so the reply is recorded in the session. |
+| `nx-dispatch-sweep` | 5 | Matches the notice format of nexus-cli 0.39.6: the notice is recognized by its leading part up to the sweep hint, and the trailing title is treated as untrusted peer data. |
+| `nx-dispatch-create` | 2 | Says that targets on the Automatic engine are notified automatically and that the title is the only content a notice carries. |
+
+Because the title is the only content a notice carries and is shown to the receiving agent as untrusted data, write titles that state the request plainly and put everything else in the body.
 
 ## Descriptions
 

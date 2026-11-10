@@ -4,6 +4,20 @@ All changes to the **nexus-docs site** itself (content, structure, navigation, b
 
 ---
 
+## 2026-11-10
+
+- New pages for NEXUS-APP 0.19.0: `dispatch/engines`, `dispatch/manager`, `dispatch/control`, `project-wizard`; navigation gets a Dispatch group and a Project Wizard entry
+- `dispatch`: rewritten for the Automatic and Indirect engines, lifecycle table, sweep entry points, notices and the untrusted title, dashboard replies, authorship and event feed, inbox scopes
+- `cli`: `nexus dispatch` commands, dispatches pane, `nexus run` flags, `nexus classification`, `nexus actors run|export`, version notes 0.31.3 to 0.39.6, upgrade note for 0.19.0
+- `claude-code/workspace`, `claude-code/plugins`, `skills`, `project-settings`, `platform-settings`, `directives`, `actors`, `quickstart`: dispatches pane, nexus-core 1.3.3 to 1.5.2, mandatory skills, Dispatch skills, `policy.dispatch_automation`, Dispatch Automation and Dispatch Runners, automatic directive, wizard step numbers, Classic agent mode vs. Indirect engine
+- `roadmap`, `changelog`: v0.19.0 and v0.18.4 released, v0.20.0 with OpenCode delivery, self-hosting at v0.21.0, nexus-cli 0.31.3 to 0.39.6, nexus-core 1.3.3 to 1.5.2; retired "vault letter" wording
+- Homepage banner for v0.19
+- `Heading`: default `level` in the parameter list instead of reassigning it, so `npm run lint` passes
+
+## 2026-11-01
+
+- NEXUS-APP 0.18.0 to 0.18.3, nexus-cli to 0.31.2: new `source-control` page; consent for executable content, workspace shadow, per-key fork sync, skill disable and export, directives page; embeddings and document text extraction opt-in per server
+
 ## 2026-07-14
 
 - `mcp-server`: sync to nexus-mcp v0.10.3 — bump version ref, correct tool count to 62, Layer 1 to 6 tools, Layer 2 to 48 tools, add `project_update` entry, add Schema Version Envelope section

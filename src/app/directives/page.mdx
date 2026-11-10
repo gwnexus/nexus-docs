@@ -14,6 +14,7 @@ export const sections = [
   { title: 'Writing good rules', id: 'writing-good-rules' },
   { title: 'Icon legend', id: 'icon-legend' },
   { title: 'Platform catalog', id: 'platform-catalog' },
+  { title: 'Automatic directive for linked projects', id: 'automatic-directive-for-linked-projects' },
   { title: 'What agents get', id: 'what-agents-get' },
   { title: 'MCP tools', id: 'mcp-tools' },
   { title: 'Migration from old directives', id: 'migration-from-old-directives' },
@@ -182,6 +183,19 @@ Platform admins manage the catalog under **Platform > Directives**. Rule texts a
 - **Usage:** each catalog rule shows how many projects get it.
 - **Versioning:** editing a rule text bumps its version (`v2`, `v3`, ...). Projects receive the new text on their next `nexus pull`; nothing has to be changed per project.
 - **Kinds:** mandatory (Required), flag (rendered by a project setting), default and optional.
+
+## Automatic directive for linked projects
+
+Since v0.19.0 the catalog has a flag rule that no project writes or switches by hand: **`dispatch-automatic-linked`** (flag `dispatch_linked`, source Setting). Its text:
+
+> When the dispatches pane or a session notice announces a Dispatch, handle it with /nexus-dispatch-sweep: acknowledge it right away, then act on it by type.
+
+It is on while both hold:
+
+- the project uses the Automatic [Dispatch engine](/dispatch/engines) (`policy.dispatch_automation` is set, also while the project is paused), and
+- the project has at least one project link, in either direction.
+
+It turns off again when either goes away. No project row is stored, so the rule appears and disappears with the next `nexus pull`. The platform catalog counts its users per project like any other rule. If the link count cannot be read, the export fails with the other sources instead of sending an incomplete list.
 
 ## What agents get
 

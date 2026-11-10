@@ -1,0 +1,154 @@
+export const metadata = {
+  title: 'Dispatch Manager',
+  description: 'The nexus-cli process that brings new Dispatches into running Claude Code sessions: register, listen, the dispatches pane, pause, resume, revoke, probe and troubleshooting.',
+}
+
+export const sections = [
+  { title: 'What it does', id: 'what-it-does' },
+  { title: 'Register', id: 'register' },
+  { title: 'Run it', id: 'run-it' },
+  { title: 'The dispatches pane', id: 'the-dispatches-pane' },
+  { title: 'Delivery into sessions', id: 'delivery-into-sessions' },
+  { title: 'Catch-up at session start', id: 'catch-up-at-session-start' },
+  { title: 'Status, pause, resume, revoke', id: 'status-pause-resume-revoke' },
+  { title: 'Security', id: 'security' },
+  { title: 'Troubleshooting', id: 'troubleshooting' },
+]
+
+# Dispatch Manager
+
+A small process in nexus-cli that announces new Dispatches in running Claude Code sessions. {{ className: 'lead' }}
+
+The Dispatch manager is the machine side of the [Automatic engine](/dispatch/engines). It needs **nexus-cli 0.39.6 or later** and, in the project, **nexus-core 1.5.0 or later**. The commands, files and JSON fields still say **runner**; the dashboard and the CLI output say "Dispatch manager".
+
+## What it does
+
+- Reads the event feed of its bound projects every 30 seconds and reports a heartbeat every 60 seconds, so the hub shows whether it is online.
+- Queues a short [notice](/dispatch#notices) once per event: a new incoming Dispatch, a reply on one of your requests, a request waiting for you, a resolution. Only Dispatches from outside the bound project are announced.
+- Delivers each notice into a running Claude Code session of the bound repository.
+
+It runs in **notify** mode only: it never replies to, resolves or closes a Dispatch. The agent in the session, or a person in the dashboard, decides and acts.
+
+Only **one manager runs per machine**: it holds an exclusive lock, and registering again on the same machine revokes the earlier registration.
+
+## Register
+
+Register once per machine, inside a linked project:
+
+```bash
+nexus dispatch runner probe
+nexus dispatch runner register
+```
+
+`register` uses your personal access token once and stores the manager's own token (`nxs_run_...`) in `~/.config/nexus/dispatch-runner.json` (mode 0600). The token is never printed again. By default it binds the linked project; earlier bindings are kept.
+
+| Option | Meaning |
+| --- | --- |
+| `--project <id>` | Project to bind instead of the linked one. Repeatable. |
+| `--mode notify\|off` | Binding mode. Default `notify`; the manager supports notify only. |
+| `--name <name>` | Manager name. Default `nexus-cli@<host>`. |
+| `--expires-days <n>` | Days until the manager token expires. Default 90. |
+| `--replace` | Drop the bindings of an earlier register. |
+
+To serve another project, run `nexus dispatch runner register` again in that project (or with `--project`); the existing bindings stay.
+
+`probe` checks whether the installed Claude Code takes notices through its cross-session inbox, against the tested version range. `--json` prints the result for scripts.
+
+## Run it
+
+Usually you do not start it yourself: `nexus run` opens the [dispatches pane](#the-dispatches-pane) when the project's `policy.dispatch_automation` is not `off`, and that pane runs the manager.
+
+To run it on its own, in the foreground:
+
+```bash
+nexus dispatch listen
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--interval <s>` | Seconds between polls, at least 10. Default 30. |
+| `--heartbeat <s>` | Seconds between heartbeats, at least 30. Default 60. |
+| `--once` | One poll and delivery round, then exit. |
+
+Ctrl-C stops it. It restarts itself after `nexus upgrade`, and when nothing is allowed it says why, for example `idle octo-backend blocked by platform_disabled`.
+
+## The dispatches pane
+
+`nexus dispatch status` is a read-only view of the project's Dispatches: incoming and outgoing counters (including what waits on you), resolved and closed counts, one row per open Dispatch with yours first, and a per-peer summary.
+
+```bash
+nexus dispatch status                       # once
+nexus dispatch status --watch --compact     # what the pane runs
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--watch` | Redraw every `--interval` seconds until interrupted. On a network error the last state stays with an error line. |
+| `--interval <s>` | Seconds between refreshes, at least 10. Default 30. |
+| `--compact` | Narrow layout for a side pane (about 40 to 60 columns). |
+| `--project <id>` | Another project instead of the linked one. |
+| `--window <days>` | Days counted for resolved and closed Dispatches. Default 7. |
+| `--json` | `nexus.dispatch-status.v1`; with `--watch` one JSON line per refresh. |
+| `--no-listen` | Do not run the manager in this process. |
+
+With `--watch`, the view also **runs the manager** in the same process when it is registered and bound to the project; otherwise it shows why not. The header shows the manager state:
+
+| State | Meaning |
+| --- | --- |
+| `running` | The manager serves this project. |
+| `elsewhere` | The manager is bound only to other projects; a line names them. |
+| `stopped` | A state file exists, but its process is gone. |
+
+For a bound project the pane also shows the manager's last error, such as a failed heartbeat, until heartbeat and feed work again. Rows of test Dispatches (title prefix `[Simulation]`) are yellow. A list longer than the pane ends with `… +N more`. Colors follow the status (waiting on you yellow, blocked red, in progress blue, open cyan, resolved green); `NO_COLOR`, a pipe and `--json` stay plain.
+
+**Where the pane sits:** the built-in workspace presets place it directly below Claude Code in the left column of the CLAUDE tab, at 13% of the height (see [Claude Code Workspace](/claude-code/workspace#presets)). `nexus run --dispatch-pane` adds it to a layout that has none; inside a running Zellij session it opens it below the focused pane. `nexus run --no-dispatch-pane` leaves it out.
+
+## Delivery into sessions
+
+The `nexus-dispatch-inbox` hook of nexus-core (1.5.0 or later) registers every Claude Code session at start in `~/.config/nexus/state/dispatch/sessions/<session_id>.json` (mode 0600) and removes the file when the session ends. The manager reads these files to find the sessions of the bound repository and posts the notice through Claude Code's cross-session inbox.
+
+- A session that holds or refuses inbound messages gets nothing pushed; it receives the notice at its next start (below).
+- Without a reachable session, the manager shows a desktop notification.
+
+Notices are queued in `~/.config/nexus/state/dispatch/notices/<project>.jsonl` with id, title and peer, never the body.
+
+## Catch-up at session start
+
+At `SessionStart` (startup, resume, clear, compact), the hook adds notices that no session has received yet to the session context: at most 10, newest first, from the last 7 days. Each notice reaches exactly one session. The block is fenced as untrusted data (nexus-core 1.5.1).
+
+Set `NEXUS_DISPATCH_INBOX=off` to turn the hook off.
+
+## Status, pause, resume, revoke
+
+| Command | Effect |
+| --- | --- |
+| `nexus dispatch runner status` | Heartbeat once and show the bindings: effective mode, which switch blocks, lag and the Claude Code probe. A notify binding shows as `read only`. `--json` for scripts. |
+| `nexus dispatch runner pause` | Pause the manager on the hub; it stays registered. |
+| `nexus dispatch runner resume` | Resume a paused manager. |
+| `nexus dispatch runner revoke` | Revoke the manager on the hub and remove the local token file. |
+
+The same controls are in the dashboard under **My Settings > Dispatch Runners**: your managers with machine, CLI version, runtimes, last heartbeat and token prefix; per binding the effective mode, what blocks it, cursor, lag, delivery totals and the last error; and Pause, Resume and Revoke. A manager counts as stale after three missed heartbeats. The project's [Dispatch Control](/dispatch/control) page lists the managers listening to the project.
+
+## Security
+
+- The manager token reaches only the projects it is bound to, never with platform-admin rights.
+- The hub stores a hash of the repository path, not the path, and only a hash of the token.
+- Notices carry no Dispatch body. The title comes from another project and is marked as data, not an instruction (see [Notices](/dispatch#notices)).
+- The session file holds the session's messaging token. It is written with mode 0600 and never logged, sent to Nexus or written to `.nexus/`.
+- Register, pause, resume, revoke and the platform switch write audit events.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `listen` prints `idle ... blocked by platform_disabled` | The platform switch is off. Ask the platform owner to switch on Platform settings > Dispatch Automation. |
+| Blocked by `project_paused` | The project is paused. Resume it in the Settings tab of its Dispatch Control page. |
+| Binding shows mode `off` | The project uses the Indirect engine. Choose Automatic on Dispatch Control, or `nexus settings set policy.dispatch_automation=notify`. |
+| Pane header `elsewhere` | The manager is bound to other projects only. Run `nexus dispatch runner register` in this project. |
+| Pane header `stopped` | The manager process ended. Restart `nexus run` or `nexus dispatch listen`. |
+| No notice in the running session | The session started before `nexus pull` brought nexus-core 1.5.0, or `NEXUS_DISPATCH_INBOX=off` is set. Restart the session; missed notices are replayed. Check `nexus dispatch runner probe`. |
+| Desktop notification instead of a notice | No session of the bound repository was reachable, or the session holds inbound messages. The notice is replayed at the next session start. |
+| Second `listen` refuses to start | Only one manager runs per machine. Stop the other one, or use the pane that already runs it. |
+| Manager rejected after about three months | The manager token expired (`--expires-days`, default 90). Run `nexus dispatch runner register` again. |
+
+To test delivery end to end, use **Simulate a Dispatch** on the project's Dispatch page (see [Dispatch Control](/dispatch/control#simulating-a-dispatch)).

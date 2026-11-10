@@ -1,0 +1,83 @@
+export const metadata = {
+  title: 'Project Wizard',
+  description: 'Creating and editing a project in the dashboard: Quick Setup and Full Setup, the six steps and their sections, the Dispatch engine choice, mandatory skills and the automatic directive for linked projects.',
+}
+
+export const sections = [
+  { title: 'Quick Setup and Full Setup', id: 'quick-setup-and-full-setup' },
+  { title: 'Steps', id: 'steps' },
+  { title: 'Dispatch letters', id: 'dispatch-letters' },
+  { title: 'Mandatory skills', id: 'mandatory-skills' },
+  { title: 'Automatic directive for linked projects', id: 'automatic-directive-for-linked-projects' },
+  { title: 'Editing a project', id: 'editing-a-project' },
+]
+
+# Project Wizard
+
+How a project is created and edited in the dashboard. {{ className: 'lead' }}
+
+The wizard was reworked in v0.19.0: six steps instead of seven, a section navigation inside long steps, and the choice of the Dispatch engine.
+
+## Quick Setup and Full Setup
+
+| Mode | Steps | For |
+| --- | --- | --- |
+| **Quick Setup** | 3: Project basics, Agent setup (agent type, agent ID and Dispatch engine), Review & create | Starting in under a minute. Plugins, skills and MCP servers use the recommended defaults; budget, documents and members can be added later. |
+| **Full Setup** | 6 (below) | Control over budget, documents, plugins and team. |
+
+Every setting can be changed later on the project's edit page, which always uses the full view.
+
+## Steps
+
+**Back** and **Continue** sit directly below the step bubbles, so every step can be controlled without scrolling; the confirm step has a second submit button at the end. Long steps have a section navigation with an icon, a state and a short "what is this for" line per section.
+
+| # | Step | Sections |
+| --- | --- | --- |
+| 1 | **Basics** | Project, Description, Languages, Repos & contacts, Security |
+| 2 | **Scope** | Schedule, Budget, Offer & SOW, Documents, PDF export (status, schedule and budget plus start documents; Timeline and Documents were separate steps before v0.19.0) |
+| 3 | **Agent Setup** | Agent type, Agent ID & skills or Actors, AI tool, Models, Config files, Git, Workspace |
+| 4 | **Plugins** | Essentials, Cost control, Add-ons, Codebase, Local models |
+| 5 | **Members** | Team members and project roles |
+| 6 | **Confirm** | Summary of all settings, with jumps to each block |
+
+Notes on the Agent Setup step:
+
+- **Agent type** is Classic (one agent with manual configuration) or actor-based (a virtual team, see [Actors](/actors#classic-vs-actor-based-mode)). It also holds the Dispatch engine.
+- **Agent ID** and display name sit side by side. The agent ID is required; it is pre-filled from the slug and has a **Generate** button.
+- **Models** shows the model execution (Provider, Gateway, Claude Max).
+
+Plugins are listed as rows with their description. Mandatory plugins are pre-selected and show a warning when deselected.
+
+## Dispatch letters
+
+The Agent Setup step (also in Quick Setup) has a **Dispatch letters** switch: how Dispatches from linked projects reach the project's agents.
+
+| Choice | Effect |
+| --- | --- |
+| **Automatic** (default) | The [Dispatch manager](/dispatch/manager) announces new Dispatches in running sessions. Saved as `policy.dispatch_automation` = `notify`. |
+| **Indirect** | Dispatches wait until an agent sweeps them or someone replies in the dashboard. |
+
+The choice shows in the confirm step and can be changed later on the [Dispatch Control](/dispatch/control#choosing-the-engine) page. See [Dispatch engines](/dispatch/engines).
+
+## Mandatory skills
+
+Two skills are always assigned and cannot be deselected in the wizard:
+
+| Skill | Why |
+| --- | --- |
+| `nexus-init` | Session start. |
+| `nexus-dispatch-sweep` | The session-start sweep, the Dispatch directive and Dispatch notices all call `/nexus-dispatch-sweep`. |
+
+Before v0.19.0 the wizard listed only skills in status active or draft, so core skills in status accepted (among them `nx-dispatch-sweep` and `nx-dispatch-create`) could not be selected, and `/nexus-init` failed on the missing sweep skill in new projects. The wizard now lists accepted skills, and the v0.19.0 migration assigned `nexus-dispatch-sweep` to every project that has `nexus-init` enabled. See [Skills](/skills#mandatory-skills).
+
+## Automatic directive for linked projects
+
+A project on the Automatic engine that has at least one [project link](/directives#automatic-directive-for-linked-projects) (either direction) gets one more directive:
+
+> When the dispatches pane or a session notice announces a Dispatch, handle it with /nexus-dispatch-sweep: acknowledge it right away, then act on it by type.
+
+The wizard does not write it as a project rule: it follows the engine and the links. It appears with the next `nexus pull` once both hold (also while automation is paused) and disappears when either goes away.
+
+## Editing a project
+
+Editing uses the same steps. The "Editing projects" box explains the step navigation and what is fixed after creation. Since v0.18.0 Git settings and repositories are edited on the [Source Control](/source-control) page, not in the wizard.

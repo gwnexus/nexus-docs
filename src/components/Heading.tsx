@@ -70,7 +70,7 @@ export function Heading<Level extends 2 | 3>({
   children,
   tag,
   label,
-  level,
+  level = 2 as Level,
   anchor = true,
   ...props
 }: React.ComponentPropsWithoutRef<`h${Level}`> & {
@@ -80,7 +80,6 @@ export function Heading<Level extends 2 | 3>({
   level?: Level
   anchor?: boolean
 }) {
-  level = level ?? (2 as Level)
   let Component = `h${level}` as 'h2' | 'h3'
   let ref = useRef<HTMLHeadingElement>(null)
   let registerHeading = useSectionStore((s) => s.registerHeading)

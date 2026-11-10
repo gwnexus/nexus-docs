@@ -1,0 +1,82 @@
+export const metadata = {
+  title: 'Dispatch Control',
+  description: 'The project page for Dispatch automation in the dashboard: engine, pause, managers, activity, metrics, health checks, the Dispatch simulation and the platform switch.',
+}
+
+export const sections = [
+  { title: 'Tile and page', id: 'tile-and-page' },
+  { title: 'Tabs', id: 'tabs' },
+  { title: 'Choosing the engine', id: 'choosing-the-engine' },
+  { title: 'Pausing a project', id: 'pausing-a-project' },
+  { title: 'Simulating a Dispatch', id: 'simulating-a-dispatch' },
+  { title: 'Platform switch', id: 'platform-switch' },
+  { title: 'Who sees what', id: 'who-sees-what' },
+]
+
+# Dispatch Control
+
+Everything about a project's Dispatch automation on one dashboard page. {{ className: 'lead' }}
+
+Since v0.19.0. For the concepts behind it see [Dispatch engines](/dispatch/engines) and [Dispatch manager](/dispatch/manager).
+
+## Tile and page
+
+The project page has a **Dispatch Control** tile. It shows the engine and its state (Indirect, Automatic with the mode as an icon, paused, or off platform-wide) and how many Dispatch managers are online. It opens the page `/dashboard/projects/<id>/dispatch-control`.
+
+The mode (notify, attended, autonomous, off) is shown as a small icon with a tooltip. In v0.19 only notify is available.
+
+## Tabs
+
+| Tab | Content |
+| --- | --- |
+| **Overview** | Engine and state, Dispatch traffic of the last 7 days, health summary, linked projects. |
+| **Settings** | Engine choice and Pause / Resume (project managers). |
+| **Runners** | The Dispatch managers listening to the project: online state, runtime, CLI version, lag, delivery totals. Errors and machine details only for your own managers. |
+| **Activity** | The latest 40 events of the project's Dispatch feed (created, status changed, assigned, rerouted, message added), metadata only. A Dispatch rerouted away from the project is labeled `away`. |
+| **Metrics** | 30-day metrics: how long incoming Dispatches stay unpicked, how long the next step waits on you or on the peer (median and p90), stalls on your side over 24 hours, created, resolved and closed counts, messages per Dispatch. |
+| **Health** | Checks for the platform switch, the project pause, managers online, lag, delivery errors and project links. |
+
+## Choosing the engine
+
+In the **Settings** tab, project managers choose:
+
+- **Indirect:** no manager acts; Dispatches wait for the next sweep. Stored as `policy.dispatch_automation` unset.
+- **Automatic:** managers deliver notices into running sessions. Stored as `policy.dispatch_automation` = `notify`.
+
+New projects choose the engine in the [project wizard](/project-wizard#dispatch-letters). The engine select that earlier sat in the project directives, and the pause and runner panels of the Dispatch list page, now link here.
+
+## Pausing a project
+
+**Pause** in the Settings tab stops every manager write and notice for the project and keeps the engine setting for **Resume**. Managers report the reason `project_paused`. Use it for quiet periods without switching the project to Indirect.
+
+Other ways to stop delivery:
+
+- pause or revoke a single manager in **My Settings > Dispatch Runners** or with `nexus dispatch runner pause`;
+- switch the project to Indirect;
+- platform owners: the [platform switch](#platform-switch).
+
+## Simulating a Dispatch
+
+The project's **Dispatch** page has a **Simulate a Dispatch** panel for project managers. It sends a real test Dispatch and shows live whether delivery works:
+
+1. Choose the direction: **incoming** (from a linked project to this one) or **outgoing** (from this project to a linked one), and the linked project.
+2. Choose type, priority and blocking; optionally an own title and a Markdown message. The title always starts with `[Simulation]`, and a footer marks the message as simulated.
+3. Send. For each manager of the receiving project the panel shows whether it has reached the Dispatch (announced, waiting, offline, or mode off), refreshing every 3 seconds for up to 2 minutes. For an outgoing test this needs access to the other project.
+4. **Cancel test Dispatch** cancels it as the requesting project.
+
+The sender must be another project, because managers announce only Dispatches from outside their bound project. In the dispatches pane, simulation rows are yellow.
+
+## Platform switch
+
+**Platform settings > Dispatch Automation** is the global switch for Dispatch managers. It is off by default and only the platform owner can change it. While it is off, managers only read and deliver nothing; Dispatch Control shows the engine as off platform-wide. Changing it writes an audit event.
+
+See [Platform settings](/platform-settings#platform-settings).
+
+## Who sees what
+
+| Who | Sees and can do |
+| --- | --- |
+| Project members | Tile, Overview, Runners (other members' managers by owner name only, without machine or manager name), Activity, Metrics, Health. |
+| Project managers (`project.manage`) | Also: engine choice, Pause / Resume, Dispatch simulation. |
+| Manager owners | Errors and machine details of their own managers; Pause, Resume, Revoke in My Settings > Dispatch Runners. |
+| Platform owner | The platform switch. |
