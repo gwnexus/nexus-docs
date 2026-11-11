@@ -108,6 +108,8 @@ All `/api/compose/*` endpoints require `Authorization: Bearer <nxs_cmd_*>`. The 
 
 ### Dashboard integration
 
+Since NEXUS-APP 0.19.1 the AI Hardware section of the dashboard and its node and compose APIs, including the read routes, are available only to platform admins and on instances with a selfhosted license; for everyone else the navigation item is hidden. A per-user feature flag is planned for 0.20.0.
+
 The AI Hardware node detail page has a **Compose** tab where you can:
 
 - **View and edit** `docker-compose.yaml` and companion files (`.env`, `.conf`, `.toml`)

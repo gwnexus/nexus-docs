@@ -102,3 +102,5 @@ Use `kb_related` to navigate supersession chains and understand the evolution of
 | `adr_decide` | Accept or reject an ADR under review |
 | `dc_add` | Add a comment to an ADR under review |
 | `dc_list` | List comments on an ADR |
+
+Since NEXUS-APP 0.19.1 the ADR tools follow the project role matrix: `adr_create` and `adr_submit` need `project_admin` or `project_editor`, `adr_decide` needs `project_admin` or `project_reviewer` (platform admins pass); other callers get 403. ADR comments need access to the project. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).

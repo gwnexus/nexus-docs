@@ -614,6 +614,8 @@ Project tokens are stored alongside other workspace credentials and resolved usi
 
 `nexus import` scans the current workspace for pre-existing agentic configuration files and imports them into the linked Nexus project. This is the recommended way to onboard existing projects alongside the platform-managed workflow.
 
+Since NEXUS-APP 0.19.1 the import needs `project_admin` or `project_editor` on the target project; other callers get 403. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).
+
 **Detected files:** `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `copilot-instructions.md`, `.windsurf/rules/*.md`, `GEMINI.md`
 
 **What happens:**

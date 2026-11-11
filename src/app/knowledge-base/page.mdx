@@ -170,3 +170,5 @@ Ingested documents can be classified to improve search relevance and organizatio
 | `doc_classify` | Update document classification |
 | `doc_update` | Update document title, body, or URL |
 | `doc_delete` | Delete an ingested document |
+
+Since NEXUS-APP 0.19.1 `doc_delete` needs `project_admin` or `project_editor`; other callers get 403. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).

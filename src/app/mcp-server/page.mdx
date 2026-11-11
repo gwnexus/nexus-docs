@@ -8,6 +8,7 @@ export const sections = [
   { title: 'Installation', id: 'installation' },
   { title: 'Architecture', id: 'architecture' },
   { title: 'Tool layers', id: 'tool-layers' },
+  { title: 'Permissions on write tools', id: 'permissions-on-write-tools' },
   { title: 'Tool naming convention', id: 'tool-naming-convention' },
   { title: 'Configuration', id: 'configuration' },
   { title: 'Schema version envelope', id: 'schema-version-envelope' },
@@ -125,6 +126,24 @@ The server organizes its 62 tools into four layers:
 | `identity` | Show current user identity |
 | `cost_summary` | Token usage and cost for the current session |
 | `show_plugins` | List loaded Nexus plugins and their status |
+
+## Permissions on write tools
+
+Since NEXUS-APP 0.19.1 the backend applies the project role matrix to these MCP tools, the same rules as in the dashboard. Calls that were allowed before now answer 403. Platform admins pass every project role check.
+
+| Tools | Required role |
+| --- | --- |
+| `rv_create`, `rv_decide` | platform admin |
+| `adr_create`, `adr_submit` | `project_admin` or `project_editor` |
+| `adr_decide` | `project_admin` or `project_reviewer` |
+| `task_delete`, `doc_delete`, import (`nexus import`) | `project_admin` or `project_editor` |
+| `vl_create` | access to the recipient project and, when set, to the sender project |
+
+**Review reads:** `rv_get`, `rv_list` and `rv_comment` only cover reviews the caller authored, reviews or takes part in, or whose skill or agent file the caller can read. Other reviews answer 404 or are left out of the list.
+
+`dispatch_create` answers 404 `PROJECT_NOT_FOUND` when the sender or target project does not exist (for example a project that only exists on another hub, or one deleted meanwhile).
+
+For the role checks on skills and directives, see "Role checks (NEXUS-APP 0.16.0)" under [Changes in v0.10.14 to v0.10.16](#changes-in-v0-10-14-to-v0-10-16).
 
 ## Tool naming convention
 

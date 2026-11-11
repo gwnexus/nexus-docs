@@ -4,6 +4,7 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.19.1', id: 'v0-19-1' },
   { title: 'v0.19.0', id: 'v0-19-0' },
   { title: 'v0.18.4', id: 'v0-18-4' },
   { title: 'v0.18.1 - v0.18.3', id: 'v0-18-1-v0-18-3' },
@@ -42,6 +43,31 @@ export const sections = [
 # Changelog
 
 Full release history for the Nexus platform and its tools. {{ className: 'lead' }}
+
+---
+
+## v0.19.1
+
+**Security and performance patch.** Released 2026-11-11. No new tool versions needed. Agents may see 403 on MCP calls that were allowed before; see [Permissions on write tools](/mcp-server#permissions-on-write-tools).
+
+### Security
+
+- **MCP permissions:** `rv_create` and `rv_decide` need a platform admin; `rv_get`, `rv_list` and `rv_comment` only return reviews the caller takes part in or whose skill or agent file the caller can read. `adr_create` and `adr_submit` need `project_admin` or `project_editor`, `adr_decide` `project_admin` or `project_reviewer`. `task_delete`, `doc_delete` and import need `project_admin` or `project_editor`; `vl_create` checks access to the sender project.
+- **ADR comments** need access to the project.
+- **Login redirect:** all login paths accept same-origin redirect paths only.
+- **AI Hardware** pages and their node and compose read routes are limited to platform admins and selfhosted licenses, as changes already were; the navigation item is hidden otherwise. 0.20.0 adds a per-user flag. See [nexus-link](/nexus-link).
+- **`/api/system/version`** no longer returns `branch` and `node_version`; `/api/rtk/preview` needs a signed-in user. The dashboard preflight route and project Devbox templates need project access.
+
+### Fixed
+
+- **Dashboard counters** show the real session and decision counts again.
+- **Project links:** each row names the direction and the creating project; one-way links show only in the source project's links view; a manager of either project can remove a link. See [Project links](/architecture#project-links).
+- **`dispatch_create`** answers 404 `PROJECT_NOT_FOUND` instead of 500 for an unknown sender or target project.
+- Session entry and scan report embeddings are no longer lost; the notification bell updates after "mark all read".
+
+### Performance
+
+- Faster MCP authentication, parallel `kb_search` and `session_append`, fewer user lookups on dashboard pages, a smaller dashboard bundle.
 
 ---
 

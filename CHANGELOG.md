@@ -6,6 +6,7 @@ All changes to the **nexus-docs site** itself (content, structure, navigation, b
 
 ## 2026-11-11
 
+- NEXUS-APP 0.19.1: `mcp-server` gets a "Permissions on write tools" section; role notes in `adrs`, `knowledge-base`, `cli` (import); AI Hardware access in `nexus-link`; one-way link visibility in `architecture`; `/api/system/version` in `api`; changelog v0.19.1
 - nexus-cli 0.39.7: fenced Dispatch notices (`dispatch`, `dispatch/manager`), `RETIRED` scripts (`workspaces`), version notes and changelog up to 0.39.7, recommended version in `cli`, `dispatch/engines`, `roadmap`
 
 ## 2026-11-10

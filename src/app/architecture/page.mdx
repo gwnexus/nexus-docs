@@ -98,3 +98,5 @@ Customer-level access is managed through `customer_memberships`, providing an ad
 Projects can be linked for cross-project coordination. When projects are linked, Dispatches can be forwarded between them, and agents can reference entities across project boundaries.
 
 Cross-project Dispatches require an active `project_link` between source and target projects.
+
+A link is either bidirectional or one-way (outbound from the project that created it). Since NEXUS-APP 0.19.1 each row in a project's links view names the direction and the project that created the link; one-way links show only in the source project's links view. A manager of either linked project can remove a link. Dispatch routing still accepts a link in either direction.
