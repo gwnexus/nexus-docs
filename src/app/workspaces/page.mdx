@@ -179,6 +179,7 @@ Since NEXUS-APP 0.18.0:
 
 - The ops scripts fail again: `check-local.sh` exits 1 when a required tool is missing, `validate.sh` checks `package.json`, `devbox.json` and every devbox script (`bash -n`) and exits 1 on problems, and `sec-scan.sh` runs gitleaks (a pattern scan of tracked files as fallback) and exits 1 on findings.
 - Forks created before 0.17.0 still store comment-only `init/os_<os>/override.sh` placeholders; `nexus pull` no longer delivers them and removes the local copies. Overrides with real commands stay.
+- Since nexus-cli 0.39.7, `nexus status` shows such leftovers (comment-only override placeholders and the tmux launchers `dbx_tmux_2w.sh` / `dbx_tmux_3w.sh` of older workspaces) as `RETIRED` with a `git rm` hint instead of `NEW`. They are not pending changes: `nexus status` and `nexus diff` exit 0 for them, and `nexus push` skips them.
 
 Run `nexus pull` to get the new scripts.
 

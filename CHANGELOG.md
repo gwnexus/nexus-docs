@@ -4,6 +4,10 @@ All changes to the **nexus-docs site** itself (content, structure, navigation, b
 
 ---
 
+## 2026-11-11
+
+- nexus-cli 0.39.7: fenced Dispatch notices (`dispatch`, `dispatch/manager`), `RETIRED` scripts (`workspaces`), version notes and changelog up to 0.39.7, recommended version in `cli`, `dispatch/engines`, `roadmap`
+
 ## 2026-11-10
 
 - New pages for NEXUS-APP 0.19.0: `dispatch/engines`, `dispatch/manager`, `dispatch/control`, `project-wizard`; navigation gets a Dispatch group and a Project Wizard entry

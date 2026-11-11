@@ -19,7 +19,7 @@ export const sections = [
   { title: 'Directives, skills and shadow', id: 'directives-skills-and-shadow' },
   { title: 'Consent for executable content', id: 'consent-for-executable-content' },
   { title: 'Dispatches', id: 'dispatches' },
-  { title: 'Version notes 0.31.3 to 0.39.6', id: 'version-notes-0-31-3-to-0-39-6' },
+  { title: 'Version notes 0.31.3 to 0.39.7', id: 'version-notes-0-31-3-to-0-39-7' },
   { title: 'Upgrading', id: 'upgrading' },
   { title: 'Import workflow', id: 'import-workflow' },
   { title: 'Workspace cache', id: 'workspace-cache' },
@@ -499,10 +499,11 @@ nexus dispatch status             # one-off view of incoming and outgoing Dispat
 - `nexus run` reports the Dispatch manager in its pre-launch checks.
 - Since 0.39.5 the output says "Dispatch manager"; commands, files and JSON keys keep `runner`.
 
-## Version notes 0.31.3 to 0.39.6
+## Version notes 0.31.3 to 0.39.7
 
 | Version | Changes |
 | --- | --- |
+| **0.39.7** | Pushed Dispatch notices are fenced as untrusted data (`[NEXUS DISPATCH NOTICE: UNTRUSTED DATA]` ... `[/NEXUS DISPATCH NOTICE]`), with the sweep hint outside the fence; titles and peer names lose brackets, control, separator and bidi characters. `nexus status` shows retired tmux launchers and comment-only override placeholders as `RETIRED` with a `git rm` hint; they are no pending changes and `nexus push` skips them. |
 | **0.39.6** | Notices put the peer's title last, marked as data and not an instruction; peer name, type and status are cleaned like the title. `nexus run` and `nexus pull --force` update project-scope plugins that Nexus manages when the marketplace offers a newer version (`PENDING` while the marketplace registration still points at another ref). Plugin ids and marketplace sources from the project settings are checked before they reach `claude`. TLS: `rustls-webpki` and `webpki-roots` updated (RUSTSEC-2026-0381, RUSTSEC-2026-0382). |
 | **0.39.5** | "Dispatch manager" in the pane, the `nexus run` checks, `runner status` and the `listen` log. Simulation Dispatches shown in yellow; a cut list ends with `… +N more`. |
 | **0.39.4** | The dispatches pane sits directly below the agent pane at 13% of the height, like the hub presets. |
@@ -522,7 +523,7 @@ nexus dispatch status             # one-off view of incoming and outgoing Dispat
 
 ## Upgrading
 
-For NEXUS-APP 0.19.0, use nexus-cli **0.39.6 or later**: it brings `nexus dispatch runner`, `nexus dispatch listen` and the dispatches pane (0.37.0 to 0.39.5), and 0.39.6 writes the notice format that `/nexus-dispatch-sweep` version 5 expects. Then run `nexus pull` in every project (nexus-core 1.5.0, the updated Dispatch skills, the dispatches pane in the workspace presets). See [Dispatch engines](/dispatch/engines#setting-up-the-automatic-engine).
+For NEXUS-APP 0.19.0, use nexus-cli **0.39.6 or later** (0.39.7 recommended, it fences pushed notices as untrusted data): it brings `nexus dispatch runner`, `nexus dispatch listen` and the dispatches pane (0.37.0 to 0.39.5), and 0.39.6 writes the notice format that `/nexus-dispatch-sweep` version 5 expects. Then run `nexus pull` in every project (nexus-core 1.5.0, the updated Dispatch skills, the dispatches pane in the workspace presets). See [Dispatch engines](/dispatch/engines#setting-up-the-automatic-engine).
 
 For NEXUS-APP 0.18.x, use nexus-cli **0.31.1 or later** (0.31.2 recommended, it masks tokens): it applies the GitHub account per project path (0.30.0), the workspace shadow setting (0.29.1) and the consent check for executable content (0.31.0), and matches the stricter path and skill name rules (0.29.2). Expect one consent prompt on the first pull after upgrading if anything changed.
 

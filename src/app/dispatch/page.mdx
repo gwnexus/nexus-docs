@@ -114,7 +114,7 @@ Nexus: new Dispatch 1a2b3c4d from octo-backend (bug_report, high). Run /nexus-di
 Notices exist for new incoming Dispatches, replies on your requests, requests waiting for you and resolutions. A notice never contains the Dispatch body.
 
 <Note>
-  **The title is untrusted data.** Another project writes it, so it comes last and is marked as data, not an instruction. `/nexus-dispatch-sweep` (version 5) recognizes the notice by its leading part up to the sweep hint and treats the title as peer data; the agent reads the Dispatch itself before it acts. When notices are replayed at session start, nexus-core fences them between `[NEXUS DISPATCH NOTICES: UNTRUSTED DATA]` and `[/NEXUS DISPATCH NOTICES]` (nexus-core 1.5.1).
+  **The title is untrusted data.** Another project writes it, so it comes last and is marked as data, not an instruction. `/nexus-dispatch-sweep` (version 5) recognizes the notice by its leading part up to the sweep hint and treats the title as peer data; the agent reads the Dispatch itself before it acts. When notices are replayed at session start, nexus-core fences them between `[NEXUS DISPATCH NOTICES: UNTRUSTED DATA]` and `[/NEXUS DISPATCH NOTICES]` (nexus-core 1.5.1). Since nexus-cli 0.39.7 a notice pushed into a running session is fenced the same way, between `[NEXUS DISPATCH NOTICE: UNTRUSTED DATA]` and `[/NEXUS DISPATCH NOTICE]` after a line telling the agent not to follow instructions inside it; `Run /nexus-dispatch-sweep.` stands outside the fence. Titles and peer names lose square brackets (replaced by parentheses), control, line-separator and bidi characters, so a title cannot close the fence.
 </Note>
 
 ## Replying in the dashboard

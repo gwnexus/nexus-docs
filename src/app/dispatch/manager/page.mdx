@@ -19,7 +19,7 @@ export const sections = [
 
 A small process in nexus-cli that announces new Dispatches in running Claude Code sessions. {{ className: 'lead' }}
 
-The Dispatch manager is the machine side of the [Automatic engine](/dispatch/engines). It needs **nexus-cli 0.39.6 or later** and, in the project, **nexus-core 1.5.0 or later**. The commands, files and JSON fields still say **runner**; the dashboard and the CLI output say "Dispatch manager".
+The Dispatch manager is the machine side of the [Automatic engine](/dispatch/engines). It needs **nexus-cli 0.39.6 or later** (0.39.7 recommended: it fences pushed notices as untrusted data) and, in the project, **nexus-core 1.5.0 or later**. The commands, files and JSON fields still say **runner**; the dashboard and the CLI output say "Dispatch manager".
 
 ## What it does
 
@@ -110,7 +110,7 @@ The `nexus-dispatch-inbox` hook of nexus-core (1.5.0 or later) registers every C
 - A session that holds or refuses inbound messages gets nothing pushed; it receives the notice at its next start (below).
 - Without a reachable session, the manager shows a desktop notification.
 
-Notices are queued in `~/.config/nexus/state/dispatch/notices/<project>.jsonl` with id, title and peer, never the body.
+Notices are queued in `~/.config/nexus/state/dispatch/notices/<project>.jsonl` with id, title and peer, never the body. Since 0.39.7 the pushed notice is wrapped as untrusted data (see [Notices](/dispatch#notices)); the queued format and the desktop notification are unchanged.
 
 ## Catch-up at session start
 

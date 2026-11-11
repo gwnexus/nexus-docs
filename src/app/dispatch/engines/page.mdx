@@ -25,7 +25,7 @@ Since v0.19.0, every project picks one of two engines: in the [project wizard](/
 | New Dispatch | The Dispatch manager on the developer machine posts a short notice into the running Claude Code session. | Waits until an agent sweeps, or someone answers in the dashboard. |
 | Who acts | The agent in the session, with `/nexus-dispatch-sweep`. | The agent at its next session start (or when asked), with `/nexus-dispatch-sweep`. |
 | Latency | About 30 seconds while a session runs. | Until the next sweep. |
-| Needs on the machine | nexus-cli 0.39.6 or later, a registered [Dispatch manager](/dispatch/manager), nexus-core 1.5.0 or later in the project. | Nothing extra. |
+| Needs on the machine | nexus-cli 0.39.6 or later (0.39.7 recommended), a registered [Dispatch manager](/dispatch/manager), nexus-core 1.5.0 or later in the project. | Nothing extra. |
 | Runtimes | Claude Code. OpenCode delivery is planned for v0.20.0. | Every runtime. |
 | Default | For new projects (wizard and Quick Setup). | For existing projects; projects without the setting keep working this way. |
 
@@ -78,7 +78,7 @@ nexus settings set policy.dispatch_automation=notify
 3. **Every developer, once per machine:**
 
    ```bash
-   nexus upgrade                     # 0.39.6 or later
+   nexus upgrade                     # 0.39.6 or later, 0.39.7 recommended
    nexus dispatch runner probe       # does the installed Claude Code take notices?
    nexus dispatch runner register    # binds the linked project
    ```
