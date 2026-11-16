@@ -9,6 +9,7 @@ export const sections = [
   { title: 'Built-in skills', id: 'built-in-skills' },
   { title: 'Mandatory skills', id: 'mandatory-skills' },
   { title: 'Dispatch skills (v0.19.0)', id: 'dispatch-skills-v0-19-0' },
+  { title: 'Skill updates (v0.20.0)', id: 'skill-updates-v0-20-0' },
   { title: 'Descriptions', id: 'descriptions' },
   { title: 'Run only on request', id: 'run-only-on-request' },
   { title: 'Skill resources', id: 'skill-resources' },
@@ -95,6 +96,16 @@ Before v0.19.0 the wizard listed only skills in status active or draft, so the c
 | `nx-dispatch-create` | 2 | Says that targets on the Automatic engine are notified automatically and that the title is the only content a notice carries. |
 
 Because the title is the only content a notice carries and is shown to the receiving agent as untrusted data, write titles that state the request plainly and put everything else in the body.
+
+## Skill updates (v0.20.0)
+
+NEXUS-APP 0.20.0 brings new versions of five core skills; projects get them with `nexus pull`.
+
+| Skill | Migration | Change |
+| --- | --- | --- |
+| `nx-dispatch-sweep` | 0311 | Describes runner notices without titles, the default from nexus-cli 0.42.0: a notice is one plain line (id, peer, type, priority, status). The peer-written title and its untrusted-data fence appear only when the receiving manager has titles switched on (`nexus dispatch runner titles on`). The sweep reads title and body from the Dispatch. |
+| `nx-dispatch-create` | 0311 | Same notice description: a target on the Automatic engine sees the title only in the sweep, unless it switched titles on. |
+| `nx-adr-draft`, `nx-sync-memory`, `nx-coderabbit-triage` | 0312 | Handle a 403 from `adr_create` or `adr_submit`: name the missing project role (`project_admin` or `project_editor`), keep the ADR text in the conversation and continue instead of failing the run. See [Permissions on write tools](/mcp-server#permissions-on-write-tools). |
 
 ## Descriptions
 

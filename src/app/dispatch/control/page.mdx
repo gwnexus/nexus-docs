@@ -21,9 +21,11 @@ Since v0.19.0. For the concepts behind it see [Dispatch engines](/dispatch/engin
 
 ## Tile and page
 
-The project page has a **Dispatch Control** tile. It shows the engine and its state (Indirect, Automatic with the mode as an icon, paused, or off platform-wide) and how many Dispatch managers are online. It opens the page `/dashboard/projects/<id>/dispatch-control`.
+Since 0.20.0 the project page has one **Dispatch** card, engine and Dispatch managers included, instead of the separate Dispatch and Dispatch Control tiles. It shows the engine and its state (Indirect, Automatic with the mode as an icon, paused, or off platform-wide) and how many Dispatch managers are online, and opens the page `/dashboard/projects/<id>/dispatch-control`.
 
-The mode (notify, attended, autonomous, off) is shown as a small icon with a tooltip. In v0.19 only notify is available.
+When Dispatch cannot work, the card keeps its normal style and shows a status pill (**Setup required**, **Blocked** or **Unavailable**). The pill opens a drawer with each cause and its fix; the Dispatch inbox and the simulator show the same cause as a notice.
+
+The mode (notify, attended, autonomous, off) is shown as a small icon with a tooltip. Only notify is available.
 
 ## Tabs
 
@@ -57,7 +59,7 @@ Other ways to stop delivery:
 
 ## Simulating a Dispatch
 
-The project's **Dispatch** page has a **Simulate a Dispatch** panel for project managers. It sends a real test Dispatch and shows live whether delivery works:
+The **Dispatch Simulator** is its own page for project managers (since 0.20.0, `/dashboard/projects/<id>/dispatches/simulate`, with a reworked form; before, a panel on the Dispatch page). It sends a real test Dispatch and shows live whether delivery works:
 
 1. Choose the direction: **incoming** (from a linked project to this one) or **outgoing** (from this project to a linked one), and the linked project.
 2. Choose type, priority and blocking; optionally an own title and a Markdown message. The title always starts with `[Simulation]`, and a footer marks the message as simulated.

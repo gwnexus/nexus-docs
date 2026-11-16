@@ -4,6 +4,8 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.20.0', id: 'v0-20-0' },
+  { title: 'v0.19.2', id: 'v0-19-2' },
   { title: 'v0.19.1', id: 'v0-19-1' },
   { title: 'v0.19.0', id: 'v0-19-0' },
   { title: 'v0.18.4', id: 'v0-18-4' },
@@ -14,6 +16,7 @@ export const sections = [
   { title: 'v0.16.x', id: 'v0-16-x' },
   { title: 'v0.15.0', id: 'v0-15-0' },
   { title: 'v0.14.x', id: 'v0-14-x' },
+  { title: 'nexus-cli v0.39.8 - v0.42.0', id: 'nexus-cli-v0-39-8-v0-42-0' },
   { title: 'nexus-cli v0.31.3 - v0.39.7', id: 'nexus-cli-v0-31-3-v0-39-7' },
   { title: 'nexus-core v1.3.3 - v1.5.2', id: 'nexus-core-v1-3-3-v1-5-2' },
   { title: 'nexus-cli v0.28.15 - v0.31.2', id: 'nexus-cli-v0-28-15-v0-31-2' },
@@ -43,6 +46,70 @@ export const sections = [
 # Changelog
 
 Full release history for the Nexus platform and its tools. {{ className: 'lead' }}
+
+---
+
+## v0.20.0
+
+**Customer templates, comment threads, calmer project and customer pages, and stricter AI processing for Strictly Confidential content.** Released 2026-11-14. Full list: the `[0.20.0]` section of the NEXUS-APP `CHANGELOG.md` (tag `v0.20.0`). Use nexus-cli 0.42.0, then `nexus pull` in every project and restart the Dispatch listener or the dispatches pane.
+
+<Note>
+  **Not part of 0.20.0:** the AI Model Gateway and Automatic Dispatch delivery for OpenCode are planned for a later 0.20.x update and not yet available to users. Availability will be announced after provider-key verification and release checks are complete. The self-hosted distribution is planned after MVP validation and not available for customer deployment.
+</Note>
+
+### Security
+
+- **MCP write tools follow the project role matrix:** `task_create`, `task_update` and `task_note` need `tasks.manage`; `doc_ingest` and `doc_update` need `ingest.create`; `doc_classify` needs `ingest.classify`; `session_create` needs `sessions.append_own`; `vl_create` and `dispatch_create` need `letters.create` in the sender project. Viewers and reviewers now get 403. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).
+- **Customers:** `GET /api/customers` returns only the caller's own customers for non-admins.
+- **Preflight** responses list MCP env variable names as `environment_keys` instead of their values; plugin preflight redacts `headers` (`header_keys`) and user info and query values of MCP server URLs. See [REST API](/api).
+- **AI Hardware** is enabled per user with the feature flag `ai_hardware` ("AI Hardware (BYOHW)", formerly `llm_bridge`); changing nodes still needs a selfhosted license. See [nexus-link](/nexus-link) and [Feature flags](/feature-flags).
+- **Sentry developer tool:** host limited to `sentry.io` and `*.sentry.io`; a self-hosted Sentry must be added by the operator in `SENTRY_MCP_ALLOWED_HOSTS`. See [Developer tools](/project-wizard#developer-tools).
+- **Claude Code hooks (nexus-core 1.5.2):** a token is paired only with an operator-approved API URL (`NEXUS_API_URL`, the origin of the global `~/.config/nexus/config.toml`, or `NEXUS_TRUSTED_API_URLS`). See [Upgrading](/cli#upgrading).
+- **Env read guard:** the Claude Code Experience denies the secret env files by name instead of `.env.*`, so templates such as `.env.example` become readable; projects get the rules with the next `nexus pull`.
+- **Strictly Confidential** keeps content off external AI: local embeddings (`LOCAL_EMBEDDING_URL`) or keyword-only search, no OpenAI embeddings, no AWS Textract. **Local OCR** for classified documents through `LOCAL_VISION_URL` (PDF, PNG, JPEG); without it, jobs end as skipped. See [External AI processing](/confidentiality#external-ai-processing).
+- The Taskmaster AI MCP server is pinned to `task-master-ai@0.43.1`.
+
+### Added
+
+- **Customer templates (ADR-0139):** platform admins mark a customer as template and create customers from it with Copy customer, with selected projects, their setup groups and links; never contact, billing, members or history. Copies are never classified lower than the source. Copy project can target another customer.
+- **ACME Inc. sample customer** with three linked sample projects (Customer Portal, Fleet CLI, Infrastructure), created or restored from the customers and projects pages by platform admins.
+- **Comment threads on customers and projects:** "Allow comments" in Edit customer and the project wizard; replies, upvotes, author edits with history, @mentions with notifications, resolve and reopen; moderation (hide, lock, restrict users) by platform owners and admins; per-user comment permission. Customer descriptions in Markdown replace Notes.
+- **ADR governance:** a fixed review row with transitions in a side drawer; no submit or accept while a newer open ADR supersedes the record; "Confirm supersession and close" (`adr_decide` with `superseded`, needs `decisions.accept`); no votes on the own ADR. See [ADRs](/adrs#supersession).
+- **Project links:** a one-way link can be visible to the linked project (`visible_to_target`). See [Project links](/architecture#project-links).
+- **Dashboard My Work** (pending reviews, open tasks); user management with search, filters and sorting; **Developer tools** in the project wizard (Sentry MCP, read-only).
+- **Dispatch area:** one Dispatch card with a status pill and a drawer of causes and fixes; the Dispatch Simulator is its own page. See [Dispatch Control](/dispatch/control).
+
+### Changed
+
+- **Dispatch notices without titles** are the default from nexus-cli 0.42.0; `nexus dispatch runner titles on` brings the title back. The core skills `nx-dispatch-sweep` and `nx-dispatch-create` (migration 0311) and `nx-adr-draft`, `nx-sync-memory` and `nx-coderabbit-triage` (migration 0312, role errors on ADR tools) have new versions. See [Notices](/dispatch#notices) and [Skill updates](/skills#skill-updates-v0-20-0).
+- **Dispatch delivery modes:** Automatic (recommended, default for new projects) and Indirect (fallback, for example for OpenCode until Automatic delivery reaches it). See [Dispatch engines](/dispatch/engines).
+- **Plugin pages** list only released runtime plugins: compaction-plus 1.8.7, cost-control 1.2.6, headroom-intercept 0.5.23, session-guard 1.2.4, routing-guard 1.1.1, attribution-headers 1.0.0. See [Plugins](/plugins).
+- **Self-hosting wording:** the Kubernetes/RKE2 + Helm distribution is planned after MVP validation, not available for customer deployment, with no announced date; the commercial model for self-hosting is not final. See [Roadmap](/roadmap).
+- Calmer project and customer pages: one meta panel, "Jump to" links, uniform section headers, Project and Customer Intelligence and Management sections.
+
+### Fixed
+
+- ADR authors could vote on their own ADR; such votes are now rejected and earlier self votes were deleted.
+- The Project Intelligence cache hit rate no longer exceeds 100%.
+- Concurrent comment edits and superseded closes get a 409 instead of losing text.
+
+### Removed
+
+- The alpha plugins vault-shield, knowledge-graph, llm-bridge and ci-bridge (never built).
+- The feature flags `nexus_encryption`, `knowledge_graph` and `ci_bridge`; the admin flag API rejects names outside the catalogue.
+
+### Upgrade
+
+- Migrations `0303` to `0312` run with the release. `0310` deletes self votes on ADRs (not reversible); `0303` renames `llm_bridge` grants to `ai_hardware`; `0306` keeps existing one-way links private.
+- Agents with a viewer or reviewer role get 403 on the write tools listed under Security.
+- Projects at Strictly Confidential no longer use OpenAI embeddings or AWS Textract; without `LOCAL_EMBEDDING_URL` new content is not embedded and search uses keywords. Existing embeddings are kept.
+- A setup that pins `api_url` in `.nexus/config.toml` but keeps the token elsewhere must set `NEXUS_TRUSTED_API_URLS`, use the same host as the global config, or run `nexus link` / `nexus pull`.
+
+---
+
+## v0.19.2
+
+**Patch for shadowed projects.** Released 2026-11-11. Shadowed projects (shadow `ai` or `nexus`) always get the shadow-safe devbox files, also when the workspace is git-excluded; the AI and Nexus tooling loads from the git-excluded `scripts/devbox/init/local.sh`. Under shadow `nexus`, devbox meta values that name Nexus fall back to neutral defaults. No migration; needs nexus-cli 0.19.0 or later.
 
 ---
 
@@ -293,9 +360,18 @@ Full release history for the Nexus platform and its tools. {{ className: 'lead' 
 
 ---
 
+## nexus-cli v0.39.8 - v0.42.0
+
+**CLI side of NEXUS-APP 0.20.0.** See the [CLI reference](/cli#version-notes-0-31-3-to-0-42-0) for every version.
+
+- **v0.42.0:** Dispatch notices without free text (id, peer, type, priority, status as one plain line); `nexus dispatch runner titles on` quotes the title again, fenced as untrusted data.
+- **v0.41.0:** security hardening of agent-file paths, `.git`, local plugins, env variables, git hooks, tokens in tracked MCP configs and gateway URLs; plugin variable checks and a Sentry live check in `nexus preflight`; `nexus man`.
+- **v0.40.0 to v0.40.3:** one Dispatch manager per hub; `nexus reload`; notices no longer echo the project's own actions and name the real author.
+- **v0.39.8:** a git-tracked `.nexus/config.toml` with an unapproved `api_url` needs a confirmation before the first API request.
+
 ## nexus-cli v0.31.3 - v0.39.7
 
-**CLI side of NEXUS-APP 0.18.4 and 0.19.0.** See the [CLI reference](/cli#version-notes-0-31-3-to-0-39-7) for every version.
+**CLI side of NEXUS-APP 0.18.4 and 0.19.0.** See the [CLI reference](/cli#version-notes-0-31-3-to-0-42-0) for every version.
 
 - **v0.39.7:** pushed Dispatch notices fenced as untrusted data; retired devbox scripts and comment-only override placeholders shown as `RETIRED` instead of pending changes.
 - **v0.39.0 to v0.39.6:** the Dispatch manager (`nexus dispatch runner register|status|pause|resume|revoke|probe`, `nexus dispatch listen`), run by the dispatches pane; `nexus run` opens the pane when dispatch automation is on (`--no-dispatch-pane`); the pane names the manager, shows `elsewhere`, its last error and simulation rows; notice format with the title last, marked as data (0.39.6); managed plugin updates in `nexus run` and `nexus pull --force` (0.39.6). See [Dispatch Manager](/dispatch/manager).

@@ -32,9 +32,9 @@ Tokens are SHA-256 hashed at rest and resolve to a user identity with tenant and
 Nexus uses a dual-layer RBAC model:
 
 1. **Platform-level roles** via `app_metadata.platform_role` (`platform_owner`, `platform_admin`)
-2. **Project-scoped roles** via `project_memberships` (`owner`, `admin`, `developer`, `viewer`)
+2. **Project-scoped roles** via `project_memberships` (`project_admin`, `project_editor`, `project_reviewer`, `project_viewer`); each role maps to a fixed set of permissions such as `tasks.manage` or `decisions.accept`. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).
 
-Customer-level access is managed through `customer_memberships`.
+Customer-level access is managed through `customer_memberships`. Since 0.20.0 `GET /api/customers` returns only the caller's own customers for users who are not platform admins.
 
 ## Base URL
 
@@ -59,7 +59,14 @@ https://nexus.gatewarden.eu/api
 | `/api/confidentiality-gate` | POST | Evaluate a gated action against project confidentiality |
 | `/api/siem/events` | GET | SIEM export of audit events (NDJSON / CEF, `nxs_siem_*` token) |
 | `/api/admin/audit-events/export` | GET | Admin download of audit events |
+| `/api/customers` | GET | Customers of the caller; all customers for platform admins (0.20.0) |
+| `/api/projects/:projectId/comments`, `/api/customers/:id/comments` | GET, POST, PATCH | Comment thread of a project or customer: read, write, moderate (0.20.0) |
+| `/api/mcp/projects/:id/preflight` | GET | Project preflight for the CLI: `checks`, `config_checks`, `all_required_ok`, `mcp_servers`, `dev_tools`, `plugins`, `headroom_enabled`; `?env_keys=` takes variable names only (0.20.0) |
 | `/api/system/version` | GET | Public build identity: `environment`, `version`, `commit`, `build_time` (since 0.19.1 without `branch` and `node_version`) |
+
+### Preflight responses (0.20.0)
+
+Preflight responses (session and PAT endpoints) no longer return the `environment` or `env` values of MCP server configs; they list the variable names as `environment_keys`. Plugin preflight also redacts `headers` values (listed as `header_keys`) and the user info and query values of an MCP server `url`.
 
 ## API reference
 

@@ -100,3 +100,5 @@ Projects can be linked for cross-project coordination. When projects are linked,
 Cross-project Dispatches require an active `project_link` between source and target projects.
 
 A link is either bidirectional or one-way (outbound from the project that created it). Since NEXUS-APP 0.19.1 each row in a project's links view names the direction and the project that created the link; one-way links show only in the source project's links view. A manager of either linked project can remove a link. Dispatch routing still accepts a link in either direction.
+
+Since NEXUS-APP 0.20.0 a one-way link can be made **visible to the linked project** ("Visible to the linked project" in the link form, stored as `visible_to_target`). Members of the linked project then see it as inbound only. The project that created a link can switch it between bidirectional, one-way visible and one-way private in the links list. Existing one-way links stay private.

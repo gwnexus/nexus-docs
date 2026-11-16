@@ -6,6 +6,7 @@ export const metadata = {
 export const sections = [
   { title: 'Quick Setup and Full Setup', id: 'quick-setup-and-full-setup' },
   { title: 'Steps', id: 'steps' },
+  { title: 'Developer tools', id: 'developer-tools' },
   { title: 'Dispatch letters', id: 'dispatch-letters' },
   { title: 'Mandatory skills', id: 'mandatory-skills' },
   { title: 'Automatic directive for linked projects', id: 'automatic-directive-for-linked-projects' },
@@ -36,7 +37,7 @@ Every setting can be changed later on the project's edit page, which always uses
 | 1 | **Basics** | Project, Description, Languages, Repos & contacts, Security |
 | 2 | **Scope** | Schedule, Budget, Offer & SOW, Documents, PDF export (status, schedule and budget plus start documents; Timeline and Documents were separate steps before v0.19.0) |
 | 3 | **Agent Setup** | Agent type, Agent ID & skills or Actors, AI tool, Models, Config files, Git, Workspace |
-| 4 | **Plugins** | Essentials, Cost control, Add-ons, Codebase, Local models |
+| 4 | **Plugins** | Essentials, Cost control, Add-ons, Developer tools (0.20.0), Codebase, Local models |
 | 5 | **Members** | Team members and project roles |
 | 6 | **Confirm** | Summary of all settings, with jumps to each block |
 
@@ -47,6 +48,18 @@ Notes on the Agent Setup step:
 - **Models** shows the model execution (Provider, Gateway, Claude Max).
 
 Plugins are listed as rows with their description. Mandatory plugins are pre-selected and show a warning when deselected.
+
+**Allow comments** (0.20.0) opens a comment thread on the project page for its members. Platform owners and admins can always comment and moderate.
+
+## Developer tools
+
+Since 0.20.0 the Plugins step has a **Developer tools** section for third-party MCP servers used in engineering work; the project page shows them as "Developer Tools". The first entry is **Sentry**, through the official `@sentry/mcp-server` pinned to 0.42.0:
+
+- **Read-only:** only the `inspect` skill, limited to the configured organization and optionally one project and region.
+- **Credentials stay local:** the project stores only `sentry_config` (slugs and host). Each developer sets `SENTRY_ACCESS_TOKEN` in their own environment; the export carries only the variable name.
+- **No model traffic, no telemetry:** the server runs with blank LLM provider keys and a blank `SENTRY_DSN`.
+- **Allowed hosts:** `sentry.io` and its region hosts (`*.sentry.io`). A self-hosted Sentry must be added by the instance operator in `SENTRY_MCP_ALLOWED_HOSTS` (comma separated, `host[:port]` or `*.domain`); project create and update reject any other host with 400, and the preflight reports a stored one as `invalid`.
+- **Checks:** the project preflight reports a missing token or organization and the token scopes Sentry needs. nexus-cli 0.41.0 checks locally that the token reaches the organization (`nexus preflight`, `--no-live` skips it).
 
 ## Dispatch letters
 

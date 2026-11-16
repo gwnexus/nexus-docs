@@ -124,7 +124,7 @@ While the switch is off, nothing is embedded, `hybrid` returns keyword results w
 
 When the switch is on, Nexus sends the text of these items to OpenAI as they are written: session entries, ADRs, documents (including text extracted from uploads), ingest items and scan reports. Semantic and hybrid search queries are sent as well.
 
-Projects whose [confidentiality level](/confidentiality) blocks external APIs never send content or queries to OpenAI (ADR-0047). They use the local embedding model when the server has one configured; without one, their content is not embedded, `semantic` answers 400 and `hybrid` returns keyword results only.
+Projects whose [confidentiality level](/confidentiality) blocks external APIs never send content or queries to OpenAI (ADR-0047); since 0.20.0 this includes Strictly Confidential (see [External AI processing](/confidentiality#external-ai-processing)). They use the local embedding model when the server has one configured; without one, their content is not embedded, `semantic` answers 400 and `hybrid` returns keyword results only.
 
 If the embedding provider fails during a search, `semantic` answers a JSON 503 with a reference and `hybrid` returns the keyword results with a `warning` (v0.18.1).
 

@@ -7,6 +7,7 @@ export const sections = [
   { title: 'How it works', id: 'how-it-works' },
   { title: 'Policy outcomes', id: 'policy-outcomes' },
   { title: 'Severity levels', id: 'severity-levels' },
+  { title: 'External AI processing', id: 'external-ai-processing' },
   { title: 'Override and audit trail', id: 'override-and-audit-trail' },
   { title: 'Evaluation endpoint', id: 'evaluation-endpoint' },
 ]
@@ -40,10 +41,29 @@ Every gated action is evaluated by a server-side policy engine before it runs. T
 
 ## Severity levels
 
-Confidentiality severity is a per-project attribute. Gating decisions are keyed to the severity band. Medium-severity projects (C.2 and C.3) are the primary target of extraction gating: document text extraction via Textract is gated for these projects rather than blocked outright, so a user with authority can override with an audit record. This applies only on servers that have Textract [switched on](/textract#server-switch); since v0.18.3 it is off by default.
+Confidentiality severity is a per-project attribute. Gating decisions are keyed to the severity band. **Confidential** projects (C.2) are the target of extraction gating: document text extraction via Textract is gated rather than blocked outright, so a user with authority can override with an audit record. This applies only on servers that have Textract [switched on](/textract#server-switch); since v0.18.3 it is off by default.
+
+Until 0.19.x, **Strictly Confidential** (C.3) was gated like Confidential. Since 0.20.0 it keeps content off external AI like the classified levels; see [External AI processing](#external-ai-processing).
 
 <Note>
-  Higher-severity classifications continue to fully block external processing at the AI-routing layer. Action gating adds a graduated response for medium-severity projects.
+  Strictly Confidential and every higher classification (VS, GEHEIM, EU levels) fully block external processing. Action gating adds a graduated response for Confidential projects only.
+</Note>
+
+## External AI processing
+
+Since 0.20.0 these levels never send content to an external AI service:
+
+| Level | External embeddings (OpenAI) | AWS Textract | Search |
+| --- | --- | --- | --- |
+| Public, Internal | Allowed where enabled | Allowed where enabled | Keyword, semantic, hybrid |
+| Confidential (C.2) | Allowed where enabled | `warn_and_override` | Keyword, semantic, hybrid |
+| Strictly Confidential (C.3) and all classified levels | Never; a local model where `LOCAL_EMBEDDING_URL` is set | Blocked | Semantic and hybrid with local embeddings; keyword only without them |
+
+- **Embeddings:** without `LOCAL_EMBEDDING_URL`, new content of these projects is not embedded and search falls back to keywords. Embeddings created before 0.20.0 are kept. See [Embeddings on the server](/knowledge-base#embeddings-on-the-server).
+- **Local OCR:** an extraction job that requests local OCR runs the local vision model where `LOCAL_VISION_URL` is set (PDF, PNG and JPEG). Without it, the job ends as skipped with "No local OCR configured" instead of failing. A local OCR request ends by the run's deadline (at most 12 seconds); a job stuck for five minutes is failed.
+
+<Note>
+  **Behaviour change in 0.20.0:** projects whose effective level is Strictly Confidential no longer use OpenAI embeddings or AWS Textract. Operators who want semantic search for them set `LOCAL_EMBEDDING_URL`.
 </Note>
 
 ## Override and audit trail

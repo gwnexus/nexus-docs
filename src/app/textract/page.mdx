@@ -53,8 +53,8 @@ Each document surfaces a status badge indicating where it is in the pipeline. St
 Extraction is a gated action under [Confidentiality Action Gating](/confidentiality).
 
 - For lower-severity projects, extraction is allowed.
-- For medium-severity projects (C.2 and C.3), extraction is gated: it returns `warn_and_override`, and proceeding requires an explicit override that is written to the [audit trail](/audit-siem).
-- Higher-severity classifications block external processing at the AI-routing layer.
+- For Confidential projects (C.2), extraction is gated: it returns `warn_and_override`, and proceeding requires an explicit override that is written to the [audit trail](/audit-siem).
+- For Strictly Confidential (C.3, since 0.20.0) and all classified levels, Textract is blocked. Their documents can be read by a local vision model instead where the operator sets `LOCAL_VISION_URL`; see [External AI processing](/confidentiality#external-ai-processing).
 
 <Note>
   Because Textract is an external AWS service, extraction on classified projects is governed by the same confidentiality principle that blocks external model providers.

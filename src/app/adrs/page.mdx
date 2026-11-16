@@ -36,7 +36,13 @@ draft -> under_review -> accepted / rejected
 | `under_review` | Submitted for team review. Comments can be added via `dc_add`. |
 | `accepted` | The decision is approved and becomes authoritative. |
 | `rejected` | The decision was not approved. Preserved for historical context. |
-| `superseded` | Replaced by a newer ADR. Automatically set when the superseding ADR is accepted. |
+| `superseded` | Replaced by a newer ADR. Automatically set when the superseding ADR is accepted, or set by a reviewer with "Confirm supersession and close" (since 0.20.0, see [Supersession](#supersession)). |
+
+### Governance widget (0.20.0)
+
+On the ADR page, the Governance widget is one row of fixed height: the steps Draft, Under review and Decision, one status line and the actions. Submit, accept and reject (with a rationale) open in a drawer on the right. The confirm button stays locked from the click until the page shows the new state, and every transition is conditional on the expected state: a double click or a concurrent call gets a conflict instead of a second transition. Reject stays available under review.
+
+Authors cannot vote on their own ADR: the API rejects it, the widget explains why, and a database trigger blocks it. Self votes cast before 0.20.0 were deleted.
 
 ## ADR structure
 
@@ -91,6 +97,18 @@ After drafting, submit for review:
 
 When a new ADR replaces an existing one, specify the `supersedes` field during creation. When the new ADR is accepted, the superseded ADR is automatically marked as `superseded`.
 
+Since 0.20.0 an ADR that another **open** ADR supersedes is locked: it can no longer be submitted or accepted, neither in the dashboard nor with `adr_submit` or `adr_decide`, and the widget links the superseding ADR. Its exit is **Confirm supersession and close**: a reviewer closes it as superseded from draft or under review. The closure note goes into the decision text in the same update, plus a comment; if the decision text was edited meanwhile, the close answers 409 instead of overwriting it.
+
+```json
+{
+  "tool": "adr_decide",
+  "adr_id": "...",
+  "decision": "superseded"
+}
+```
+
+The dashboard action is `close_superseded`. Both need `decisions.accept` (`project_admin` or `project_reviewer`).
+
 Use `kb_related` to navigate supersession chains and understand the evolution of decisions.
 
 ## MCP tools
@@ -99,7 +117,7 @@ Use `kb_related` to navigate supersession chains and understand the evolution of
 | --- | --- |
 | `adr_create` | Create a new ADR in draft status |
 | `adr_submit` | Submit a draft ADR for review |
-| `adr_decide` | Accept or reject an ADR under review |
+| `adr_decide` | Accept or reject an ADR under review; `superseded` closes an ADR that an open ADR supersedes (0.20.0) |
 | `dc_add` | Add a comment to an ADR under review |
 | `dc_list` | List comments on an ADR |
 

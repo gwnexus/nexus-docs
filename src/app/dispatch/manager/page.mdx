@@ -19,7 +19,7 @@ export const sections = [
 
 A small process in nexus-cli that announces new Dispatches in running Claude Code sessions. {{ className: 'lead' }}
 
-The Dispatch manager is the machine side of the [Automatic engine](/dispatch/engines). It needs **nexus-cli 0.39.6 or later** (0.39.7 recommended: it fences pushed notices as untrusted data) and, in the project, **nexus-core 1.5.0 or later**. The commands, files and JSON fields still say **runner**; the dashboard and the CLI output say "Dispatch manager".
+The Dispatch manager is the machine side of the [Automatic engine](/dispatch/engines). It needs **nexus-cli 0.39.6 or later** (0.42.0 recommended: its notices carry no free text) and, in the project, **nexus-core 1.5.0 or later**. The commands, files and JSON fields still say **runner**; the dashboard and the CLI output say "Dispatch manager".
 
 ## What it does
 
@@ -29,7 +29,7 @@ The Dispatch manager is the machine side of the [Automatic engine](/dispatch/eng
 
 It runs in **notify** mode only: it never replies to, resolves or closes a Dispatch. The agent in the session, or a person in the dashboard, decides and acts.
 
-Only **one manager runs per machine**: it holds an exclusive lock, and registering again on the same machine revokes the earlier registration.
+Since nexus-cli 0.40.0 there is **one manager per hub** on a machine, so a production and a staging manager can coexist. Each holds an exclusive lock for its hub, and `register` replaces only the manager of the hub of the effective API URL. `register`, `pause`, `resume`, `revoke`, `listen` and the dispatches pane act on that hub.
 
 ## Register
 
@@ -40,7 +40,7 @@ nexus dispatch runner probe
 nexus dispatch runner register
 ```
 
-`register` uses your personal access token once and stores the manager's own token (`nxs_run_...`) in `~/.config/nexus/dispatch-runner.json` (mode 0600). The token is never printed again. By default it binds the linked project; earlier bindings are kept.
+`register` uses your personal access token once and stores the manager's own token (`nxs_run_...`) in `~/.config/nexus/dispatch-runners/<hub>.json` (mode 0600; one file per hub since nexus-cli 0.40.0, before `~/.config/nexus/dispatch-runner.json`, which moves on first use). The token is never printed again. By default it binds the linked project; earlier bindings are kept.
 
 | Option | Meaning |
 | --- | --- |
@@ -110,7 +110,9 @@ The `nexus-dispatch-inbox` hook of nexus-core (1.5.0 or later) registers every C
 - A session that holds or refuses inbound messages gets nothing pushed; it receives the notice at its next start (below).
 - Without a reachable session, the manager shows a desktop notification.
 
-Notices are queued in `~/.config/nexus/state/dispatch/notices/<project>.jsonl` with id, title and peer, never the body. Since 0.39.7 the pushed notice is wrapped as untrusted data (see [Notices](/dispatch#notices)); the queued format and the desktop notification are unchanged.
+Notices are queued in `~/.config/nexus/state/dispatch/notices/<project>.jsonl` with id, title and peer, never the body. Since 0.42.0 the pushed notice holds only id, peer, type, priority and status as one plain line; `nexus dispatch runner titles on` quotes the title again, fenced as untrusted data as in 0.39.7 (see [Notices](/dispatch#notices)).
+
+A reply, status change or resolution written by the bound project itself raises no notice for that project (0.40.3), and notices name the project that wrote the event. A binding registered with `--project <id>` from another workspace delivers into every running session whose repository is linked to that project.
 
 ## Catch-up at session start
 
@@ -122,10 +124,11 @@ Set `NEXUS_DISPATCH_INBOX=off` to turn the hook off.
 
 | Command | Effect |
 | --- | --- |
-| `nexus dispatch runner status` | Heartbeat once and show the bindings: effective mode, which switch blocks, lag and the Claude Code probe. A notify binding shows as `read only`. `--json` for scripts. |
+| `nexus dispatch runner status` | Heartbeat once and show the bindings: effective mode, which switch blocks, lag and the Claude Code probe. A notify binding shows as `read only`. Since 0.40.0 it lists every manager, marks the current hub and shows how many running sessions each binding reaches; `--json` prints `nexus.dispatch-runners.v1` with a `runners` array. |
 | `nexus dispatch runner pause` | Pause the manager on the hub; it stays registered. |
 | `nexus dispatch runner resume` | Resume a paused manager. |
 | `nexus dispatch runner revoke` | Revoke the manager on the hub and remove the local token file. |
+| `nexus dispatch runner titles on\|off` | Quote the peer's title in notices again (fenced as untrusted data), or keep notices without titles, the default since 0.42.0. |
 
 The same controls are in the dashboard under **My Settings > Dispatch Runners**: your managers with machine, CLI version, runtimes, last heartbeat and token prefix; per binding the effective mode, what blocks it, cursor, lag, delivery totals and the last error; and Pause, Resume and Revoke. A manager counts as stale after three missed heartbeats. The project's [Dispatch Control](/dispatch/control) page lists the managers listening to the project.
 
@@ -133,7 +136,7 @@ The same controls are in the dashboard under **My Settings > Dispatch Runners**:
 
 - The manager token reaches only the projects it is bound to, never with platform-admin rights.
 - The hub stores a hash of the repository path, not the path, and only a hash of the token.
-- Notices carry no Dispatch body. The title comes from another project and is marked as data, not an instruction (see [Notices](/dispatch#notices)).
+- Notices carry no Dispatch body and, since 0.42.0, no title unless titles are switched on. A title comes from another project and is then marked as data, not an instruction (see [Notices](/dispatch#notices)).
 - The session file holds the session's messaging token. It is written with mode 0600 and never logged, sent to Nexus or written to `.nexus/`.
 - Register, pause, resume, revoke and the platform switch write audit events.
 
@@ -148,7 +151,7 @@ The same controls are in the dashboard under **My Settings > Dispatch Runners**:
 | Pane header `stopped` | The manager process ended. Restart `nexus run` or `nexus dispatch listen`. |
 | No notice in the running session | The session started before `nexus pull` brought nexus-core 1.5.0, or `NEXUS_DISPATCH_INBOX=off` is set. Restart the session; missed notices are replayed. Check `nexus dispatch runner probe`. |
 | Desktop notification instead of a notice | No session of the bound repository was reachable, or the session holds inbound messages. The notice is replayed at the next session start. |
-| Second `listen` refuses to start | Only one manager runs per machine. Stop the other one, or use the pane that already runs it. |
+| Second `listen` refuses to start | Only one manager runs per hub on a machine. Stop the other one, or use the pane that already runs it. |
 | Manager rejected after about three months | The manager token expired (`--expires-days`, default 90). Run `nexus dispatch runner register` again. |
 
-To test delivery end to end, use **Simulate a Dispatch** on the project's Dispatch page (see [Dispatch Control](/dispatch/control#simulating-a-dispatch)).
+To test delivery end to end, open the project's **Dispatch Simulator** (see [Dispatch Control](/dispatch/control#simulating-a-dispatch)).

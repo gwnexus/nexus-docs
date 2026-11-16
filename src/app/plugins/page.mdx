@@ -21,6 +21,19 @@ Nexus ships open-source OpenCode plugins that integrate session tracking, contex
   Claude Code projects get the same hooks (session guard, headroom intercept, compaction plus, routing guard, cost control and the agent observer) through the **nexus-core** Claude Code plugin and the hook adapters `nexus pull` writes to `.claude/hooks/`. See [Claude Code Plugins](/claude-code/plugins#nexus-core).
 </Note>
 
+Released versions in the nexus-runtime-plugins repository, as listed on the hub's plugin pages since NEXUS-APP 0.20.0:
+
+| Plugin | Version |
+| --- | --- |
+| `nexus-compaction-plus` | 1.8.7 |
+| `nexus-cost-control` | 1.2.6 |
+| `nexus-headroom-intercept` | 0.5.23 |
+| `nexus-session-guard` | 1.2.4 |
+| `nexus-routing-guard` | 1.1.1 |
+| `nexus-attribution-headers` | 1.0.0 |
+
+The dispatch-inbox and agent-observer hooks ship with nexus-core. `nexus-mcp-guard` is planned, not released. The alpha plugins vault-shield, knowledge-graph, llm-bridge and ci-bridge were never built and were removed from the plugin pages, pricing add-ons and the project page in 0.20.0.
+
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="https://github.com/gwnexus/nexus-oc-plugins" variant="outline">
     <>View on GitHub</>
@@ -29,7 +42,7 @@ Nexus ships open-source OpenCode plugins that integrate session tracking, contex
 
 ## nexus-compaction-plus
 
-**Version:** v1.8.0
+**Version:** v1.8.7
 
 Preserves Nexus session context across OpenCode compaction events and records each compaction as an auditable entry in the active Nexus session. Ensures resuming agents have full context even after context window compaction.
 
@@ -46,7 +59,7 @@ Preserves Nexus session context across OpenCode compaction events and records ea
 
 ## nexus-cost-control
 
-**Version:** v2.0.0
+**Version:** v1.2.6
 
 Tracks token usage and estimated cost for the current Nexus session by aggregating data from OpenCode's native `AssistantMessage` objects. No external dependencies — all data is sourced locally from the OpenCode session.
 
@@ -75,7 +88,7 @@ On load, each plugin shows a TUI toast confirming its name, version, and API con
 
 ## nexus-headroom-intercept
 
-**Version:** v0.5.9
+**Version:** v0.5.23
 
 Policy-based output compression for Nexus MCP tool responses. Intercepts MCP tool output in the OpenCode main process, compresses large responses using the Headroom MCP server, and stores originals for retrieval. Reduces context token consumption by 60–95% on large `nexus_kb_memory`, `nexus_dispatch_sweep`, and similar responses.
 

@@ -4,6 +4,13 @@ All changes to the **nexus-docs site** itself (content, structure, navigation, b
 
 ---
 
+## 2026-11-14
+
+- NEXUS-APP 0.20.0: `mcp-server` role matrix for task, document, session and Dispatch write tools; `confidentiality` gets "External AI processing" (Strictly Confidential, local embeddings and OCR), with notes in `textract` and `knowledge-base`; ADR governance and supersession close in `adrs`; `feature-flags` (`ai_hardware`, removed flags), `nexus-link`, `api` (customers, preflight, project roles), `architecture` (visible one-way links), `project-wizard` (Developer tools, comments), `dispatch/control` (one Dispatch card, simulator page), `skills` (skill updates), `plugins` (released versions)
+- AI Gateway and OpenCode Automatic delivery marked as planned for a later 0.20.x update (`ai-gateway`, `dispatch`, `dispatch/engines`, `roadmap`, navigation); self-hosting planned after MVP validation in `roadmap`
+- nexus-cli 0.39.8 to 0.42.0: notices without titles (`dispatch`, `dispatch/manager`), one manager per hub, `nexus reload`, `nexus man`, version notes and upgrade note in `cli`
+- `changelog`: v0.20.0, v0.19.2, nexus-cli v0.39.8 to v0.42.0; homepage banner for v0.20
+
 ## 2026-11-11
 
 - NEXUS-APP 0.19.1: `mcp-server` gets a "Permissions on write tools" section; role notes in `adrs`, `knowledge-base`, `cli` (import); AI Hardware access in `nexus-link`; one-way link visibility in `architecture`; `/api/system/version` in `api`; changelog v0.19.1

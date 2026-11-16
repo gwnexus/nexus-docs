@@ -108,7 +108,9 @@ All `/api/compose/*` endpoints require `Authorization: Bearer <nxs_cmd_*>`. The 
 
 ### Dashboard integration
 
-Since NEXUS-APP 0.19.1 the AI Hardware section of the dashboard and its node and compose APIs, including the read routes, are available only to platform admins and on instances with a selfhosted license; for everyone else the navigation item is hidden. A per-user feature flag is planned for 0.20.0.
+Since NEXUS-APP 0.20.0 AI Hardware is enabled per user: the Operations > AI Hardware navigation item, its pages and the dashboard node and compose-spec routes are available to platform admins and to holders of the [feature flag](/feature-flags) `ai_hardware` ("AI Hardware (BYOHW)", formerly `llm_bridge`). Registering, editing, deleting and rotating nodes and the compose channel additionally need a selfhosted license. The node-token routes (register, heartbeat, telemetry, pending commands) are unchanged. Compose command results need operate access, like the compose routes.
+
+AI Hardware connects private GPU nodes to hosted Nexus; it is not the self-hosted Nexus distribution, which is planned after MVP validation (see [Roadmap](/roadmap)).
 
 The AI Hardware node detail page has a **Compose** tab where you can:
 

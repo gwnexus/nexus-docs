@@ -19,7 +19,7 @@ export const sections = [
   { title: 'Directives, skills and shadow', id: 'directives-skills-and-shadow' },
   { title: 'Consent for executable content', id: 'consent-for-executable-content' },
   { title: 'Dispatches', id: 'dispatches' },
-  { title: 'Version notes 0.31.3 to 0.39.7', id: 'version-notes-0-31-3-to-0-39-7' },
+  { title: 'Version notes 0.31.3 to 0.42.0', id: 'version-notes-0-31-3-to-0-42-0' },
   { title: 'Upgrading', id: 'upgrading' },
   { title: 'Import workflow', id: 'import-workflow' },
   { title: 'Workspace cache', id: 'workspace-cache' },
@@ -109,8 +109,10 @@ nexus pull               # Sync skills and agent files from the platform
 | `nexus settings ...` | Alias of `nexus env` (0.31.4) |
 | `nexus pull --untrack-shadowed` | Take excluded (shadowed) paths that git still tracks out of the index; the files stay on disk, nothing is committed (0.31.4) |
 | `nexus dispatch status [--watch] [--compact] [--json]` | Read-only view of the project's incoming and outgoing Dispatches; with `--watch` it also runs the Dispatch manager (0.37.0, 0.39.0). See [Dispatches](#dispatches) |
-| `nexus dispatch runner register\|status\|pause\|resume\|revoke\|probe` | Register and control this machine's Dispatch manager; `probe` checks whether the installed Claude Code takes notices (0.39.0). See [Dispatch Manager](/dispatch/manager) |
-| `nexus dispatch listen [--interval <s>] [--heartbeat <s>] [--once]` | Run the Dispatch manager in the foreground, notify mode, one per machine (0.39.0) |
+| `nexus dispatch runner register\|status\|pause\|resume\|revoke\|probe\|titles` | Register and control this machine's Dispatch manager for the current hub; `probe` checks whether the installed Claude Code takes notices (0.39.0); `titles on\|off` quotes the sender's title in notices, default off (0.42.0). See [Dispatch Manager](/dispatch/manager) |
+| `nexus dispatch listen [--interval <s>] [--heartbeat <s>] [--once]` | Run the Dispatch manager in the foreground, notify mode, one per hub on a machine (0.39.0, 0.40.0) |
+| `nexus reload` | Run `nexus pull` inside a running workspace and report what the running Claude Code session picks up live and what needs a reload or restart (0.40.1) |
+| `nexus man [command] [--out-dir DIR]` | Print the manual page of `nexus` or a command, or write one page per command (0.41.0) |
 | `nexus classification [show\|levels\|set]` | Show or change the project's confidentiality classification and what it drives; alias `nexus class` (0.35.0) |
 | `nexus actors run <slug> [-p <prompt>]` | Start a gateway-lane actor as its own Claude Code session against the Nexus gateway, with the project inference token (0.34.0) |
 | `nexus actors export --target claude` | Print the backend's Claude Code actor export as JSON; writes no files (0.36.0) |
@@ -495,14 +497,20 @@ nexus dispatch status             # one-off view of incoming and outgoing Dispat
 ```
 
 - `nexus run` opens the dispatches pane when `policy.dispatch_automation` is not `off` (0.39.3); `--no-dispatch-pane` leaves it out, `--dispatch-pane` forces it. Inside a running Zellij session it opens below the focused pane.
-- The manager token lives in `~/.config/nexus/dispatch-runner.json` (mode 0600); notices are queued in `~/.config/nexus/state/dispatch/notices/<project>.jsonl` and never contain the Dispatch body.
+- The manager token lives in `~/.config/nexus/dispatch-runners/<hub>.json` (mode 0600, one manager per hub since 0.40.0); notices are queued in `~/.config/nexus/state/dispatch/notices/<project>.jsonl` and never contain the Dispatch body.
 - `nexus run` reports the Dispatch manager in its pre-launch checks.
 - Since 0.39.5 the output says "Dispatch manager"; commands, files and JSON keys keep `runner`.
 
-## Version notes 0.31.3 to 0.39.7
+## Version notes 0.31.3 to 0.42.0
 
 | Version | Changes |
 | --- | --- |
+| **0.42.0** | Dispatch notices without free text: id, peer project, type, priority and status, each reduced to a fixed character set, as one plain line without the untrusted-data fence; the sweep reads the title. `nexus dispatch runner titles on` quotes the title again, fenced as before; notices queued by earlier versions stay fenced. Messages use colons instead of long dashes. |
+| **0.41.0** | Security: agent-file paths from the platform must be canonical; no writes into `.git` in any spelling or through symlinks; `[plugins]` in `.nexus/config.toml` stay inside the workspace; env files and platform values never set loader, proxy, CA or `GIT_*` variables, nor `NEXUS_API_URL`, `NEXUS_TRUSTED_API_URLS`, `NEXUS_PRIVATE_TOKEN` and `NEXUS_GATEWAY_URL`; git hooks are activated only after a confirmation or `--trust`; git-tracked `.mcp.json` and `opencode.json` get an environment reference instead of the token; gateway URLs must use HTTPS. Added: plugin variable checks in `nexus preflight` and `nexus run` (needs hub 0.20.0; no variable name is sent), a Sentry live check (`--no-live` skips it; the token goes only to `sentry.io`, `*.sentry.io` or hosts in `NEXUS_TRUSTED_SENTRY_HOSTS`), MCP package versions in `nexus doctor claude`, a Sentry host warning in the consent prompt, and `nexus man`. Shorter help; `ANTHROPIC_*` and `*_BASE_URL` variables only from `.env.nexus.local`; tracked env files are ignored. |
+| **0.40.3** | Notices no longer echo the bound project's own replies, status changes or resolutions, name the project that wrote the event, and are dropped for a closed Dispatch. A binding registered with `--project` reaches every running session linked to that project. `nexus dispatch runner status` shows how many sessions each binding reaches; a hint when the project has no links yet. |
+| **0.40.1, 0.40.2** | `nexus reload`: runs `nexus pull` in a running workspace and reports per area what the running Claude Code session picks up live and what needs `/reload-plugins`, `/compact`, `claude --continue` or the next `nexus run`. |
+| **0.40.0** | One Dispatch manager per hub: tokens in `~/.config/nexus/dispatch-runners/<hub>.json`, state per hub; the single `dispatch-runner.json` moves on first use. `runner status --json` is `nexus.dispatch-runners.v1` with a `runners` array. `nexus push` handles reverted fork overrides and deleted fork scripts. |
+| **0.39.8** | A git-tracked `.nexus/config.toml` whose `api_url` origin is not approved (global config, default or `NEXUS_TRUSTED_API_URLS`) gets a confirmation before the first API request and is refused without a terminal or with `--yes`. |
 | **0.39.7** | Pushed Dispatch notices are fenced as untrusted data (`[NEXUS DISPATCH NOTICE: UNTRUSTED DATA]` ... `[/NEXUS DISPATCH NOTICE]`), with the sweep hint outside the fence; titles and peer names lose brackets, control, separator and bidi characters. `nexus status` shows retired tmux launchers and comment-only override placeholders as `RETIRED` with a `git rm` hint; they are no pending changes and `nexus push` skips them. |
 | **0.39.6** | Notices put the peer's title last, marked as data and not an instruction; peer name, type and status are cleaned like the title. `nexus run` and `nexus pull --force` update project-scope plugins that Nexus manages when the marketplace offers a newer version (`PENDING` while the marketplace registration still points at another ref). Plugin ids and marketplace sources from the project settings are checked before they reach `claude`. TLS: `rustls-webpki` and `webpki-roots` updated (RUSTSEC-2026-0381, RUSTSEC-2026-0382). |
 | **0.39.5** | "Dispatch manager" in the pane, the `nexus run` checks, `runner status` and the `listen` log. Simulation Dispatches shown in yellow; a cut list ends with `… +N more`. |
@@ -522,6 +530,10 @@ nexus dispatch status             # one-off view of incoming and outgoing Dispat
 | **0.31.3** | `opencode.json` and `.mcp.json` no longer carry `NEXUS_SEC_OPENAI_API_KEY`; `nexus pull` removes an existing entry from the nexus MCP server. |
 
 ## Upgrading
+
+For NEXUS-APP 0.20.0, use nexus-cli **0.42.0**: Dispatch notices without titles are its default, and the plugin variable checks of `nexus preflight` need hub 0.20.0. Then restart the Dispatch listener (`nexus dispatch listen`) or the dispatches pane, and run `nexus pull` in every project for the new core skill versions (migrations 0311 and 0312). `nexus dispatch runner titles on` brings the title back into notices.
+
+A setup that pins `api_url` in `.nexus/config.toml` but keeps the token only in the environment, a token-only `.mcp.json` or the global credentials stops reaching the API from the hooks of nexus-core 1.5.2. Fix it with any one of: set `NEXUS_TRUSTED_API_URLS`, use the same host as the global config, or run `nexus link` / `nexus pull` so the project `credentials.toml` holds the token. See [nexus-core](/claude-code/plugins#nexus-core).
 
 For NEXUS-APP 0.19.0, use nexus-cli **0.39.6 or later** (0.39.7 recommended, it fences pushed notices as untrusted data): it brings `nexus dispatch runner`, `nexus dispatch listen` and the dispatches pane (0.37.0 to 0.39.5), and 0.39.6 writes the notice format that `/nexus-dispatch-sweep` version 5 expects. Then run `nexus pull` in every project (nexus-core 1.5.0, the updated Dispatch skills, the dispatches pane in the workspace presets). See [Dispatch engines](/dispatch/engines#setting-up-the-automatic-engine).
 

@@ -16,41 +16,63 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 ## Upcoming
 
-### v1.0.0-beta — Planned (Q2 2027)
+### v1.0.0-beta: stable release, planned
 
-**Production-ready release**
-
-- Feature-complete platform with all core workflows stabilized and battle-tested
-- Full documentation suite: onboarding guides, API reference, plugin SDK, and self-hosting manual
-- Performance baseline and SLA definitions for cloud and self-hosted deployments
+- Feature-complete platform with the core workflows stabilized after the MVP test phase
+- Full documentation suite: onboarding guides, API reference and plugin SDK
+- Performance baseline for the hosted service
 - Public API stability guarantee with semantic versioning commitment
 - Community contribution guidelines, plugin SDK, and third-party integration templates
 - End-to-end test coverage for all critical paths (auth, sessions, decisions, CLI, MCP)
 
 ---
 
-### v0.21.0: self-hosted stack, multi-tenant and Nexus Spark (BYOH), planned (Q1 2027)
+### Self-hosted distribution: planned after MVP validation
 
-- Nexus Spark (BYOH): deeper provisioning and lifecycle wiring for user-owned DGX Spark and private GPU nodes in the AI Gateway routing surface
-- Cost Control: sharper per-project and per-session cost attribution, refined budget enforcement, clearer reconciliation on top of the BYOK provider credentials
-- Organization-scoped URL routing: `/o/[orgSlug]/` prefix for all authenticated routes (ADR-0081)
-- Multi-tenant support: tenant resolution via middleware and row-level security session variables
-- Helm chart for the full Nexus stack (webapp, MCP server, Supabase services, Caddy) on user-owned Kubernetes, with RKE2 as the reference distribution, plus a one-command single-node deployment
-- PostgreSQL through the CloudNativePG operator (pgvector, scheduled backups, point-in-time recovery, failover) for self-hosted installs
-- Community / Pro self-hosted deployment with no license enforcement and no phone-home, with a configuration wizard for database, storage, auth and domain
-- Stripe billing with metered usage tracking and invoice generation; self-service tenant onboarding
-- nexus-cli organization context (`NEXUS_ORG`, organization binding in `config.toml`)
+The self-hosted distribution is **not available for customer deployment yet**. It follows only after the MVP has completed its test phase and its core features have proven stable; no release date is announced. Hosted Nexus is available for evaluation (alpha).
+
+- Helm chart for the full Nexus stack (webapp, MCP server, Supabase services, Caddy) on user-owned Kubernetes, with RKE2 as the reference distribution
+- PostgreSQL through the CloudNativePG operator (pgvector, scheduled backups, point-in-time recovery, failover)
+- Docker Compose as a single-node alternative, and a configuration wizard for database, storage, auth and domain
+- Intended as open core: the Pro feature set without license enforcement or phone-home. The commercial model for self-hosting is not final yet.
 
 ---
 
-### v0.20.0: AI Model Gateway and Dispatch delivery for OpenCode, planned
+### v0.21.0: multi-tenant, Nexus Spark (BYOH) and cost control, planned
 
-- AI Model Gateway for users: BYOK provider credentials, the Registry / Discover model catalog, Routing Lab and gateway operations, available to users again. Until then the gateway is grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway)
-- Dispatch delivery into OpenCode sessions: the [Dispatch manager](/dispatch/manager) brings notices to OpenCode as it does to Claude Code since v0.19.0
+- Multi-tenant support: tenant resolution via middleware and row-level security session variables
+- Organization-scoped URL routing: `/o/[orgSlug]/` prefix for all authenticated routes (ADR-0081)
+- Multi-tenant SaaS onboarding with self-service registration and tenant provisioning
+- nexus-cli organization context (`NEXUS_ORG`, organization binding in `config.toml`)
+- Nexus Spark (BYOH): deeper provisioning and lifecycle wiring for user-owned DGX Spark and private GPU nodes
+- Cost Control: sharper per-project and per-session cost attribution, refined budget enforcement, clearer reconciliation against provider billing
+- Stripe billing with metered usage tracking and invoice generation
+
+---
+
+### v0.20.x: AI Model Gateway and Dispatch delivery for OpenCode, planned
+
+Planned for a later 0.20.x update, not yet available to users. Availability will be announced after provider-key verification and release checks are complete.
+
+- AI Model Gateway for users: BYOK provider credentials, the Registry / Discover model catalog, Routing Lab and gateway operations. Until then the gateway is grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway)
+- Automatic Dispatch delivery into OpenCode sessions: the [Dispatch manager](/dispatch/manager) brings notices to OpenCode as it does to Claude Code since v0.19.0
 
 ---
 
 ## Released
+
+### v0.20.0 (November 2026)
+
+**Calmer project pages, templates and comments**
+
+- Project and customer pages: one compact metadata panel, "Jump to" navigation, clear section headers and dedicated Intelligence and Management sections
+- Customer templates (ADR-0139): platform admins copy a template customer with selected projects and setup; copies are never classified lower than their source, and contact, billing and history stay behind. ACME Inc. sample customer with three linked sample projects
+- Comment threads on customers and projects: replies, upvotes, edits, @mentions, resolved threads and moderation by platform owners and admins; customer descriptions in Markdown
+- [ADR governance](/adrs#supersession): a fixed review row with actions in a side drawer, no submit or accept while a newer open ADR supersedes the record, and no votes on the own ADR
+- Dashboard My Work; one-way project links can be made visible to the linked project
+- Strictly Confidential keeps embeddings and text extraction off external AI; local OCR for classified documents (see [External AI processing](/confidentiality#external-ai-processing))
+- Security: [MCP write tools follow the project role matrix](/mcp-server#permissions-on-write-tools); AI Hardware is enabled per user
+- See the [v0.20.0 release notes](/changelog#v0-20-0)
 
 ### v0.19.0 (November 2026)
 
@@ -142,7 +164,7 @@ A transparent view of what we've shipped, what we're building, and where Nexus i
 
 **AI Gateway: BYOK, Model Catalog Rebuild, Routing Lab & Gateway Operations**
 
-Held back since v0.18.0; available to users again with v0.20.0.
+Held back since v0.18.0; planned for a later 0.20.x update, not yet available to users.
 
 - BYOK: Provider Credentials & Project Billing Bindings (ADR-0096) -- bring your own OpenRouter, Anthropic, or OpenCode Zen key, encrypted at rest and verified against the provider's key-info endpoint; explicit, audited billing binding per project (0.13.1)
 - Model Catalog Rebuild (ADR-0097, ADR-0100): Registry/Discover split, nightly `pg_cron` sync from OpenRouter and models.dev, OpenCode Zen as a first-class aggregator, catalog drift log (0.13.2)
@@ -159,7 +181,7 @@ Held back since v0.18.0; available to users again with v0.20.0.
 
 - Confidentiality-aware action gating (ADR-0079): policy outcomes allow / warn_and_override / block, Textract gating for C.2/C.3 projects, override dialog with permanent audit trail, and `POST /api/confidentiality-gate`
 - Admin Audit Log at `/dashboard/admin/audit-log` with SIEM export (`GET /api/siem/events`, NDJSON + CEF) and owner-only SIEM token management
-- Per-user feature flags (alpha): `textract_extraction`, `knowledge_graph`, `llm_bridge`, `ci_bridge` with admin toggle UI
+- Per-user feature flags (alpha): `textract_extraction`, `knowledge_graph`, `llm_bridge`, `ci_bridge` with admin toggle UI (`knowledge_graph` and `ci_bridge` were removed in 0.20.0, `llm_bridge` became `ai_hardware`)
 - AWS Textract extraction pipeline (alpha), gated by confidentiality and feature flag
 - Platform and user settings: tenant management, tabbed settings, editable profiles, password change, landing-page tree picker
 - CodeRabbit review workflow: `coderabbit_review` classification and `coderabbit_fix` task category
@@ -236,8 +258,8 @@ Held back since v0.18.0; available to users again with v0.20.0.
 **Local LLM, Plugin Marketplace & Project Intelligence**
 
 - DGX Spark local LLM integration: Qwen3-14B on NVIDIA GB10 via vLLM + LiteLLM + Caddy
-- Plugin Marketplace: free (compaction+, cost-control) and alpha tiers (vault-shield, knowledge-graph, llm-bridge, ci-bridge)
-- Licensing rework: self-hosted = full Pro for free, no license key, no phone-home
+- Plugin Marketplace: free (compaction+, cost-control) and alpha tiers (the alpha placeholders vault-shield, knowledge-graph, llm-bridge and ci-bridge were never built and were removed in 0.20.0)
+- Licensing rework (intent, not final): a future self-hosted edition is meant to get the Pro features at no cost, without license key or phone-home
 - Project Intelligence Layer positioning: Nexus as the governance brain upstream of agent execution
 - Project-scoped skills and agent files (ADR-0044)
 - Security + performance scans with auto-ingest into knowledge base
