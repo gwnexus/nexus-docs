@@ -37,7 +37,7 @@ Every setting can be changed later on the project's edit page, which always uses
 | 1 | **Basics** | Project, Description, Languages, Repos & contacts, Security |
 | 2 | **Scope** | Schedule, Budget, Offer & SOW, Documents, PDF export (status, schedule and budget plus start documents; Timeline and Documents were separate steps before v0.19.0) |
 | 3 | **Agent Setup** | Agent type, Agent ID & skills or Actors, AI tool, Models, Config files, Git, Workspace |
-| 4 | **Plugins** | Essentials, Cost control, Add-ons, Developer tools (0.20.0), Codebase, Local models |
+| 4 | **Plugins** | Essentials, Cost control, Add-ons, Developer tools (0.20.0), Codebase (the legacy Local models section was removed in 0.21.0; local models run through the gateway) |
 | 5 | **Members** | Team members and project roles |
 | 6 | **Confirm** | Summary of all settings, with jumps to each block |
 
@@ -46,8 +46,11 @@ Notes on the Agent Setup step:
 - **Agent type** is Classic (one agent with manual configuration) or actor-based (a virtual team, see [Actors](/actors#classic-vs-actor-based-mode)). It also holds the Dispatch engine.
 - **Agent ID** and display name sit side by side. The agent ID is required; it is pre-filled from the slug and has a **Generate** button.
 - **Models** shows the model execution (Provider, Gateway, Claude Max).
+- **OpenCode modes** (0.21.0): the plan, act and review slots are labelled OpenCode modes and are hidden for Claude Code projects unless old slots are still set; the starred primary actor is the main-session choice. See [Management](/actors/management#assigning-actors-to-projects).
 
 Plugins are listed as rows with their description. Mandatory plugins are pre-selected and show a warning when deselected.
+
+**Taskmaster AI** (optional add-on) sends task content to external AI providers on its own. Since 0.21.0 the plugin preflight (`nexus run`, `nexus preflight` and the project preflight API) fails for a project whose effective classification blocks external AI, with "remove the plugin from the project", instead of asking for provider keys. `ANTHROPIC_API_KEY` is optional for Taskmaster: with a Claude subscription it is not needed, and a key in the session replaces the subscription login and bills the API. The project form says both.
 
 **Allow comments** (0.20.0) opens a comment thread on the project page for its members. Platform owners and admins can always comment and moderate.
 

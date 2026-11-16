@@ -4,6 +4,7 @@ export const metadata = {
 }
 
 export const sections = [
+  { title: 'v0.21.0', id: 'v0-21-0' },
   { title: 'v0.20.0', id: 'v0-20-0' },
   { title: 'v0.19.2', id: 'v0-19-2' },
   { title: 'v0.19.1', id: 'v0-19-1' },
@@ -46,6 +47,55 @@ export const sections = [
 # Changelog
 
 Full release history for the Nexus platform and its tools. {{ className: 'lead' }}
+
+---
+
+## v0.21.0
+
+**ADR review decisions with conditions and change requests, project activity emails with a daily digest, and your own AI hardware connected to model routing, with local OCR and embeddings you can see and re-run. Actors route only through their Model Profile.** Released RELEASE-DATE-0.21.0. Full list: the `[0.21.0]` section of the NEXUS-APP `CHANGELOG.md` (tag `v0.21.0`). Run `nexus pull` in every project afterwards.
+
+<Note>
+  **Not part of 0.21.0:** the AI Model Gateway itself stays unavailable to users until provider-key verification and release checks are complete; Automatic Dispatch delivery for OpenCode is planned for a later update; the self-hosted distribution is planned after MVP validation. Multi-tenant support, organization routing, self-service onboarding, the nexus-cli organization context, Stripe billing and cost control moved to v0.22.0 (see [Roadmap](/roadmap)).
+</Note>
+
+### Security
+
+- **Dispatch replies and state changes follow the project role matrix:** `dispatch_reply`, `dispatch_ack`, `dispatch_assign`, `dispatch_forward`, `dispatch_resolve` and `dispatch_close` need `letters.reply` (admin, editor or reviewer) in the sending or the receiving project; viewers keep read access and get 403 (GH #80). `dispatch_sweep` with `acknowledge_non_blocking` needs the same role. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).
+- **Activity emails for classified projects** carry no content, only that something changed and a link; the bell stays complete. See [Notifications](/notifications#classified-projects).
+- **Taskmaster AI** is refused by the plugin preflight for projects whose effective classification blocks external AI; `ANTHROPIC_API_KEY` is optional for it. See [Project Wizard](/project-wizard#steps).
+- **Fail closed:** if the project or customer level cannot be read, OpenAI embeddings and Textract are not used for that call. See [External AI processing](/confidentiality#external-ai-processing).
+
+### Added
+
+- **ADR review decisions** in the drawer: Accept, Accept with conditions (`## Conditions`), Request changes (back to draft, reason as a comment), Reject with an optional reason. See [Review decisions](/adrs#review-decisions).
+- **ADR change requests** on accepted ADRs: Revision and Amendment (a new superseding draft), Deprecation (status `deprecated`, reviewers only). See [Change requests](/adrs#change-requests).
+- **ADR review history** on the list (path under the title, badges) and on the ADR page; status quick filters including "Needs my review" and Deprecated; ADR download as Markdown or zip. See [Review history](/adrs#review-history).
+- **MCP `adr_decide`** takes `accepted_with_conditions`, `changes_requested`, `rejected` with an optional `reason`, and `deprecated`, with the same behaviour as the dashboard (409 on a concurrent decision). See [ADRs](/adrs#mcp-tools).
+- **Project activity emails:** ADR events by email (right away, daily digest or off) and bell for every member but the actor; document changes as a daily digest (06:00 UTC); one-click unsubscribe per category. See [Notifications](/notifications).
+- **Documents:** the extraction badge shows the method and why a document has no text; **Re-run extraction** and **Re-embed** for up to 25 documents; agent documents and notes download as Markdown or zip. See [Document Extraction](/textract#extraction-status) and [Downloading documents](/knowledge-base#downloading-documents).
+- **AI Hardware (BYOHW):** the node page lists its gateway deployments and the model profiles routing to it; platform admins add a model as a local deployment. See [Model routing](/nexus-link#model-routing).
+- **Local AI services** panel for platform admins (configured, reachable, model served, extraction jobs of the last 7 days). See [Local AI services](/nexus-link#local-ai-services).
+- **Local endpoints with keys:** `LOCAL_VISION_API_KEY` and `LOCAL_EMBEDDING_API_KEY` are sent as bearer token.
+
+### Changed
+
+- **Actors route only through their Model Profile:** one "Model" field; migration 0318 bound legacy route aliases to profiles and removed them; outside the gateway (`direct_provider`) actors use the project default. Imports list unmatched names in `unbound_profiles`, downloads write `routing.model_profile`, and the runtime spec no longer carries `route_alias`. See [Model Routing](/actors/model-routing).
+- **OpenCode modes** (plan, act, review) are stored on the actor assignment (`primary_slots` per entry of `actors` in the project API) and hidden for Claude Code projects. See [Management](/actors/management#assigning-actors-to-projects).
+- The documents, document detail and ADR pages use the **effective confidentiality level** (the stricter of project and customer) like the backend; the processing banner follows the server configuration. See [Processing banner](/textract#processing-banner).
+- **Settings > Notifications** reworked: project activity per category, globally and per project, "Send my digest now"; Product news as three switches.
+- A superseding ADR must belong to the same project.
+- AI Hardware: a node silent for more than five minutes shows offline; "AI Hardware: Enabled" in User management follows the `ai_hardware` flag or the platform admin role.
+- The legacy "Local models" (DGX Spark) section of the project form and its direct `dgx-spark` export provider were removed; projects with `spark_models` get the export warning `legacy_local_models`.
+- The ACME Inc. sample customer is an internal template customer and shows in the customer and project lists.
+
+### Fixed
+
+- A Dispatch addressed to a named actor keeps that actor ("For &lt;actor&gt;"). See [Nexus Dispatch](/dispatch#core-concept).
+- ADR review texts are plain text of at most 10,000 characters (400 otherwise); a concurrent `adr_submit` gets 409.
+- Dispatch message totals use an aggregate count, so busy projects show complete totals (GH #78).
+- Races on project-link changes (409 instead of a stale flag) and in the Dispatch simulation; the customer form opens the section of the first invalid field (GH #77).
+- Comment threads page by top-level comment, newest first; mention and reply notifications go only to people who can open the thread (GH #75).
+- Dates on the customer projects list and in My work render the same on server and browser (GH #76); copy-project preview and sample provisioning fixes (GH #79).
 
 ---
 

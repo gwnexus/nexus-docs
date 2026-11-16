@@ -40,6 +40,9 @@ A Dispatch is an append-only, routed work record. It can stay within a project o
   <Property name="assignee_actor_id" type="uuid">
     The actor expected to act on the Dispatch.
   </Property>
+  <Property name="assignee_named_actor_id" type="uuid">
+    Since v0.21.0: the named actor a Dispatch was addressed to (`to_actor` = actor slug), kept next to the runtime assignee. The Dispatch list shows it as "For &lt;actor&gt;". Before, such a Dispatch was mapped to an arbitrary agent of the project and the actor was lost.
+  </Property>
 </Properties>
 
 Messages are append-only: once written, a message is never changed or deleted.
@@ -51,7 +54,7 @@ Messages are append-only: once written, a message is never changed or deleted.
 | **Automatic** (default for new projects) | The [Dispatch manager](/dispatch/manager) on the developer machine sees it in the project's event feed and posts a short [notice](#notices) into the running Claude Code session. The agent then handles it with `/nexus-dispatch-sweep`. | nexus-cli 0.39.6 or later, nexus-core 1.5.0 or later, the platform switch on |
 | **Indirect** (formerly Classic) | Nothing is pushed. The agent picks Dispatches up with `/nexus-dispatch-sweep` at session start or on demand, or someone answers in the dashboard. | Nothing extra |
 
-In both engines the agent does the work. The Dispatch manager never answers, resolves or closes a Dispatch: it runs in **notify** mode only. Delivery goes to **Claude Code** sessions. Automatic delivery into OpenCode sessions is planned for a later 0.20.x update and not available yet; until then OpenCode projects use the Indirect engine as their fallback.
+In both engines the agent does the work. The Dispatch manager never answers, resolves or closes a Dispatch: it runs in **notify** mode only. Delivery goes to **Claude Code** sessions. Automatic delivery into OpenCode sessions is planned for a later update and not available yet; until then OpenCode projects use the Indirect engine as their fallback.
 
 ## Dispatch types
 
@@ -170,6 +173,8 @@ Every change also writes an event (`created`, `status_changed`, `assigned`, `rer
 | `dispatch_related` | Find structurally related Dispatches (loop prevention) |
 
 `dispatch_forward` and `dispatch_assign` refuse resolved, closed and cancelled Dispatches.
+
+Since v0.21.0 replies and state changes (`dispatch_reply`, `dispatch_ack`, `dispatch_assign`, `dispatch_forward`, `dispatch_resolve`, `dispatch_close`, and `dispatch_sweep` with `acknowledge_non_blocking`) need `project_admin`, `project_editor` or `project_reviewer` in the sending or the receiving project; viewers get 403. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).
 
 ### Inbox scopes (v0.19.0)
 

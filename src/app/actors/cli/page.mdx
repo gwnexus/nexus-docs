@@ -46,11 +46,11 @@ PROJECT: nexus-doc (adb6278b)
 
 ACTORS (3 assigned):
 
-  SLUG                    DISPLAY NAME              MODE       PERMISSION    ROUTE ALIAS
-  ────                    ────────────              ────       ──────────    ───────────
-  security-architect      Security Architect         primary    builder       premium-security-reasoning
-  backend-engineer        Backend Engineer           subagent   builder       zen-balanced
-  doc-writer              Documentation Writer       subagent   writer        zen-fast
+  SLUG                    DISPLAY NAME              MODE       PERMISSION
+  ────                    ────────────              ────       ──────────
+  security-architect      Security Architect         primary    builder
+  backend-engineer        Backend Engineer           subagent   builder
+  doc-writer              Documentation Writer       subagent   writer
 ```
 
 ### Flags
@@ -77,7 +77,6 @@ ACTOR: Security Architect (security-architect)
   Title:            Senior Security Architect
   Mode:             primary
   Permission:       builder
-  Route Alias:      premium-security-reasoning
   Cost Class:       premium
   Domains:          security, infrastructure, compliance
   Working Style:    methodical
@@ -163,7 +162,7 @@ The validator checks:
 
 - Required frontmatter fields are present and correctly typed
 - Permission profile is one of the 5 valid values
-- Route alias references an existing route in the catalog
+- Model routing: a legacy `route_alias` gets a warning, because the hub binds the actor to the Model Profile with the same slug; set `model_profile` instead (nexus-cli releases after 0.42.0 read `model_profile`, see [Model Routing](/actors/model-routing#imports-and-downloads))
 - Domain tags are valid
 - No invalid field combinations (e.g., `hidden` mode + `opencode` export target)
 - Recommended skills reference existing skill IDs
@@ -179,7 +178,6 @@ VALIDATE: .nexus/actors/security-architect.md
 
   [PASS] Required frontmatter fields present
   [PASS] Permission profile: builder
-  [PASS] Route alias: premium-security-reasoning (active)
   [PASS] Domains: 3 valid tags
   [PASS] No invalid field combinations
   [WARN] Skill 'nexus-git-commit' not found in skill catalog
@@ -192,7 +190,6 @@ VALIDATE: .nexus/actors/security-architect.md
 | Flag | Behavior |
 | --- | --- |
 | `--strict` | Treat warnings as errors (non-zero exit code) |
-| `--ignore-routes` | Skip route alias validation (useful offline) |
 
 ## nexus actors import
 

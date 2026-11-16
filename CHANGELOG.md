@@ -4,6 +4,12 @@ All changes to the **nexus-docs site** itself (content, structure, navigation, b
 
 ---
 
+## Unreleased (NEXUS-APP 0.21.0, publish after the release)
+
+- NEXUS-APP 0.21.0: `adrs` (review decisions, change requests, review history, overview, `adr_decide` decisions); new `notifications` page and navigation entry; `textract` (extraction badge, re-run and re-embed, processing banner); `confidentiality` (effective level, fail closed, local endpoint keys); `knowledge-base` (Markdown download); `nexus-link` (model routing, local AI services); `actors` pages rewritten for Model Profiles; `mcp-server` and `dispatch` (Dispatch reply roles, named actor); `project-wizard` and `api` (Taskmaster preflight, OpenCode modes, new routes)
+- `roadmap`: v0.22.0 with the moved multi-tenant and cost items, v0.21.0 released; `changelog`: v0.21.0; homepage banner for v0.21
+- `ai-gateway`, `dispatch`, `dispatch/engines`: "later 0.20.x update" wording replaced, the Gateway and OpenCode delivery stay planned
+
 ## 2026-11-14
 
 - NEXUS-APP 0.20.0: `mcp-server` role matrix for task, document, session and Dispatch write tools; `confidentiality` gets "External AI processing" (Strictly Confidential, local embeddings and OCR), with notes in `textract` and `knowledge-base`; ADR governance and supersession close in `adrs`; `feature-flags` (`ai_hardware`, removed flags), `nexus-link`, `api` (customers, preflight, project roles), `architecture` (visible one-way links), `project-wizard` (Developer tools, comments), `dispatch/control` (one Dispatch card, simulator page), `skills` (skill updates), `plugins` (released versions)

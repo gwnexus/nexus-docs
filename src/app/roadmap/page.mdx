@@ -38,21 +38,23 @@ The self-hosted distribution is **not available for customer deployment yet**. I
 
 ---
 
-### v0.21.0: multi-tenant, Nexus Spark (BYOH) and cost control, planned
+### v0.22.0: multi-tenant and cost control, planned
+
+Moved from v0.21.0.
 
 - Multi-tenant support: tenant resolution via middleware and row-level security session variables
 - Organization-scoped URL routing: `/o/[orgSlug]/` prefix for all authenticated routes (ADR-0081)
 - Multi-tenant SaaS onboarding with self-service registration and tenant provisioning
 - nexus-cli organization context (`NEXUS_ORG`, organization binding in `config.toml`)
-- Nexus Spark (BYOH): deeper provisioning and lifecycle wiring for user-owned DGX Spark and private GPU nodes
+- Your own AI hardware, next steps: an approval path for local deployments and node health in the gateway routing policy
 - Cost Control: sharper per-project and per-session cost attribution, refined budget enforcement, clearer reconciliation against provider billing
 - Stripe billing with metered usage tracking and invoice generation
 
 ---
 
-### v0.20.x: AI Model Gateway and Dispatch delivery for OpenCode, planned
+### AI Model Gateway and Dispatch delivery for OpenCode, planned
 
-Planned for a later 0.20.x update, not yet available to users. Availability will be announced after provider-key verification and release checks are complete.
+Planned for a later update, not yet available to users. Availability will be announced after provider-key verification and release checks are complete.
 
 - AI Model Gateway for users: BYOK provider credentials, the Registry / Discover model catalog, Routing Lab and gateway operations. Until then the gateway is grayed out for everyone but the platform owner. See [AI Gateway](/ai-gateway)
 - Automatic Dispatch delivery into OpenCode sessions: the [Dispatch manager](/dispatch/manager) brings notices to OpenCode as it does to Claude Code since v0.19.0
@@ -60,6 +62,20 @@ Planned for a later 0.20.x update, not yet available to users. Availability will
 ---
 
 ## Released
+
+### v0.21.0 (RELEASE-DATE-0.21.0)
+
+**ADR reviews, activity emails and your own AI hardware**
+
+- [ADR review decisions](/adrs#review-decisions) in a drawer: accept, accept with conditions, request changes or reject with a reason; change requests on accepted ADRs (revision, amendment, deprecation) and the review history on every ADR
+- [Project activity emails](/notifications): every member hears about ADR decisions right away or in a daily digest, document changes in a daily digest, with one-click unsubscribe per category
+- ADR and agent document downloads as Markdown, several as one zip; status quick filters including "Needs my review"
+- Your own AI hardware (BYOHW): a node page shows the models it serves and which model profiles route to it; platform admins add a node's models as local deployments (see [Model routing](/nexus-link#model-routing))
+- Local OCR and embeddings you can see: a status panel for the local models, how each document's text was obtained and why one has none, a banner that follows the server setup, and [re-run extraction or re-embed](/textract#re-run-extraction-and-re-embed) per document
+- Simpler actors: one Model field (the model profile); legacy route aliases are bound to profiles and removed
+- Security: [Dispatch replies and state changes follow the project role matrix](/mcp-server#permissions-on-write-tools); Taskmaster AI is refused for classified projects
+- The AI Gateway itself stays unavailable to users until provider-key verification and release checks are done
+- See the [v0.21.0 release notes](/changelog#v0-21-0)
 
 ### v0.20.0 (November 2026)
 
@@ -164,7 +180,7 @@ Planned for a later 0.20.x update, not yet available to users. Availability will
 
 **AI Gateway: BYOK, Model Catalog Rebuild, Routing Lab & Gateway Operations**
 
-Held back since v0.18.0; planned for a later 0.20.x update, not yet available to users.
+Held back since v0.18.0; planned for a later update, not yet available to users.
 
 - BYOK: Provider Credentials & Project Billing Bindings (ADR-0096) -- bring your own OpenRouter, Anthropic, or OpenCode Zen key, encrypted at rest and verified against the provider's key-info endpoint; explicit, audited billing binding per project (0.13.1)
 - Model Catalog Rebuild (ADR-0097, ADR-0100): Registry/Discover split, nightly `pg_cron` sync from OpenRouter and models.dev, OpenCode Zen as a first-class aggregator, catalog drift log (0.13.2)

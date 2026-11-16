@@ -266,6 +266,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'Sessions',       href: '/sessions' },
       { title: 'ADRs',           href: '/adrs' },
       { title: 'Knowledge Base', href: '/knowledge-base' },
+      { title: 'Notifications',  href: '/notifications' },
       { title: 'Skills',         href: '/skills' },
       { title: 'Directives',     href: '/directives' },
       { title: 'Project Wizard', href: '/project-wizard' },

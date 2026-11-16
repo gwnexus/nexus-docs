@@ -8,6 +8,8 @@ export const sections = [
   { title: 'Server switch', id: 'server-switch' },
   { title: 'Access requirements', id: 'access-requirements' },
   { title: 'Extraction status', id: 'extraction-status' },
+  { title: 'Re-run extraction and re-embed', id: 're-run-extraction-and-re-embed' },
+  { title: 'Processing banner', id: 'processing-banner' },
   { title: 'Confidentiality gating', id: 'confidentiality-gating' },
 ]
 
@@ -48,13 +50,42 @@ A user can trigger extraction only when the server switch is on and both conditi
 
 Each document surfaces a status badge indicating where it is in the pipeline. Status is shown per document in the documents view so users can see at a glance which documents have been processed.
 
+Since 0.21.0 the badge also tells **how** the text was obtained and why a document has none:
+
+| State | Badge shows |
+| --- | --- |
+| Completed | The method: plain text, PDF text layer, local OCR or AWS Textract. A classified document that could not be embedded for lack of a local embedding model shows **text only** (amber). |
+| Failed or skipped | The reason in the tooltip, for example "Classified project and no local OCR model is configured". |
+| Pending | The planned path. |
+
+The inspect panel lists the method, the search source and the reason. Documents extracted before 0.21.0 show no method.
+
+## Re-run extraction and re-embed
+
+Since 0.21.0 two actions work on selected documents (toolbar, up to 25 at once) and in the inspect panel. Both need `documents.upload` and write the audit event `documents.reprocessed`.
+
+- **Re-run extraction** queues a new extraction job with the current routing, for example after a local OCR model was configured or Textract was switched on. Documents with a running job are left alone, and the old text stays until the new job completes. Confidential projects ask for the same confirmation as an upload before Textract is used.
+- **Re-embed** builds the search vector again from the stored text, for example after a local embedding model was configured.
+
+The result is summarized above the list.
+
+## Processing banner
+
+Since 0.21.0 the banner on the documents, document detail and ADR pages follows the server configuration and the project's effective level (the stricter of project and customer):
+
+- **Classified projects** (the level blocks external AI) see whether scanned documents are read by the local OCR model and whether search vectors come from the local embedding model, or that neither is configured.
+- **Other projects** see when AWS Textract is off on the server or for the account ("Document storage only"), or when OpenAI embeddings are off ("Limited search", keyword search only).
+- Internal and public projects with everything on see no banner.
+
+Platform admins see the state of the local models in the [Local AI services](/nexus-link#local-ai-services) panel.
+
 ## Confidentiality gating
 
 Extraction is a gated action under [Confidentiality Action Gating](/confidentiality).
 
 - For lower-severity projects, extraction is allowed.
 - For Confidential projects (C.2), extraction is gated: it returns `warn_and_override`, and proceeding requires an explicit override that is written to the [audit trail](/audit-siem).
-- For Strictly Confidential (C.3, since 0.20.0) and all classified levels, Textract is blocked. Their documents can be read by a local vision model instead where the operator sets `LOCAL_VISION_URL`; see [External AI processing](/confidentiality#external-ai-processing).
+- For Strictly Confidential (C.3, since 0.20.0) and all classified levels, Textract is blocked. Their documents can be read by a local vision model instead where the operator sets `LOCAL_VISION_URL` (and `LOCAL_VISION_API_KEY` when the endpoint checks keys, since 0.21.0); see [External AI processing](/confidentiality#external-ai-processing).
 
 <Note>
   Because Textract is an external AWS service, extraction on classified projects is governed by the same confidentiality principle that blocks external model providers.

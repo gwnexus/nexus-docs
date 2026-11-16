@@ -60,13 +60,20 @@ https://nexus.gatewarden.eu/api
 | `/api/siem/events` | GET | SIEM export of audit events (NDJSON / CEF, `nxs_siem_*` token) |
 | `/api/admin/audit-events/export` | GET | Admin download of audit events |
 | `/api/customers` | GET | Customers of the caller; all customers for platform admins (0.20.0) |
-| `/api/projects/:projectId/comments`, `/api/customers/:id/comments` | GET, POST, PATCH | Comment thread of a project or customer: read, write, moderate (0.20.0) |
+| `/api/projects/:projectId/comments`, `/api/customers/:id/comments` | GET, POST, PATCH | Comment thread of a project or customer: read, write, moderate (0.20.0). Since 0.21.0 `GET` pages by top-level comment, newest first (50 per page, replies included): `before_at`/`before_id` and `from_at`/`from_id`, `next_cursor` in the response |
 | `/api/mcp/projects/:id/preflight` | GET | Project preflight for the CLI: `checks`, `config_checks`, `all_required_ok`, `mcp_servers`, `dev_tools`, `plugins`, `headroom_enabled`; `?env_keys=` takes variable names only (0.20.0) |
+| `/api/projects/:projectId/decisions/export` | POST | Download selected ADRs as Markdown, several as one zip (`decisions.read`, 0.21.0) |
+| `/api/projects/:projectId/ingest-items/export` | POST | Download selected agent documents and notes as Markdown or zip (`ingest.read`, at most 100, 0.21.0) |
+| `/api/projects/:projectId/documents/reprocess` | POST | Re-run extraction or re-embed selected documents (`documents.upload`, up to 25, 0.21.0) |
+| `/api/nodes/:nodeId/models` | GET, POST | AI Hardware node: deployments, served models, add a model as local deployment (platform admins, 0.21.0) |
+| `/api/admin/local-ai/status` | GET | State of the local OCR and embedding models (platform admins; host only, never a key, 0.21.0) |
 | `/api/system/version` | GET | Public build identity: `environment`, `version`, `commit`, `build_time` (since 0.19.1 without `branch` and `node_version`) |
 
 ### Preflight responses (0.20.0)
 
 Preflight responses (session and PAT endpoints) no longer return the `environment` or `env` values of MCP server configs; they list the variable names as `environment_keys`. Plugin preflight also redacts `headers` values (listed as `header_keys`) and the user info and query values of an MCP server `url`.
+
+Since 0.21.0 the plugin preflight fails the Taskmaster AI check for projects whose effective classification blocks external AI ("remove the plugin from the project"), and no longer requires `ANTHROPIC_API_KEY` for it. See [Project Wizard](/project-wizard#steps).
 
 ## API reference
 

@@ -6,6 +6,10 @@ export const metadata = {
 export const sections = [
   { title: 'What is an ADR?', id: 'what-is-an-adr' },
   { title: 'ADR lifecycle', id: 'adr-lifecycle' },
+  { title: 'Review decisions', id: 'review-decisions' },
+  { title: 'Change requests', id: 'change-requests' },
+  { title: 'Review history', id: 'review-history' },
+  { title: 'ADR overview', id: 'adr-overview' },
   { title: 'ADR structure', id: 'adr-structure' },
   { title: 'Creating an ADR', id: 'creating-an-adr' },
   { title: 'Supersession', id: 'supersession' },
@@ -28,14 +32,19 @@ ADRs are first-class entities in Nexus with a formal review lifecycle. They are 
 
 ```
 draft -> under_review -> accepted / rejected
+              |              |
+              v              v
+        draft (changes   deprecated (0.21.0)
+         requested)
 ```
 
 | Status | Description |
 | --- | --- |
 | `draft` | Initial state. The ADR is being written and refined. |
 | `under_review` | Submitted for team review. Comments can be added via `dc_add`. |
-| `accepted` | The decision is approved and becomes authoritative. |
+| `accepted` | The decision is approved and becomes authoritative. "Accepted with conditions" (0.21.0) is also status `accepted`, with the conditions in the ADR text. |
 | `rejected` | The decision was not approved. Preserved for historical context. |
+| `deprecated` | Since 0.21.0: an accepted ADR that no longer applies, retired by a reviewer without a successor. |
 | `superseded` | Replaced by a newer ADR. Automatically set when the superseding ADR is accepted, or set by a reviewer with "Confirm supersession and close" (since 0.20.0, see [Supersession](#supersession)). |
 
 ### Governance widget (0.20.0)
@@ -43,6 +52,48 @@ draft -> under_review -> accepted / rejected
 On the ADR page, the Governance widget is one row of fixed height: the steps Draft, Under review and Decision, one status line and the actions. Submit, accept and reject (with a rationale) open in a drawer on the right. The confirm button stays locked from the click until the page shows the new state, and every transition is conditional on the expected state: a double click or a concurrent call gets a conflict instead of a second transition. Reject stays available under review.
 
 Authors cannot vote on their own ADR: the API rejects it, the widget explains why, and a database trigger blocks it. Self votes cast before 0.20.0 were deleted.
+
+## Review decisions
+
+Since 0.21.0, **Review** on an ADR under review opens the drawer on the right with a decision dropdown:
+
+| Decision | Effect |
+| --- | --- |
+| **Accept** | Status `accepted`; the rationale is appended as `## Decision Rationale`. |
+| **Accept with conditions** | Status `accepted`; the conditions are appended as `## Conditions`. |
+| **Request changes** | Back to `draft`; the reason is posted as a comment. The author revises and submits again. |
+| **Reject** | Status `rejected`, with an optional reason: alternative preferred, insufficient context or evidence, out of scope, duplicate, obsolete. |
+
+Review texts (rationale, conditions) are plain text of at most 10,000 characters, in the dashboard and through MCP; other input gets a 400. Every decision is conditional on the state that was read: a concurrent decision gets 409 instead of overwriting the first. Each decision notifies the project members (see [Notifications](/notifications)).
+
+## Change requests
+
+**Request change** on an accepted ADR offers three kinds:
+
+| Kind | Effect |
+| --- | --- |
+| **Revision** | A new draft that supersedes the ADR opens in the editor. |
+| **Amendment** | Same as a revision, for an addition rather than a rework. |
+| **Deprecation** | The ADR moves from `accepted` to `deprecated`. Reviewers only (`decisions.accept`). |
+
+Revisions and amendments follow the normal lifecycle; accepting the new ADR marks the old one `superseded` (see [Supersession](#supersession)). The earlier change-request page redirects to the ADR.
+
+## Review history
+
+The ADR list shows the review path under each title, for example "Submitted for review -> Changes requested", and a badge next to the status for what matters now:
+
+| Badge | Meaning |
+| --- | --- |
+| **With conditions** | Accepted with conditions; the conditions show as tooltip. |
+| **Changes requested** | A draft sent back by a reviewer. |
+| **Resubmitted (round n)** | Submitted again after changes were requested. |
+| **Change requested** | An accepted ADR with an open change request. |
+
+The ADR page shows the conditions or the requested changes in a highlighted box and the full review history with actor, time and reason. The history is recorded since 0.21.0; earlier decisions show no path.
+
+## ADR overview
+
+The status quick filters on the ADR overview are always visible, including **Needs my review** (under review, decidable by you, not your own) and **Deprecated**. Select ADRs to download them as Markdown; several download as one zip (`decisions.read`, audit event `decisions.exported`).
 
 ## ADR structure
 
@@ -95,7 +146,7 @@ After drafting, submit for review:
 
 ## Supersession
 
-When a new ADR replaces an existing one, specify the `supersedes` field during creation. When the new ADR is accepted, the superseded ADR is automatically marked as `superseded`.
+When a new ADR replaces an existing one, specify the `supersedes` field during creation. Since 0.21.0 the superseded ADR must belong to the same project (dashboard and `adr_create`; otherwise 400). When the new ADR is accepted, the superseded ADR is automatically marked as `superseded`.
 
 Since 0.20.0 an ADR that another **open** ADR supersedes is locked: it can no longer be submitted or accepted, neither in the dashboard nor with `adr_submit` or `adr_decide`, and the widget links the superseding ADR. Its exit is **Confirm supersession and close**: a reviewer closes it as superseded from draft or under review. The closure note goes into the decision text in the same update, plus a comment; if the decision text was edited meanwhile, the close answers 409 instead of overwriting it.
 
@@ -116,9 +167,22 @@ Use `kb_related` to navigate supersession chains and understand the evolution of
 | Tool | Description |
 | --- | --- |
 | `adr_create` | Create a new ADR in draft status |
-| `adr_submit` | Submit a draft ADR for review |
-| `adr_decide` | Accept or reject an ADR under review; `superseded` closes an ADR that an open ADR supersedes (0.20.0) |
+| `adr_submit` | Submit a draft ADR for review; a concurrent second submit gets 409 (0.21.0) |
+| `adr_decide` | Decide an ADR, see the decisions below |
 | `dc_add` | Add a comment to an ADR under review |
 | `dc_list` | List comments on an ADR |
+
+`adr_decide` takes these decisions:
+
+| `decision` | Applies to | Extra fields |
+| --- | --- | --- |
+| `accepted` | under review | optional `rationale` |
+| `accepted_with_conditions` (0.21.0) | under review | `conditions` (required) |
+| `changes_requested` (0.21.0) | under review | `rationale` (required); back to draft, posted as a comment |
+| `rejected` | under review | optional `rationale`, optional `reason` (0.21.0): `alternative_preferred`, `insufficient_context`, `out_of_scope`, `duplicate`, `obsolete` |
+| `deprecated` (0.21.0) | accepted | `rationale` (required) |
+| `superseded` (0.20.0) | draft or under review, superseded by an open ADR | optional `rationale` (closure note) |
+
+Since 0.21.0 the dashboard and MCP share one implementation: the appended text, the 409 on a concurrent decision and the notifications are identical. MCP accept and reject now append `## Decision Rationale` like the dashboard (before: `**Review rationale:**`).
 
 Since NEXUS-APP 0.19.1 the ADR tools follow the project role matrix: `adr_create` and `adr_submit` need `project_admin` or `project_editor`, `adr_decide` needs `project_admin` or `project_reviewer` (platform admins pass); other callers get 403. ADR comments need access to the project. See [Permissions on write tools](/mcp-server#permissions-on-write-tools).

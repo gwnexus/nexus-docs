@@ -1,0 +1,47 @@
+export const metadata = {
+  title: 'Notifications',
+  description: 'Project activity emails and bell notifications for ADR and document changes: delivery options, the daily digest, unsubscribing and classified projects.',
+}
+
+export const sections = [
+  { title: 'Project activity', id: 'project-activity' },
+  { title: 'Settings', id: 'settings' },
+  { title: 'Unsubscribing', id: 'unsubscribing' },
+  { title: 'Classified projects', id: 'classified-projects' },
+]
+
+# Notifications
+
+Emails and bell notifications about what happens in your projects. {{ className: 'lead' }}
+
+Since v0.21.0, every project member hears about the ADR process and about document changes, whether a change was made in the dashboard or by an agent through the MCP tools. Your own actions never notify you.
+
+## Project activity
+
+| Category | Events | Email | Bell |
+| --- | --- | --- | --- |
+| **Architecture decisions** | Submitted for review, accepted, accepted with conditions, changes requested, rejected, change request opened, deprecated, closed as superseded | Right away (default), daily digest or off. Conditions and reasons are included. | Always |
+| **Documents** | Added, updated, reclassified, deleted (any write path) | Daily digest (default) or off | No |
+
+Agents often write many documents at once, so document changes never arrive as single emails. The daily digest goes out at 06:00 UTC and collects everything since the last one.
+
+The ADR events also feed the review history on the ADR list and page (see [ADRs](/adrs#review-history)).
+
+## Settings
+
+**Settings > Notifications** has two parts:
+
+- **Project activity:** the email delivery for Architecture decisions and Documents, as a global default and per project. A project can follow the default or override it. **Send my digest now** sends the pending digest at once; the next one covers the time from then on.
+- **Product news:** three switches, Release updates, Feature previews and news, Beta releases. They replace the earlier per-product matrix.
+
+The bell in the header shows ADR events independent of the email setting.
+
+## Unsubscribing
+
+Every activity email has a one-click unsubscribe link for its category (a `List-Unsubscribe` header and a confirm page at `/unsubscribe/activity`). If the change cannot be saved, the confirm page says so and the link can be used again.
+
+## Classified projects
+
+For projects whose effective level blocks external AI (see [Confidentiality](/confidentiality#external-ai-processing)), activity emails carry **no content**: no project name, ADR title, decision detail or document titles leave through the mail provider. The email only says that something changed and links into Nexus. The digest lists such a project as "Classified project" with counts only. If the levels cannot be read, the email falls back to this form.
+
+The bell notification inside Nexus stays complete.

@@ -42,7 +42,7 @@ To create a new actor from scratch:
    - **Title** -- full role title (e.g., "Senior Backend Architect")
    - **Domains** -- expertise areas as tags (e.g., `backend`, `databases`, `api-design`)
    - **Permission profile** -- select from `readonly`, `reviewer`, `writer`, `builder`, `operator`
-   - **Route alias** -- which model route to use
+   - **Model** -- the Model Profile (since v0.21.0 the only model choice; see [Model Routing](/actors/model-routing))
    - **Recommended skills** -- skills this actor brings to projects
    - **Recommended plugins** -- plugins this actor brings to projects
 4. Save the actor
@@ -56,7 +56,7 @@ At minimum, an actor needs:
 - A **display name**
 - A **slug** (auto-generated)
 - A **permission profile** (defaults to `writer`)
-- A **route alias** (defaults to the project's default route)
+- A **Model** (without a profile the actor runs on the project default)
 
 All other fields are optional and can be filled in later.
 
@@ -65,7 +65,7 @@ All other fields are optional and can be filled in later.
 Personalized workspace actors are fully editable. Navigate to the actor detail page to modify:
 
 - Identity fields (display name, title, domains, working style)
-- Routing (route alias, override policy)
+- Model (the Model Profile)
 - Runtime (permission profile, tool restrictions, recommended skills/plugins)
 - Avatar (regenerate DiceBear avatar, upload custom image)
 - Dispatch configuration (ticket creation rules, escalation targets)
@@ -111,7 +111,8 @@ Actors are assigned to projects through the [Project Wizard](/project-wizard#ste
 ### Assignment rules
 
 - Multiple actors can be assigned to a single project
-- The first selected actor is marked as **primary** for default prompt routing
+- The first selected actor is marked as **primary** for default prompt routing; the starred primary actor is the main-session choice
+- **OpenCode modes** (plan, act, review): in OpenCode projects each mode can be given to one assigned actor. Since v0.21.0 the modes are stored on the actor assignment, a mode actor is always an assigned actor, and each mode has at most one actor. The project form hides them for Claude Code projects unless old slots are still set. In the project API they are `primary_slots` per entry of `actors` (for example `"primary_slots": ["plan"]`); without it the stored modes stay.
 - Selecting specialized actors **deselects the default** actor automatically
 - Each actor contributes its recommended skills and plugins to the project
 

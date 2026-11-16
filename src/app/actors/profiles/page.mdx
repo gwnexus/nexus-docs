@@ -28,7 +28,7 @@ The profile follows a normalized YAML frontmatter format (ADR-0056) with these t
 | Section | Purpose |
 | --- | --- |
 | `identity` | Role name, title, expertise domains, working style |
-| `routing` | Model route alias and override policy |
+| `routing` | Model Profile |
 | `runtime` | Permission profile, tool restrictions, resource limits |
 | `cost` | Cost class and budget constraints |
 | `avatar` | DiceBear style, seed, colors, or custom upload reference |
@@ -67,20 +67,18 @@ identity:
 
 ## Routing
 
-The routing section defines which AI model the actor uses via **route aliases** -- stable names that resolve to provider/model pairs at export time:
+The routing section names the actor's **Model Profile**, a stable name for a kind of work that the gateway resolves to a concrete model:
 
 ```yaml
 routing:
-  route_alias: "premium-security-reasoning"
-  override_policy: "project"
+  model_profile: "coding"
 ```
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `route_alias` | string | Reference to a Model Route (e.g., `premium-security-reasoning`, `local-coder-main`) |
-| `override_policy` | string | Whether the project can override the route (`actor`, `project`, `none`) |
+| `model_profile` | string | Slug of an active Model Profile (e.g., `reasoning`, `coding`, `review`) |
 
-Route aliases decouple actor definitions from volatile provider model IDs. Instead of storing `anthropic/claude-opus-4-8` directly, actors reference a route alias that is resolved from the Model Route catalog at export time. See [Model Routing](/actors/model-routing) for details.
+Since v0.21.0 this is the only routing field. A legacy `route_alias` in an imported file is bound to a profile, and the earlier `override_policy` no longer applies. Outside the gateway a profile does not apply and the actor runs on the project default. See [Model Routing](/actors/model-routing).
 
 ## Runtime
 

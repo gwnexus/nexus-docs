@@ -10,6 +10,7 @@ export const sections = [
   { title: 'Embeddings on the server', id: 'embeddings-on-the-server' },
   { title: 'Document ingestion', id: 'document-ingestion' },
   { title: 'Classification', id: 'classification' },
+  { title: 'Downloading documents', id: 'downloading-documents' },
   { title: 'MCP tools', id: 'mcp-tools' },
 ]
 
@@ -126,6 +127,8 @@ When the switch is on, Nexus sends the text of these items to OpenAI as they are
 
 Projects whose [confidentiality level](/confidentiality) blocks external APIs never send content or queries to OpenAI (ADR-0047); since 0.20.0 this includes Strictly Confidential (see [External AI processing](/confidentiality#external-ai-processing)). They use the local embedding model when the server has one configured; without one, their content is not embedded, `semantic` answers 400 and `hybrid` returns keyword results only.
 
+Since 0.21.0, an embedding write whose confidentiality level cannot be read does not go to OpenAI (fail closed). Local endpoints that check keys get `LOCAL_EMBEDDING_API_KEY` as bearer token. After a local model was configured, **Re-embed** builds the search vectors of existing documents again (see [Document Extraction](/textract#re-run-extraction-and-re-embed)).
+
 If the embedding provider fails during a search, `semantic` answers a JSON 503 with a reference and `hybrid` returns the keyword results with a `warning` (v0.18.1).
 
 ## Document ingestion
@@ -156,6 +159,17 @@ Ingested documents can be classified to improve search relevance and organizatio
 | `decision_input` | Input material for ADR decisions |
 | `reference` | Reference documentation |
 | `archive` | Historical, no longer active |
+
+In the dashboard, the bulk **Classify as...** action groups the classifications into Promote, Reclassify and Archive (0.21.0).
+
+## Downloading documents
+
+Since 0.21.0 the **Notes** tab of the documents page has a **Download** action for the selected agent documents and notes:
+
+- one item downloads as a Markdown file;
+- several download as one zip: one `.md` per item with YAML front matter (id, title, classification, source and dates) plus a `README.md` index.
+
+It needs `ingest.read`, takes at most 100 items and writes the audit event `ingest_items.exported` (`POST /api/projects/<projectId>/ingest-items/export`). ADRs download the same way from the [ADR overview](/adrs#adr-overview).
 
 ## MCP tools
 

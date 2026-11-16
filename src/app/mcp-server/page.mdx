@@ -143,6 +143,10 @@ Since NEXUS-APP 0.19.1, extended in 0.20.0, the backend applies the project role
 | `doc_classify` (0.20.0) | `ingest.classify`: `project_admin` or `project_editor` |
 | `session_create` (0.20.0) | `sessions.append_own`: `project_admin` or `project_editor` |
 | `vl_create`, `dispatch_create` (0.20.0) | `letters.create` in the sender project: `project_admin` or `project_editor` |
+| `dispatch_reply`, `dispatch_ack`, `dispatch_assign`, `dispatch_forward`, `dispatch_resolve`, `dispatch_close` (0.21.0) | `letters.reply` in the sending or the receiving project: `project_admin`, `project_editor` or `project_reviewer` |
+| `dispatch_sweep` with `acknowledge_non_blocking` (0.21.0) | same as `dispatch_ack`; without it any member can sweep |
+
+Since NEXUS-APP 0.21.0 **viewers** also get 403 on Dispatch replies and state changes; they keep read access (GH #80). Runner tokens keep their own scopes.
 
 Since NEXUS-APP 0.20.0 **viewers and reviewers** get 403 on the task, document, session and Dispatch create and update tools; before, any project member could call them. A Dispatch manager (runner token) is checked with the role of its owner. `session_append` and `session_close` stay ownership based: only the creator of a session writes to it. The managed skills `nx-adr-draft`, `nx-sync-memory` and `nx-coderabbit-triage` name the missing role on a 403 from `adr_create` or `adr_submit`, keep the ADR text in the conversation and continue.
 

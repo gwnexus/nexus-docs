@@ -1,145 +1,76 @@
 export const metadata = {
   title: 'Model Routing',
-  description: 'Route aliases, the Model Route catalog, and how actors are decoupled from volatile provider model IDs.',
+  description: 'How actors choose their model through a Model Profile, what applies outside the gateway, and how legacy route aliases were migrated in v0.21.0.',
 }
 
 export const sections = [
-  { title: 'Why route aliases?', id: 'why-route-aliases' },
-  { title: 'Model Route catalog', id: 'model-route-catalog' },
-  { title: 'Route resolution', id: 'route-resolution' },
-  { title: 'Cost tiers', id: 'cost-tiers' },
-  { title: 'Route lifecycle', id: 'route-lifecycle' },
+  { title: 'Model Profiles', id: 'model-profiles' },
+  { title: 'Where a profile applies', id: 'where-a-profile-applies' },
   { title: 'Actor routing configuration', id: 'actor-routing-configuration' },
+  { title: 'Imports and downloads', id: 'imports-and-downloads' },
+  { title: 'Migration from route aliases', id: 'migration-from-route-aliases' },
+  { title: 'Local models', id: 'local-models' },
 ]
 
 # Model Routing
 
-Stable route aliases decouple actor definitions from volatile provider model IDs. {{ className: 'lead' }}
+Actors choose their model through a Model Profile; the gateway picks the concrete model. {{ className: 'lead' }}
 
 <Note>
-  As of v0.13.2, the AI Gateway catalog is split into **Registry** (curated, routable models) and **Discover** (the full raw upstream feed). The Model Route catalog described below resolves against Registry entries only. See [AI Gateway](/ai-gateway) for the full model catalog and BYOK provider credentials. The AI Gateway pages in the dashboard are held back until NEXUS-APP 0.20.0.
+  Since v0.21.0 actors route **only** through their Model Profile. Legacy route aliases (`route_alias`) were bound to profiles and removed. Earlier versions of this page described the route alias catalog; see [Migration from route aliases](#migration-from-route-aliases).
 </Note>
 
-AI model identifiers change frequently -- providers rename models, release new versions, or deprecate old ones. Model Routing provides a stable abstraction layer so actor profiles reference route aliases instead of raw provider/model pairs.
+## Model Profiles
 
-## Why route aliases?
+A Model Profile is a stable name for a kind of work, for example `reasoning`, `coding` or `review`. An actor references a profile instead of a provider model ID, so a provider renaming or retiring a model does not touch any actor.
 
-Without route aliases, an actor profile would contain a hard-coded reference like `anthropic/claude-opus-4-8`. When the provider releases a new version, every actor profile referencing that model must be updated manually.
+The actor edit page has one **Model** field: the Model Profile. The gateway resolves the profile to a concrete model, in the cloud or on your own [AI hardware](/nexus-link#model-routing). The actor tabs are named Persona, Capabilities & Dispatch and Advanced runtime.
 
-Route aliases solve this by introducing a stable indirection layer:
+Only active profiles count. A binding to an inactive profile is treated like no binding.
 
-```
-Actor profile            Route alias              Provider/Model
-─────────────            ───────────              ──────────────
-route_alias:             premium-reasoning   →    anthropic/claude-opus-4-8
-"premium-reasoning"      (resolved at export)
-```
+## Where a profile applies
 
-When the provider releases a new model, you update the route alias mapping once in the Model Route catalog. All actors referencing that alias automatically get the new model on their next `nexus pull`.
-
-## Model Route catalog
-
-The Model Route catalog is a tenant-scoped table of route definitions stored in the `model_routes` table:
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `route_alias` | string | Stable name (e.g., `premium-reasoning`, `local-coder-main`) |
-| `provider` | string | Model provider (e.g., `anthropic`, `openai`, `dgx-spark`) |
-| `model` | string | Provider-specific model ID (e.g., `claude-opus-4-8`) |
-| `cost_class` | string | Cost tier: `local`, `balanced`, `premium` |
-| `capability_tags` | string[] | What the model is good at (e.g., `reasoning`, `coding`, `fast`) |
-| `lifecycle_status` | string | Route state: `active`, `deprecated`, `retired` |
-| `fallback` | string | Fallback route alias if this route is unavailable |
-
-### Seed catalog
-
-Nexus ships with a default set of route aliases covering common use cases:
-
-| Route alias | Provider | Model | Cost class | Capabilities |
-| --- | --- | --- | --- | --- |
-| `local-coder-main` | dgx-spark | nexus-coder-main | local | coding, reasoning |
-| `zen-premium` | zen-provider | premium model | premium | reasoning, analysis |
-| `zen-balanced` | zen-provider | balanced model | balanced | coding, general |
-| `zen-fast` | zen-provider | fast model | balanced | coding, fast |
-| `premium-reasoning` | anthropic | claude-opus-4 | premium | reasoning, analysis |
-| `premium-coding` | anthropic | claude-sonnet-4 | balanced | coding, fast |
-
-The seed catalog is a starting point. You can add, modify, or remove routes to match your model infrastructure.
-
-## Route resolution
-
-Route resolution happens at **export time** when `nexus pull` generates runtime configuration files:
-
-1. The export pipeline reads each actor's `route_alias`
-2. Looks up the alias in the Model Route catalog
-3. Resolves to the current `provider/model` pair
-4. Writes the resolved value into the runtime config (e.g., `opencode.json`)
-
-### Validation rules
-
-- **Active** routes resolve normally
-- **Deprecated** routes resolve with a warning in the export log
-- **Retired** routes **fail the export** -- you must update the actor's route alias before pulling
-
-### Fallback chain
-
-If a route has a `fallback` defined and the primary model is unavailable, the export pipeline follows the fallback chain:
-
-```
-premium-reasoning → zen-premium → zen-balanced
-```
-
-Fallback chains are optional and primarily useful for local/on-premise models that may be offline.
-
-## Cost tiers
-
-Routes are grouped into cost tiers that help teams manage AI spending:
-
-| Tier | Description | Use case |
-| --- | --- | --- |
-| **local** | On-premise models (DGX Spark, self-hosted) | Zero external cost, classified workloads |
-| **balanced** | Mid-range cloud models | Day-to-day coding, general tasks |
-| **premium** | Top-tier reasoning models | Architecture decisions, security audits, complex analysis |
-
-The UI groups routes by cost tier with lifecycle badges, making it easy to see which models are available at each price point.
-
-### Cost class and actors
-
-An actor's `cost.cost_class` field indicates its expected cost tier. This is informational -- it helps project administrators understand the cost implications of assigning specific actors. The actual cost depends on the resolved model route.
-
-## Route lifecycle
-
-Routes go through a lifecycle that prevents breaking changes:
-
-| Status | Behavior |
+| Project execution | What the actor runs on |
 | --- | --- |
-| **active** | Normal operation, fully supported |
-| **deprecated** | Still works, export produces a warning. Schedule migration. |
-| **retired** | Export fails. The route alias must be updated. |
+| Through the gateway (`execution_mode = nexus_gateway`) | The actor's Model Profile; OpenCode exports write `nexus/<profile-slug>`. |
+| Outside the gateway (`direct_provider`) | A profile does not apply; the actor runs on the project default. |
+| No profile bound | The project or runtime default. |
 
-### Deprecation workflow
-
-1. Mark a route as `deprecated` in the catalog
-2. All projects using actors with that route see warnings during `nexus pull`
-3. Update actor profiles to reference the replacement route
-4. Mark the old route as `retired` once all actors have migrated
+The [AI Gateway](/ai-gateway) itself is not yet available to users, so most projects run outside the gateway and their actors use the project default.
 
 ## Actor routing configuration
 
-Each actor's profile contains a `routing` section:
+An actor file names its profile under `routing`:
 
 ```yaml
 routing:
-  route_alias: "premium-reasoning"
-  override_policy: "project"
+  model_profile: coding
 ```
 
-The `override_policy` controls whether the project can override the actor's route:
+Actor downloads from the dashboard write `routing.model_profile` (0.21.0). The runtime spec no longer carries `route_alias` per actor.
 
-| Policy | Behavior |
-| --- | --- |
-| `actor` | The actor's route is fixed and cannot be overridden by the project |
-| `project` | The project can override the route with a different alias |
-| `none` | No routing restrictions |
+## Imports and downloads
 
-This lets you enforce that security-critical actors always use premium models, while allowing flexible routing for general-purpose actors.
+Actor imports accept both `model_profile` and a legacy `route_alias` and bind either to an active profile, with the same rule as the migration below. Names without an active profile are listed in `unbound_profiles` in the import result; those actors run on the project default until you choose a profile.
+
+nexus-cli releases after 0.42.0 read `model_profile` at the top level or under `routing` in `nexus actors import`, `normalize` and `validate`, so a re-imported download keeps its profile; `validate` reports a `route_alias` as legacy.
+
+## Migration from route aliases
+
+Migration 0318 (v0.21.0) bound every actor that still used a legacy route alias to a Model Profile:
+
+1. `balanced-reasoning`, `balanced-coding` and `balanced-review` map to `reasoning`, `coding` and `review`; every other alias maps to the profile with the same slug.
+2. The actor's tenant profile is used first, then the global profile; only active profiles count.
+3. Actors without a match run on the project default.
+
+The migration removed the alias together with the provider, model, fallback and local flag that the old route picker wrote next to it. Every change is recorded in `actor_route_alias_migration` for review and rollback.
+
+Also removed in v0.21.0:
+
+- the "Legacy model route" picker on the actor page;
+- the alias fallback in the OpenCode and Claude Code exports;
+- the 422 for an unknown alias.
+
+## Local models
+
+Local models run through the gateway, as deployments on your [AI hardware](/nexus-link#model-routing). v0.21.0 removed the legacy "Local models" (DGX Spark) section of the project form and its direct `dgx-spark` provider in the OpenCode export. Projects that still carry `spark_models` get the export warning `legacy_local_models`.

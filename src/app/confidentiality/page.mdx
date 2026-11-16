@@ -59,8 +59,13 @@ Since 0.20.0 these levels never send content to an external AI service:
 | Confidential (C.2) | Allowed where enabled | `warn_and_override` | Keyword, semantic, hybrid |
 | Strictly Confidential (C.3) and all classified levels | Never; a local model where `LOCAL_EMBEDDING_URL` is set | Blocked | Semantic and hybrid with local embeddings; keyword only without them |
 
+- **Effective level:** the stricter of the project and the customer level. Since 0.21.0 the documents, document detail and ADR pages use it like the backend; before, a stricter customer level was not shown there.
+- **Fail closed (0.21.0):** if the project or customer level cannot be read, OpenAI embeddings and Textract are not used for that call.
+- **Local endpoints with keys (0.21.0):** for local endpoints that check keys (for example LiteLLM), set `LOCAL_EMBEDDING_API_KEY` and `LOCAL_VISION_API_KEY`; they are sent as bearer token by embeddings, OCR and the embedding backfill.
 - **Embeddings:** without `LOCAL_EMBEDDING_URL`, new content of these projects is not embedded and search falls back to keywords. Embeddings created before 0.20.0 are kept. See [Embeddings on the server](/knowledge-base#embeddings-on-the-server).
 - **Local OCR:** an extraction job that requests local OCR runs the local vision model where `LOCAL_VISION_URL` is set (PDF, PNG and JPEG). Without it, the job ends as skipped with "No local OCR configured" instead of failing. A local OCR request ends by the run's deadline (at most 12 seconds); a job stuck for five minutes is failed.
+
+The same levels also keep content out of [activity emails](/notifications#classified-projects) (0.21.0) and refuse the Taskmaster AI plugin in the [plugin preflight](/plugins) (0.21.0).
 
 <Note>
   **Behaviour change in 0.20.0:** projects whose effective level is Strictly Confidential no longer use OpenAI embeddings or AWS Textract. Operators who want semantic search for them set `LOCAL_EMBEDDING_URL`.

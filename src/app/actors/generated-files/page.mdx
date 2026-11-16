@@ -97,7 +97,6 @@ The `actors.json` file contains a machine-readable representation of all actors 
       "mode": "primary",
       "domains": ["security", "infrastructure", "compliance"],
       "permission_profile": "builder",
-      "route_alias": "premium-security-reasoning",
       "recommended_skills": ["nexus-init", "nexus-sec-scan", "nexus-code-review"],
       "recommended_plugins": ["nexus-compaction-plus", "nexus-cost-control"]
     },
@@ -108,7 +107,6 @@ The `actors.json` file contains a machine-readable representation of all actors 
       "mode": "subagent",
       "domains": ["backend", "databases", "api-design"],
       "permission_profile": "builder",
-      "route_alias": "zen-balanced",
       "recommended_skills": ["nexus-init", "nexus-code-review", "nexus-deploy-check"],
       "recommended_plugins": ["nexus-compaction-plus"]
     }
@@ -129,7 +127,8 @@ display_name: Security Architect
 title: Senior Security Architect
 mode: primary
 permission_profile: builder
-route_alias: premium-security-reasoning
+routing:
+  model_profile: reasoning
 domains:
   - security
   - infrastructure
@@ -170,7 +169,7 @@ When the OpenCode adapter is enabled as an export target, `nexus pull` generates
 {
   "agents": {
     "security-architect": {
-      "model": "anthropic/claude-opus-4-8",
+      "model": "nexus/reasoning",
       "name": "Security Architect",
       "description": "Senior Security Architect specializing in security, infrastructure, and compliance.",
       "permissions": {
@@ -180,7 +179,7 @@ When the OpenCode adapter is enabled as an export target, `nexus pull` generates
       }
     },
     "backend-engineer": {
-      "model": "zen-provider/balanced-model",
+      "model": "nexus/coding",
       "name": "Backend Engineer",
       "description": "Backend Development Engineer specializing in backend, databases, and API design.",
       "type": "subagent",
@@ -194,13 +193,13 @@ When the OpenCode adapter is enabled as an export target, `nexus pull` generates
 }
 ```
 
-Key mappings:
+Key mappings (since v0.21.0 actors route only through their Model Profile; the alias fallback was removed):
 
 | Actor field | opencode.json field | Notes |
 | --- | --- | --- |
 | `mode: primary` | Top-level agent | The main agent entry |
 | `mode: subagent` | `"type": "subagent"` | Accessible via @mention |
-| `route_alias` | `model` | Resolved to `provider/model` at export time |
+| `routing.model_profile` | `model` | `nexus/<profile-slug>` when the project routes through the gateway; otherwise no `model`, and the project default applies |
 | `permission_profile` | `permissions` | Mapped to OpenCode's permission model |
 
 <Note>
@@ -212,8 +211,8 @@ Key mappings:
 The export pipeline follows these steps:
 
 1. **Fetch actors** -- retrieve all actors assigned to the project from the Nexus backend
-2. **Resolve routes** -- look up each actor's route alias in the Model Route catalog, resolve to provider/model
-3. **Validate** -- check for retired routes (fail), deprecated routes (warn), permission mapping gaps (reject)
+2. **Resolve models** -- bind each actor to its active Model Profile (see [Model Routing](/actors/model-routing))
+3. **Validate** -- check for permission mapping gaps (reject)
 4. **Generate AGENTS.md** -- assemble the agent policy document from actor profiles, skills, directives
 5. **Generate actors.json** -- serialize the actor registry to JSON
 6. **Generate actor profiles** -- write individual markdown files per actor

@@ -8,6 +8,8 @@ export const sections = [
   { title: 'Quick start', id: 'quick-start' },
   { title: 'Two-token security model', id: 'two-token-security-model' },
   { title: 'Compose management', id: 'compose-management' },
+  { title: 'Model routing', id: 'model-routing' },
+  { title: 'Local AI services', id: 'local-ai-services' },
   { title: 'Ed25519 request signing', id: 'ed25519-request-signing' },
   { title: 'Device compatibility', id: 'device-compatibility' },
   { title: 'CLI reference', id: 'cli-reference' },
@@ -120,6 +122,29 @@ The AI Hardware node detail page has a **Compose** tab where you can:
 - **Stream Logs** — live `docker compose logs --follow` as Server-Sent Events
 
 The dashboard proxy routes all compose API calls server-side — the command token never reaches the browser.
+
+## Model routing
+
+Since NEXUS-APP 0.21.0 AI Hardware nodes are connected to model routing (BYOHW). The node page shows:
+
+- the gateway deployments that run on the node, and whether each serves live traffic;
+- the model profiles that route to it.
+
+Platform admins link catalog entries that point at the node, or add a model as a new local deployment; it runs a smoke test and then the usual admission. When the heartbeat reports the models a node serves (`models`, planned for an upcoming nexus-link release), they are listed with **Add to gateway**. Existing local deployments were linked to their node by endpoint host. API: `GET` and `POST /api/nodes/<nodeId>/models`.
+
+A node's status follows its last heartbeat: a node silent for more than five minutes shows **offline** in the list and on its page, with a hint, instead of keeping the last reported "online".
+
+In User management, **AI Hardware: Enabled** (formerly "Spark: Enabled") follows the `ai_hardware` feature flag or the platform admin role; before 0.21.0 it was on for every user once any node existed.
+
+<Note>
+  Model routing over your own hardware is part of AI Hardware. The [AI Model Gateway](/ai-gateway) as a user-facing product is still planned and not available.
+</Note>
+
+## Local AI services
+
+Since 0.21.0 platform admins see a **Local AI services** panel under AI Hardware. For the local OCR model (`LOCAL_VISION_*`) and the local embedding model (`LOCAL_EMBEDDING_*`) it shows whether each is configured, answers on `GET /models` and serves the configured model, with latency and a readable reason (rejected or missing API key, model not served, no answer).
+
+Below that it lists the extraction jobs of the last 7 days per path (local OCR, AWS Textract, none) with the most frequent failure reasons, the documents embedded locally and the classified documents skipped, and whether Textract and OpenAI embeddings are switched on. The panel shows only the endpoint host, never a key (`GET /api/admin/local-ai/status`).
 
 ## Ed25519 request signing
 
