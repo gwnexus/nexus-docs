@@ -148,7 +148,9 @@ Since NEXUS-APP 0.20.0 **viewers and reviewers** get 403 on the task, document, 
 
 **Review reads:** `rv_get`, `rv_list` and `rv_comment` only cover reviews the caller authored, reviews or takes part in, or whose skill or agent file the caller can read. Other reviews answer 404 or are left out of the list.
 
-`dispatch_create` answers 404 `PROJECT_NOT_FOUND` when the sender or target project does not exist (for example a project that only exists on another hub, or one deleted meanwhile).
+`dispatch_create` answers 403 when the caller has no access to the sender project, or when a cross-project Dispatch has no project link. It answers 404 `PROJECT_NOT_FOUND` only when the sender or target project no longer exists after those checks (for example a project that only exists on another hub, or one deleted meanwhile); before 0.19.1 this was a 500.
+
+Write tools not listed in the table keep their earlier checks: project membership, plus `project.manage` for `project_update` and session ownership for `session_append` and `session_close`.
 
 For the role checks on skills and directives, see "Role checks (NEXUS-APP 0.16.0)" under [Changes in v0.10.14 to v0.10.16](#changes-in-v0-10-14-to-v0-10-16).
 
