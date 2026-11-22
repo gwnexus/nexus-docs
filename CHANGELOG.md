@@ -4,6 +4,10 @@ All changes to the **nexus-docs site** itself (content, structure, navigation, b
 
 ---
 
+## 2026-11-22
+
+- New page `claude-code/browser-tool` (ADR-0158): browser tool choice in My Settings, one-time Playwright setup, guided login for protected sites and the session file as a credential, `.vault/screenshots` output and its devbox checks, shot lists, hub auto-login not covered; navigation entry and a link from `claude-code/workspace`
+
 ## 2026-11-14
 
 - NEXUS-APP 0.20.0: `mcp-server` role matrix for task, document, session and Dispatch write tools; `confidentiality` gets "External AI processing" (Strictly Confidential, local embeddings and OCR), with notes in `textract` and `knowledge-base`; ADR governance and supersession close in `adrs`; `feature-flags` (`ai_hardware`, removed flags), `nexus-link`, `api` (customers, preflight, project roles), `architecture` (visible one-way links), `project-wizard` (Developer tools, comments), `dispatch/control` (one Dispatch card, simulator page), `skills` (skill updates), `plugins` (released versions)

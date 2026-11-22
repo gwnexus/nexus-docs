@@ -258,6 +258,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: 'Workspace',      href: '/claude-code/workspace' },
       { title: 'Plugins',        href: '/claude-code/plugins' },
+      { title: 'Browser Tool',   href: '/claude-code/browser-tool' },
     ],
   },
   {

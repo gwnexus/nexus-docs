@@ -1,0 +1,166 @@
+export const metadata = {
+  title: 'Browser Tool',
+  description: 'Choose a browser tool for Claude Code workspaces, set up Playwright once, sign in to protected sites, and take repeatable screenshots from shot lists into .vault.',
+}
+
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Choosing the browser tool', id: 'choosing-the-browser-tool' },
+  { title: 'One-time setup', id: 'one-time-setup' },
+  { title: 'Protected sites and apps', id: 'protected-sites-and-apps' },
+  { title: 'Output in .vault', id: 'output-in-vault' },
+  { title: 'Shot lists', id: 'shot-lists' },
+  { title: 'Not covered', id: 'not-covered' },
+]
+
+# Browser Tool
+
+Give the agent a browser: repeatable screenshots in light and dark from a shot list, and interactive browsing, also behind a login. {{ className: 'lead' }}
+
+The browser tool is a personal setting (ADR-0158). It applies to every Claude Code project you open with the Claude Code Experience, not only to projects with the Zellij workspace.
+
+## Overview
+
+| Choice | What you get |
+| --- | --- |
+| **None** | No browser tooling. |
+| **Claude in Chrome** | Claude Code starts with `--chrome` and uses the Chrome extension. Needs a running desktop Chrome with the extension, signed in to the same account; not headless and not repeatable. |
+| **Playwright** | The `nexus-screenshots` skill and a Playwright MCP server (see below). Runs headless, needs no desktop Chrome session. |
+
+With **Playwright** you get two parts:
+
+- **Skill `nexus-screenshots`**
+  - a **runner** that turns a [shot list](#shot-lists) into PNG files, in light and dark
+  - a **login helper** for [protected sites](#protected-sites-and-apps)
+  - a shot-list **template**
+  - a **setup script** for the [one-time setup](#one-time-setup)
+- **Playwright MCP server** (`@playwright/mcp`, pinned): the agent browses interactively and uses the same saved login session.
+
+Use the runner when you need the same screenshots again, for example for a review round. Use the MCP server when the agent should look around, click through a flow or check a single page.
+
+## Choosing the browser tool
+
+1. Open **My Settings** in the hub and pick **Browser tool**: None, Claude in Chrome or Playwright. This choice replaces the former "Claude in Chrome (experimental)" switch; if you had that switched on, it shows as **Claude in Chrome**.
+2. Run `nexus pull` in the project to fetch the skill and the MCP server block.
+3. Start a new workspace with `nexus run`. A running Claude Code session does not pick up the change.
+
+The Playwright MCP server is a third-party executable: Claude Code asks for consent before it starts it, as for every MCP server from Nexus.
+
+## One-time setup
+
+Playwright and Chromium are installed once per machine, not per repository. Run the skill's setup script (or ask the agent to run it). It installs pinned versions of `playwright` and Chromium into:
+
+```text
+~/.cache/nexus/shots/
+```
+
+This takes about 150 MB. Other projects on the same machine reuse it.
+
+With Playwright chosen, `devbox shell` warns when the runner or Chromium is missing.
+
+## Protected sites and apps
+
+Most pages worth a screenshot sit behind a login. The login helper signs you in once per site and saves the browser session, so the runner and the MCP server can open those pages.
+
+### Sign in once
+
+1. Run the login helper with the site URL (or ask the agent to). A browser window opens.
+2. Sign in as usual, including 2FA.
+3. Once you are signed in, the helper saves the session.
+
+The session is saved per project and host:
+
+```text
+~/.cache/nexus/shots/<project>/<host>.json
+```
+
+The file has mode `0600` and lives outside the repository.
+
+### When the session expires
+
+A saved session expires like any browser session. When the runner lands on a login page instead of the target page, it stops, says that the session for that host has expired, and names the command that renews it. Run the login helper again for that URL.
+
+`devbox shell` warns when the session file is missing or old.
+
+### Use a test account
+
+<Note>
+  Sign in with a dedicated, low-privilege test user, and on staging rather than production. Do not use an admin account on production: anyone who has the session file can act as that user until the session expires.
+</Note>
+
+### The session file is a credential
+
+- Never commit, share or paste the session file, also not into a chat, an issue, a Dispatch or a Nexus artifact.
+- Do not copy it into the repository or into `.vault/`.
+- Keep its mode at `0600`. `devbox shell` fails when other users can read it.
+- If it leaked, sign out that session on the site (or change the password of the test user), delete the file and sign in again.
+
+## Output in .vault
+
+Screenshots go to `.vault/` in the project, by default to:
+
+```text
+.vault/screenshots/<YYYY-MM-DD>-<topic>/
+```
+
+A shot list may name another path, as long as it is inside `.vault/`.
+
+`.vault/` is local and git-ignored, because screenshots can show customer data. `nexus link` and `nexus init` create the folder and its ignore entry when they are missing. `devbox shell` checks it:
+
+| Check | Result |
+| --- | --- |
+| `.vault/` is missing | warning |
+| `.vault/` is not git-ignored, or files under it are tracked | failure |
+
+To share a screenshot, pick the file and check it first; never publish the whole folder.
+
+## Shot lists
+
+A shot list describes the pages to capture. The skill ships a template; copy it and adapt it. Each shot has:
+
+| Field | Meaning |
+| --- | --- |
+| `name` | File name of the screenshot (without extension). |
+| `path` | Page path on the site, relative to the base URL. |
+| `clicks` | Optional: elements to click before the screenshot, in order (for example a tab or a dialog button). |
+| `waitFor` | Optional: an element or text to wait for before the screenshot. |
+| `theme` | `light`, `dark`, or both. |
+
+Example: a hub review round in light and dark.
+
+```json
+{
+  "baseUrl": "https://staging.example.com",
+  "topic": "hub-review",
+  "shots": [
+    {
+      "name": "dashboard",
+      "path": "/dashboard",
+      "waitFor": "text=Dashboard",
+      "theme": ["light", "dark"]
+    },
+    {
+      "name": "dispatch-detail",
+      "path": "/dashboard/dispatches",
+      "clicks": ["text=Open"],
+      "waitFor": "text=Timeline",
+      "theme": ["light", "dark"]
+    },
+    {
+      "name": "my-settings-browser-tool",
+      "path": "/settings",
+      "clicks": ["text=Browser tool"],
+      "theme": ["light", "dark"]
+    }
+  ]
+}
+```
+
+The runner writes one PNG per shot and theme into `.vault/screenshots/<YYYY-MM-DD>-hub-review/`. Run it again after a change and compare the two folders.
+
+The template in the skill is the reference for the exact format.
+
+## Not covered
+
+- **Automatic login to the Nexus hub.** The runner cannot sign in to the hub by itself with your CLI token; use the login helper like for any other site. An automatic hub login is planned as a later step with its own decision and security review.
+- **Screenshots with real data.** The tool takes whatever the page shows. Use staging and test data, and check every screenshot before you share it.
