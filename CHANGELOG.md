@@ -9,6 +9,7 @@ All changes to the **nexus-docs site** itself (content, structure, navigation, b
 - NEXUS-APP 0.21.0: `adrs` (review decisions, change requests, review history, overview, `adr_decide` decisions); new `notifications` page and navigation entry; `textract` (extraction badge, re-run and re-embed, processing banner); `confidentiality` (effective level, fail closed, local endpoint keys); `knowledge-base` (Markdown download); `nexus-link` (model routing, local AI services); `actors` pages rewritten for Model Profiles; `mcp-server` and `dispatch` (Dispatch reply roles, named actor); `project-wizard` and `api` (Taskmaster preflight, OpenCode modes, new routes)
 - `roadmap`: v0.22.0 with the moved multi-tenant and cost items, v0.21.0 released; `changelog`: v0.21.0; homepage banner for v0.21
 - `ai-gateway`, `dispatch`, `dispatch/engines`: "later 0.20.x update" wording replaced, the Gateway and OpenCode delivery stay planned
+- nexus-gateway 0.3.0 to 0.6.1: `ai-gateway` gets "Runtime behavior" (error codes `policy_stale`, `no_eligible_deployment`, `context_too_long`; reviewed data boundary and advertised surfaces for local models; output-token cap; `effective_profile`; `/health/ready` bundle readback and readiness alerting); link from `actors/model-routing`
 
 ## 2026-11-14
 

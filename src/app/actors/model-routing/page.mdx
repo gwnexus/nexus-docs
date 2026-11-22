@@ -74,3 +74,5 @@ Also removed in v0.21.0:
 ## Local models
 
 Local models run through the gateway, as deployments on your [AI hardware](/nexus-link#model-routing). v0.21.0 removed the legacy "Local models" (DGX Spark) section of the project form and its direct `dgx-spark` provider in the OpenCode export. Projects that still carry `spark_models` get the export warning `legacy_local_models`.
+
+A local deployment serves only requests up to its reviewed classification and only the APIs it passed admission for; a local profile never falls back to a cloud model. See [AI Gateway: local-model routing](/ai-gateway#local-model-routing).

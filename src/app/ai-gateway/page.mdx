@@ -9,6 +9,7 @@ export const sections = [
   { title: 'Model catalog: Registry and Discover', id: 'model-catalog-registry-and-discover' },
   { title: 'Routing Lab: evidence-based suitability', id: 'routing-lab-evidence-based-suitability' },
   { title: 'Gateway operations', id: 'gateway-operations' },
+  { title: 'Runtime behavior (nexus-gateway 0.3 to 0.6)', id: 'runtime-behavior' },
 ]
 
 # AI Gateway
@@ -108,6 +109,74 @@ Every gateway routing decision -- selected deployment, fallback reason, budget s
 A platform-admin-only view that compares a provider's own account usage and credit balance (for example, OpenRouter) against Nexus's internal cost ledger, surfacing discrepancies for investigation.
 
 - API: `GET /api/admin/cost-reconciliation`
+
+## Runtime behavior (nexus-gateway 0.3 to 0.6) {{ id: 'runtime-behavior' }}
+
+The gateway service (nexus-gateway) releases 0.3.0 to 0.6.1 change behavior that callers and operators see. All of them require hub 0.21.0. They roll out on staging first; production follows hub 0.21.0.
+
+### Error codes
+
+| Status | Code | Surface | When |
+| --- | --- | --- | --- |
+| 503 | `policy_stale` | `/v1/chat/completions`, `/v1/messages` (message starts with `policy_stale:`) | The gateway has not reached the hub for `stale_fail_secs` (default 1800 s). Also applies to requests already in flight, before their next upstream attempt. (0.3.0) |
+| 503 | `no_eligible_deployment` | `/v1/chat/completions` | No local deployment may serve the request, because of its [reviewed data boundary](#reviewed-data-boundary) or its [advertised surfaces](#advertised-surfaces). (0.4.0) |
+| 503 | `api_error` | `/v1/messages` | Same cause as `no_eligible_deployment`, on the Messages API. (0.4.0) |
+| 400 | `context_too_long` | `/v1/chat/completions`, `/v1/messages` | The prompt is estimated above the deployment's `max_context_tokens`; refused before any upstream call. Chat completions since 0.5.0. |
+
+The context estimate is about 4 characters per token, over the messages, tool calls and tool definitions.
+
+### Local-model routing
+
+#### Reviewed data boundary
+
+A local deployment is reviewed up to a classification, for example `confidential` (ADR-0149). Since 0.4.0 the gateway never uses it for a request classified above that level.
+
+- If no other local deployment fits, the request fails with 503 (see [Error codes](#error-codes)).
+- A local profile or a `@local` variant never falls back to a cloud model.
+- The Routing Lab shows the reason `above_max_classification`.
+
+#### Advertised surfaces
+
+Since 0.3.0 (effective with hub bundle schema 1.3), a local deployment serves only the APIs it passed the admission probes for: `chat_completions`, `messages` or both.
+
+Example: a model that passes the chat probes but fails the Messages probes is not offered on `/v1/messages`. A `nexus/<profile>@local` request there gets 503 when no other local model qualifies.
+
+#### Credentials of local deployments
+
+Local deployments (`data_path: local_only`) always use their configured credential, never a project BYOK key. Before 0.6.1, chat requests with a project token to a local deployment could fail with 502 `byok_resolution_unavailable`.
+
+### Output-token cap
+
+When a deployment declares `max_output_tokens` (0.5.0), both inference surfaces apply it:
+
+- a larger client `max_tokens` or `max_completion_tokens` is lowered to the cap, and the cap is set when the client sends none;
+- the request is never refused for it;
+- a manual thinking budget is kept below the cap, or `thinking` is removed when the cap is under 1024.
+
+Usage events carry `max_tokens_requested` and `max_tokens_applied`; the hub stores them since gateway 0.6.0.
+
+### Usage and decision views
+
+Since 0.3.0 the usage and decision views can show `effective_profile`, the purpose profile behind a variant: `coding` for `coding@local`.
+
+### Messages API responses
+
+Since 0.6.1, `/v1/messages` without `stream` answers with JSON, as the Messages API default. Before, it could answer with an event stream.
+
+### Health and readiness
+
+- `/health/ready` reports a stale routing policy (0.3.0). `/v1/models` keeps answering while the policy is stale.
+- Since 0.6.0 it also reports the current bundle:
+
+  | Field | Meaning |
+  | --- | --- |
+  | `bundle_version` | The hub's canonical content hash of the bundle, also its ETag. |
+  | `bundle_schema_version` | Schema of the bundle, for example `"1.3"`. |
+  | `bundle_accepted_at` | When the current bundle content was accepted (RFC 3339, UTC). |
+
+<Note>
+  **Alert on readiness.** A hub outage longer than `stale_fail_secs` (30 minutes by default) stops inference with `policy_stale`. Watch `/health/ready`, not only liveness.
+</Note>
 
 ## Security and data-integrity hardening
 
